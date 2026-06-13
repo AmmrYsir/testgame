@@ -1,7 +1,7 @@
 import { useGameStore } from '../store';
 
 export default function TopBar() {
-  const { resources, companyName } = useGameStore();
+  const { resources, companyName, simulationSpeed } = useGameStore();
 
   return (
     <header className="bg-surface/80 dark:bg-surface/80 backdrop-blur-xl w-full z-50 border-b border-white/10 shadow-sm flex-none">
@@ -38,8 +38,15 @@ export default function TopBar() {
             </div>
           </div>
           <div className="flex items-center gap-2 bg-surface-container/50 px-4 py-2 rounded-lg border-l border-t border-white/5">
-            <span className="material-symbols-outlined text-outline-variant text-sm">calendar_today</span>
-            <span className="font-label-md text-label-md text-outline">Day {resources.currentTick}</span>
+            <span className="material-symbols-outlined text-outline-variant text-sm">
+              {simulationSpeed === 0 ? 'pause' : 'play_arrow'}
+            </span>
+            <div className="flex flex-col text-right">
+              <span className="font-label-sm text-label-sm text-outline uppercase leading-tight">
+                {simulationSpeed === 0 ? 'PAUSED' : `${simulationSpeed}x Speed`}
+              </span>
+              <span className="font-label-md text-label-md text-on-surface leading-tight">Day {resources.currentTick}</span>
+            </div>
           </div>
         </div>
       </div>
