@@ -25,7 +25,13 @@ function App() {
           setSimulationSpeed(2);
           break;
         case '3':
-          setSimulationSpeed(4); // fast
+          setSimulationSpeed(3);
+          break;
+        case '4':
+          setSimulationSpeed(4);
+          break;
+        case '5':
+          setSimulationSpeed(5);
           break;
         default:
           break;

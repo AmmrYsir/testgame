@@ -90,8 +90,19 @@ export default function TopBar({ onMailboxToggle }) {
               2x
             </button>
             <button
+              onClick={() => setSimulationSpeed(3)}
+              title="Triple speed (3)"
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors font-mono text-xs border ${
+                simulationSpeed === 3
+                  ? 'bg-primary/20 text-primary border-primary/30 font-bold'
+                  : 'text-outline hover:text-on-surface hover:bg-white/5 border-transparent'
+              }`}
+            >
+              3x
+            </button>
+            <button
               onClick={() => setSimulationSpeed(4)}
-              title="Fast forward (3)"
+              title="Quad speed (4)"
               className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors font-mono text-xs border ${
                 simulationSpeed === 4
                   ? 'bg-primary/20 text-primary border-primary/30 font-bold'
@@ -99,6 +110,17 @@ export default function TopBar({ onMailboxToggle }) {
               }`}
             >
               4x
+            </button>
+            <button
+              onClick={() => setSimulationSpeed(5)}
+              title="Hyper speed (5)"
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors font-mono text-xs border ${
+                simulationSpeed === 5
+                  ? 'bg-primary/20 text-primary border-primary/30 font-bold'
+                  : 'text-outline hover:text-on-surface hover:bg-white/5 border-transparent'
+              }`}
+            >
+              5x
             </button>
           </div>
           

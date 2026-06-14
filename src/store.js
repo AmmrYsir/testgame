@@ -3,7 +3,8 @@ import { create } from 'zustand';
 export const useGameStore = create((set, get) => ({
   // Game Flow State
   gameStage: 'menu', // 'menu', 'newGameSetup', 'playing'
-  simulationSpeed: 1, // 0 = paused, 1 = normal, 2 = fast, 3 = very fast
+  simulationSpeed: 1, // 0 = paused, 1 = normal, 2 = fast, etc.
+  lastActiveSpeed: 1,
   isPaused: false,
 
   // Player Info
@@ -83,16 +84,20 @@ export const useGameStore = create((set, get) => ({
     company: { ...state.company, ...details }
   })),
 
-  setSimulationSpeed: (speed) => set((state) => ({ 
-    simulationSpeed: speed,
-    isPaused: speed === 0 
-  })),
+  setSimulationSpeed: (speed) => set((state) => {
+    const isZero = speed === 0;
+    return { 
+      simulationSpeed: speed,
+      isPaused: isZero,
+      lastActiveSpeed: isZero ? state.lastActiveSpeed : speed
+    };
+  }),
 
   togglePause: () => set((state) => {
     if (state.simulationSpeed > 0) {
       return { isPaused: true, simulationSpeed: 0 };
     } else {
-      return { isPaused: false, simulationSpeed: 1 };
+      return { isPaused: false, simulationSpeed: state.lastActiveSpeed || 1 };
     }
   }),
 
