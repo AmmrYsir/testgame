@@ -17,7 +17,7 @@ export default function BottomLogsDrawer({ isOpen, onClose }) {
   });
 
   return (
-    <div className="absolute bottom-12 left-0 right-0 h-64 bg-surface-container-low/95 dark:bg-surface-container-low/95 backdrop-blur-2xl border-t border-white/10 z-40 flex flex-col overflow-hidden shadow-2xl">
+    <div className="absolute bottom-0 left-0 right-0 h-72 bg-surface-container-low/95 dark:bg-surface-container-low/95 backdrop-blur-2xl border-t border-white/10 z-40 flex flex-col overflow-hidden shadow-2xl">
       {/* Header bar of drawer */}
       <div className="px-lg py-2 border-b border-white/10 bg-surface-container/60 flex items-center justify-between flex-none">
         <div className="flex items-center gap-6">

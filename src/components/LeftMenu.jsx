@@ -1,6 +1,6 @@
 import { useGameStore } from '../store';
 
-export default function LeftMenu({ activeTab, setActiveTab }) {
+export default function LeftMenu({ activeTab, setActiveTab, isLogsOpen, setIsLogsOpen }) {
   const { infrastructure } = useGameStore();
 
   return (
@@ -46,6 +46,21 @@ export default function LeftMenu({ activeTab, setActiveTab }) {
           <span className={`material-symbols-outlined ${activeTab !== 'market' ? 'opacity-70 group-hover:opacity-100 transition-opacity' : ''}`}>storefront</span>
           <span className="font-label-md text-label-md">Market</span>
           {activeTab === 'market' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
+        </button>
+      </div>
+
+      {/* Diagnostics Logs Button at bottom */}
+      <div className="mt-auto px-sm pt-md border-t border-white/5">
+        <button
+          onClick={() => setIsLogsOpen(!isLogsOpen)}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold w-full text-left transition-all duration-200 group border ${
+            isLogsOpen
+              ? 'bg-primary/20 text-primary border-primary/20'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-bright/10 border-transparent'
+          }`}
+        >
+          <span className={`material-symbols-outlined ${!isLogsOpen ? 'opacity-70 group-hover:opacity-100 transition-opacity' : ''}`}>terminal</span>
+          <span className="font-label-md text-label-md">Diagnostics Logs</span>
         </button>
       </div>
     </nav>

@@ -32,3 +32,31 @@
     @apply focus:ring-2 focus:ring-primary/50 focus:border-primary shadow-[0_0_15px_rgba(173,198,255,0.1)] focus:shadow-[0_0_20px_rgba(173,198,255,0.3)];
   }
 }
+
+/* Custom Scrollbar Styles for premium aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(173, 198, 255, 0.45); /* Primary glow hover */
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
+}

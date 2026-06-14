@@ -14,11 +14,16 @@ export default function TycoonUI() {
   const [isMailboxOpen, setIsMailboxOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background text-on-surface overflow-hidden dark relative pb-12">
+    <div className="flex flex-col h-screen w-screen bg-background text-on-surface overflow-hidden dark relative">
       <TopBar onMailboxToggle={() => setIsMailboxOpen(true)} />
 
       <div className="flex flex-1 overflow-hidden relative">
-        <LeftMenu activeTab={activeTab} setActiveTab={setActiveTab} />
+        <LeftMenu 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          isLogsOpen={isLogsOpen} 
+          setIsLogsOpen={setIsLogsOpen} 
+        />
 
         <main className="flex-1 flex flex-col relative h-full">
           <div className="absolute inset-0 z-0 flex items-center justify-center opacity-80 mix-blend-screen pointer-events-none p-12">
@@ -39,21 +44,6 @@ export default function TycoonUI() {
           <MailboxModal isOpen={isMailboxOpen} onClose={() => setIsMailboxOpen(false)} />
         </main>
       </div>
-
-      <footer className="bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md absolute bottom-0 left-0 right-0 flex items-center justify-between px-lg z-50 h-12 border-t border-white/10">
-        <div className="flex items-center gap-6">
-          <button 
-            onClick={() => setIsLogsOpen(!isLogsOpen)}
-            className={`font-label-sm text-label-sm font-semibold uppercase tracking-wider px-3 py-1 rounded transition-colors ${
-              isLogsOpen 
-                ? 'bg-primary/20 text-primary border border-primary/20' 
-                : 'text-outline hover:text-surface-tint border border-transparent'
-            }`}
-          >
-            Diagnostics Logs
-          </button>
-        </div>
-      </footer>
     </div>
   );
 }
