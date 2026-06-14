@@ -15,7 +15,7 @@ export default function LeftMenu({ activeTab, setActiveTab }) {
         </div>
       </div>
       <div className="flex flex-col gap-2 px-sm">
-        <button 
+        <button
           onClick={() => setActiveTab('infrastructure')}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold w-full text-left transition-transform duration-200 group ${activeTab === 'infrastructure' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-bright/10'}`}
         >
@@ -23,7 +23,7 @@ export default function LeftMenu({ activeTab, setActiveTab }) {
           <span className="font-label-md text-label-md">Hardware</span>
           {activeTab === 'infrastructure' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('model')}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold w-full text-left transition-transform duration-200 group ${activeTab === 'model' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-bright/10'}`}
         >
@@ -31,7 +31,7 @@ export default function LeftMenu({ activeTab, setActiveTab }) {
           <span className="font-label-md text-label-md">Model</span>
           {activeTab === 'model' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('research')}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold w-full text-left transition-transform duration-200 group ${activeTab === 'research' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-bright/10'}`}
         >
@@ -39,7 +39,7 @@ export default function LeftMenu({ activeTab, setActiveTab }) {
           <span className="font-label-md text-label-md">Research</span>
           {activeTab === 'research' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
         </button>
-        <button 
+        <button
           onClick={() => setActiveTab('market')}
           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold w-full text-left transition-transform duration-200 group ${activeTab === 'market' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-bright/10'}`}
         >
@@ -47,15 +47,6 @@ export default function LeftMenu({ activeTab, setActiveTab }) {
           <span className="font-label-md text-label-md">Market</span>
           {activeTab === 'market' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
         </button>
-      </div>
-      <div className="mt-auto px-md pb-md">
-        <div className="glass-panel border border-white/10 bg-surface/40 p-4 rounded-xl flex flex-col gap-2">
-          <span className="font-label-sm text-label-sm text-outline uppercase">System Load</span>
-          <div className="w-full bg-surface-dim rounded-full h-1.5 overflow-hidden">
-            <div className="bg-primary h-full rounded-full" style={{ width: `${infrastructure.serverHeat}%` }}></div>
-          </div>
-          <span className="font-label-sm text-label-sm text-on-surface-variant text-right">{infrastructure.serverHeat}%</span>
-        </div>
       </div>
     </nav>
   );

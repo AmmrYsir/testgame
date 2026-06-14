@@ -18,13 +18,7 @@ export default function SetupScreen() {
       <div className="absolute inset-0 z-0 bg-background"></div>
       <div className="relative z-10 glass-panel w-full max-w-[800px] rounded-xl shadow-2xl p-lg md:p-xl flex flex-col gap-xl">
         <div className="flex flex-col items-center text-center gap-sm">
-          <span className="material-symbols-outlined text-primary font-display-lg text-display-lg" style={{ "fontVariationSettings": "'FILL' 1" }}>
-            corporate_fare
-          </span>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface">Initialize Startup Protocol</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant max-w-md mx-auto">
-            Configure core identity and strategic parameters for the new corporate entity.
-          </p>
+          <h1 className="font-headline-lg text-headline-lg text-on-surface">Create New Company</h1>
         </div>
 
         <form className="flex flex-col gap-lg w-full" onSubmit={e => { e.preventDefault(); handleLaunch(); }}>

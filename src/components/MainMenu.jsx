@@ -12,35 +12,27 @@ export default function MainMenu() {
       </div>
       <main className="relative z-20 w-full max-w-[600px] px-lg flex flex-col items-center">
         <div className="text-center mb-xl">
-          <h1 className="font-display-lg text-display-lg text-on-surface mb-sm">
-            AETHER CORP
+          <h1 className="font-display-lg text-2xl text-on-surface">
+            Artificial Intelligence Race
           </h1>
-          <p className="font-headline-md text-headline-md text-outline tracking-widest uppercase">
-            LLM RACE
-          </p>
         </div>
         <div className="bg-surface-container/60 backdrop-blur-xl border border-white/10 rounded-xl p-xl w-full flex flex-col gap-md shadow-2xl">
-          <button 
+          <button
             onClick={() => setGameStage('newGameSetup')}
             className="w-full bg-primary text-on-primary py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-primary-container transition-colors group relative overflow-hidden"
           >
             <span className="material-symbols-outlined text-on-primary text-[20px] transition-transform group-hover:scale-110">rocket_launch</span>
-            <span>New Startup</span>
+            <span>New Game</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
           </button>
           <button className="w-full bg-surface-bright/50 border border-white/5 text-on-surface py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-surface-container-high hover:border-white/20 transition-all group">
             <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">play_arrow</span>
-            <span>Resume Command</span>
+            <span>Continue</span>
           </button>
           <button className="w-full bg-surface-bright/30 border border-white/5 text-outline py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-surface-container hover:text-on-surface transition-all group">
             <span className="material-symbols-outlined text-outline group-hover:text-on-surface transition-colors text-[20px]">settings</span>
-            <span>Executive Settings</span>
+            <span>Settings</span>
           </button>
-        </div>
-        <div className="mt-xl text-center">
-          <p className="font-label-sm text-label-sm text-outline-variant uppercase">
-            System Status: Optimal | Latency: 12ms
-          </p>
         </div>
       </main>
     </div>
