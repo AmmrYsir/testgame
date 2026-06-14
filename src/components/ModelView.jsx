@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store';
 
 export default function ModelView() {
-  const { llms, research, infrastructure, resources, createModel, startTraining, releaseLLM } = useGameStore();
+  const { llms, research, infrastructure, resources, createModel, startTraining, releaseLLM, allocateProductionGpus, setModelPrice } = useGameStore();
   
   const [selectedModelId, setSelectedModelId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -16,13 +16,29 @@ export default function ModelView() {
   const [epochs, setEpochs] = useState(3);
   const [datasetType, setDatasetType] = useState('web_dump');
 
+  // Release Config State
+  const [releaseSegment, setReleaseSegment] = useState('consumer');
+  const [releasePrice, setReleasePrice] = useState(15);
+
+  const handleSegmentChange = (seg) => {
+    setReleaseSegment(seg);
+    if (seg === 'consumer') setReleasePrice(15);
+    else if (seg === 'dev') setReleasePrice(5);
+    else if (seg === 'business') setReleasePrice(25);
+    else if (seg === 'enterprise') setReleasePrice(5000);
+  };
+
   // Selected Model Object
   const selectedModel = llms.find(m => m.id === selectedModelId) || llms[0];
 
   // Calculate available GPUs
   const totalGpus = infrastructure.gpus + infrastructure.cloudGpusRented;
   const activeTrainingGpus = llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-  const idleGpus = totalGpus - activeTrainingGpus;
+  const activeProductionGpus = llms.reduce((sum, m) => sum + (m.productionGpus || 0), 0);
+  const idleGpus = Math.max(0, totalGpus - activeTrainingGpus - activeProductionGpus);
+
+  const liveYield = selectedModel ? Math.round((selectedModel.marketMetrics?.users || 0) * (selectedModel.priceTag || 0) * ((selectedModel.marketMetrics?.satisfaction || 100) / 100)) : 0;
+  const maxAllocatable = selectedModel ? (idleGpus + (selectedModel.productionGpus || 0)) : 0;
 
   const handleCreateModelSubmit = (e) => {
     e.preventDefault();
@@ -324,10 +340,15 @@ export default function ModelView() {
               {selectedModel.status === 'released' && (
                 <div className="flex flex-col items-end">
                   <span className="px-3 py-1 rounded bg-secondary/15 border border-secondary/30 text-secondary font-label-sm text-[12px] uppercase">
-                    API Active ({selectedModel.releaseType === 'b2b' ? 'B2B Enterprise' : 'B2C App'})
+                    API Active ({
+                      selectedModel.targetSegment === 'consumer' ? 'Consumer' :
+                      selectedModel.targetSegment === 'dev' ? 'Developer' :
+                      selectedModel.targetSegment === 'business' ? 'Business' :
+                      'Enterprise'
+                    })
                   </span>
-                  {selectedModel.revenuePerTick > 0 && (
-                    <span className="text-xs text-outline mt-1 font-semibold">+${selectedModel.revenuePerTick}/tick yield</span>
+                  {liveYield > 0 && (
+                    <span className="text-xs text-outline mt-1 font-semibold">+${liveYield.toLocaleString()}/tick yield</span>
                   )}
                 </div>
               )}
@@ -441,16 +462,213 @@ export default function ModelView() {
                     <span>Weight Optimization (Day {selectedModel.training.progress}/{selectedModel.training.totalTicks})</span>
                     <span className="text-secondary font-bold">{Math.round((selectedModel.training.progress / selectedModel.training.totalTicks) * 100)}%</span>
                   </div>
-                  <div className="w-full bg-surface-dim rounded-full h-3 overflow-hidden border border-white/10 shadow-inner">
+                  <div className="w-full bg-surface-dim rounded-full h-1.5 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-secondary-container to-secondary h-full rounded-full transition-all duration-300"
+                      className="bg-secondary h-full rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(78,222,163,0.5)]"
                       style={{ width: `${(selectedModel.training.progress / selectedModel.training.totalTicks) * 100}%` }}
                     ></div>
                   </div>
                 </div>
               </div>
+            ) : selectedModel.status === 'released' ? (
+              /* SERVE & SCALE CONSOLE FOR RELEASED MODELS */
+              <div className="mt-md space-y-md border-t border-white/10 pt-md">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-label-md text-label-md text-secondary uppercase font-bold tracking-widest flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">cloud_done</span> Serve & Scale Console
+                  </h3>
+                  <span className="text-xs text-outline font-semibold capitalize">
+                    Platform: {selectedModel.targetSegment === 'consumer' ? 'B2C App Store' :
+                               selectedModel.targetSegment === 'dev' ? 'Dev API Gateway' :
+                               selectedModel.targetSegment === 'business' ? 'Business SaaS Portal' :
+                               'Dedicated Enterprise Cloud'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-lg bg-surface-dim/30 p-lg rounded-xl border border-white/5">
+                  {/* Performance Indicators */}
+                  <div className="space-y-md">
+                    <h4 className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Performance Metrics</h4>
+                    
+                    {/* Latency Status */}
+                    <div className="flex justify-between items-center bg-surface-dim p-3 rounded-lg border border-white/5">
+                      <div>
+                        <span className="text-[11px] text-outline block uppercase">Model Latency</span>
+                        <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
+                          {selectedModel.marketMetrics?.latency || 10} ms
+                        </span>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded text-xs font-bold border ${
+                        (selectedModel.marketMetrics?.latency || 10) <= 15
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
+                          : (selectedModel.marketMetrics?.latency || 10) <= 50
+                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+                          : 'bg-error/10 border-error/30 text-error animate-pulse'
+                      }`}>
+                        {(selectedModel.marketMetrics?.latency || 10) <= 15 ? 'Optimal' : 
+                         (selectedModel.marketMetrics?.latency || 10) <= 50 ? 'High Latency' : 'Severe Throttling'}
+                      </span>
+                    </div>
+
+                    {/* Customer Satisfaction */}
+                    <div className="bg-surface-dim p-3 rounded-lg border border-white/5 space-y-xs">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-outline uppercase">Customer Retention Index</span>
+                        <span className={`font-bold ${
+                          (selectedModel.marketMetrics?.satisfaction || 100) >= 80 ? 'text-emerald-500' :
+                          (selectedModel.marketMetrics?.satisfaction || 100) >= 50 ? 'text-amber-500' : 'text-error'
+                        }`}>
+                          {selectedModel.marketMetrics?.satisfaction || 100}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            (selectedModel.marketMetrics?.satisfaction || 100) >= 80 ? 'bg-emerald-500' :
+                            (selectedModel.marketMetrics?.satisfaction || 100) >= 50 ? 'bg-amber-500' : 'bg-error'
+                          }`}
+                          style={{ width: `${selectedModel.marketMetrics?.satisfaction || 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Live Yield */}
+                    <div className="flex justify-between items-center bg-surface-dim p-3 rounded-lg border border-white/5">
+                      <div>
+                        <span className="text-[11px] text-outline block uppercase font-semibold">Dynamic Financial Yield</span>
+                        <p className="text-[10px] text-outline">Adjusted for Customer Satisfaction</p>
+                      </div>
+                      <span className="font-headline-sm text-headline-sm text-emerald-500 font-bold">
+                        +${liveYield.toLocaleString()}/tick
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Pricing and Traffic Controls */}
+                  <div className="space-y-md">
+                    <h4 className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Demand & Pricing</h4>
+
+                    {/* Traffic metrics */}
+                    <div className="flex justify-between items-center bg-surface-dim p-3 rounded-lg border border-white/5">
+                      <div>
+                        <span className="text-[11px] text-outline block uppercase">
+                          {selectedModel.targetSegment === 'consumer' ? 'Active App Users' :
+                           selectedModel.targetSegment === 'dev' ? 'Inference Queries / tick' :
+                           selectedModel.targetSegment === 'business' ? 'Subscribed Seats' :
+                           'Active Dedicated Contracts'}
+                        </span>
+                        <span className="font-headline-sm text-headline-sm text-on-surface font-bold">
+                          {(selectedModel.marketMetrics?.users || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <span className="text-xs text-outline">
+                        Max Market: {
+                          selectedModel.targetSegment === 'consumer' ? '50,000' :
+                          selectedModel.targetSegment === 'dev' ? '5,000' :
+                          selectedModel.targetSegment === 'business' ? '1,000' :
+                          '50'
+                        }
+                      </span>
+                    </div>
+
+                    {/* Pricing Controller */}
+                    <div className="bg-surface-dim p-3 rounded-lg border border-white/5 space-y-xs">
+                      <div className="flex justify-between items-center mb-xs">
+                        <span className="text-[11px] text-outline uppercase">Adjust Price Tag</span>
+                        <span className="font-label-md text-label-md text-primary font-bold">
+                          ${(selectedModel.priceTag || 10).toLocaleString()} {
+                            selectedModel.targetSegment === 'consumer' ? '/mo' :
+                            selectedModel.targetSegment === 'dev' ? '/M tokens' :
+                            selectedModel.targetSegment === 'business' ? '/seat/mo' :
+                            '/mo contract'
+                          }
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={selectedModel.targetSegment === 'enterprise' ? 1000 : 1}
+                        max={selectedModel.targetSegment === 'enterprise' ? 20000 : selectedModel.targetSegment === 'business' ? 200 : selectedModel.targetSegment === 'consumer' ? 100 : 50}
+                        step={selectedModel.targetSegment === 'enterprise' ? 500 : 1}
+                        value={selectedModel.priceTag || 10}
+                        onChange={(e) => setModelPrice(selectedModel.id, parseInt(e.target.value))}
+                        className="w-full accent-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Compute Serving & Scaling Allocation Card */}
+                <div className="bg-surface-dim/30 p-lg rounded-xl border border-white/5 space-y-md">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-sm">
+                    <div>
+                      <h4 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Serve Compute Scaling</h4>
+                      <p className="text-xs text-outline mt-0.5">Scale production nodes serving real-time customer requests.</p>
+                    </div>
+                    <div className="flex items-center gap-md bg-surface-dim px-4 py-2 rounded-lg border border-white/5 shrink-0">
+                      <div>
+                        <span className="text-[10px] text-outline block uppercase">GPU Demand</span>
+                        <span className="font-label-md text-label-md text-on-surface font-semibold">
+                          Required: <span className="text-primary font-bold">{selectedModel.marketMetrics?.gpusRequired || 0}</span> GPUs
+                        </span>
+                      </div>
+                      <div className="border-l border-white/10 pl-md">
+                        <span className="text-[10px] text-outline block uppercase">GPU Served</span>
+                        <span className="font-label-md text-label-md text-on-surface font-semibold">
+                          Allocated: <span className={
+                            (selectedModel.productionGpus || 0) >= (selectedModel.marketMetrics?.gpusRequired || 0)
+                              ? 'text-emerald-500 font-bold'
+                              : 'text-error font-bold animate-pulse'
+                          }>{selectedModel.productionGpus || 0}</span> GPUs
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-sm">
+                    <div className="flex justify-between text-xs text-outline">
+                      <span>Scale Serve Nodes</span>
+                      <span>Allocatable range: 0 - {maxAllocatable} GPUs (Available Idle: {idleGpus})</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max={maxAllocatable}
+                      value={selectedModel.productionGpus || 0}
+                      onChange={(e) => allocateProductionGpus(selectedModel.id, parseInt(e.target.value))}
+                      className="w-full accent-primary"
+                    />
+                    
+                    <div className="flex flex-wrap gap-sm justify-between pt-xs">
+                      <button 
+                        onClick={() => allocateProductionGpus(selectedModel.id, 0)}
+                        disabled={(selectedModel.productionGpus || 0) === 0}
+                        className="text-xs px-3 py-1.5 bg-surface-container-highest border border-outline-variant hover:border-error hover:text-error rounded text-on-surface transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        De-allocate All
+                      </button>
+
+                      <div className="flex gap-sm">
+                        <button 
+                          onClick={() => allocateProductionGpus(selectedModel.id, selectedModel.marketMetrics?.gpusRequired || 0)}
+                          disabled={(selectedModel.productionGpus || 0) === (selectedModel.marketMetrics?.gpusRequired || 0) || maxAllocatable < (selectedModel.marketMetrics?.gpusRequired || 0)}
+                          className="text-xs px-3 py-1.5 bg-primary/20 border border-primary/30 rounded text-primary hover:bg-primary/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Match Demand ({selectedModel.marketMetrics?.gpusRequired || 0} GPUs)
+                        </button>
+                        <button 
+                          onClick={() => allocateProductionGpus(selectedModel.id, maxAllocatable)}
+                          disabled={(selectedModel.productionGpus || 0) === maxAllocatable}
+                          className="text-xs px-3 py-1.5 bg-secondary/20 border border-secondary/30 rounded text-secondary hover:bg-secondary/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          Allocate Max ({maxAllocatable} GPUs)
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : (
-              /* TRAINING CONFIGURATOR (FOR DRAFT, TRAINED, OR RELEASED MODELS) */
+              /* TRAINING CONFIGURATOR (FOR DRAFT OR TRAINED MODELS) */
               <div className="mt-md space-y-md border-t border-white/10 pt-md">
                 <div className="flex justify-between items-center">
                   <h3 className="font-label-md text-label-md text-primary uppercase font-bold tracking-widest">
@@ -550,27 +768,80 @@ export default function ModelView() {
                   </button>
                 </div>
 
-                {/* Release Deploy block if trained */}
+                {/* Release Deploy panel if trained */}
                 {selectedModel.status === 'trained' && (
-                  <div className="mt-md bg-primary/5 border border-primary/20 rounded-xl p-md flex flex-col md:flex-row justify-between items-center gap-md">
-                    <div>
-                      <h4 className="font-label-md text-label-md text-primary uppercase font-bold">Release to Commercial Market</h4>
-                      <p className="text-xs text-outline mt-0.5">Publish weights to the market to trigger global revenues.</p>
+                  <div className="mt-lg border-t border-white/10 pt-lg space-y-md">
+                    <h3 className="font-label-md text-label-md text-primary uppercase font-bold tracking-widest">
+                      Market Release Configuration
+                    </h3>
+                    
+                    <div className="bg-surface-dim/30 p-4 rounded-xl border border-white/5 space-y-md">
+                      {/* Segment Selector */}
+                      <div>
+                        <label className="font-label-sm text-label-sm text-outline block mb-xs">Target Commercial Segment</label>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-sm">
+                          {[
+                            { id: 'consumer', label: 'B2C App', icon: 'person', desc: 'Subscription' },
+                            { id: 'dev', label: 'Developer', icon: 'code', desc: 'Token usage' },
+                            { id: 'business', label: 'SaaS Seat', icon: 'business', desc: 'Per seat' },
+                            { id: 'enterprise', label: 'Enterprise', icon: 'cloud', desc: 'Flat lease' },
+                          ].map((seg) => (
+                            <button
+                              key={seg.id}
+                              type="button"
+                              onClick={() => handleSegmentChange(seg.id)}
+                              className={`p-3 rounded-lg border text-center transition-all flex flex-col items-center gap-xs ${
+                                releaseSegment === seg.id
+                                  ? 'bg-primary/10 border-primary text-primary'
+                                  : 'bg-surface-dim border-white/5 hover:border-white/10 text-on-surface'
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-[18px]">{seg.icon}</span>
+                              <span className="font-label-sm text-label-sm font-bold block">{seg.label}</span>
+                              <span className="text-[9px] text-outline block">{seg.desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Pricing Tag Input */}
+                      <div>
+                        <div className="flex justify-between items-center mb-xs">
+                          <label className="font-label-sm text-label-sm text-outline">Initial Pricing Price Tag</label>
+                          <span className="font-label-md text-label-md text-primary font-bold">
+                            ${releasePrice.toLocaleString()} {
+                              releaseSegment === 'consumer' ? '/mo subscription' :
+                              releaseSegment === 'dev' ? '/M tokens' :
+                              releaseSegment === 'business' ? '/seat/mo' :
+                              '/mo contract'
+                            }
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={releaseSegment === 'enterprise' ? 1000 : 1}
+                          max={releaseSegment === 'enterprise' ? 20000 : releaseSegment === 'business' ? 200 : releaseSegment === 'consumer' ? 100 : 50}
+                          step={releaseSegment === 'enterprise' ? 500 : 1}
+                          value={releasePrice}
+                          onChange={(e) => setReleasePrice(parseInt(e.target.value))}
+                          className="w-full accent-primary"
+                        />
+                        <p className="text-[10px] text-outline mt-1">
+                          {releaseSegment === 'consumer' && 'Consumer target base price is $15/mo. Lower price gains users faster but drops margins.'}
+                          {releaseSegment === 'dev' && 'Developer target API base price is $5/M tokens. Demands Coding/Math benchmarks.'}
+                          {releaseSegment === 'business' && 'Business SaaS target base price is $25/seat/mo. Demands Knowledge/Coding benchmarks.'}
+                          {releaseSegment === 'enterprise' && 'Enterprise dedicated cluster base lease contract is $5,000/mo. Demands Math/Knowledge.'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex gap-sm w-full md:w-auto">
-                      <button
-                        onClick={() => releaseLLM(selectedModel.id, 'b2b')}
-                        className="flex-1 bg-surface-container-highest border border-outline-variant hover:border-primary text-on-surface hover:text-primary font-label-sm text-label-sm px-md py-sm rounded-lg transition-all"
-                      >
-                        B2B Enterprise API
-                      </button>
-                      <button
-                        onClick={() => releaseLLM(selectedModel.id, 'b2c')}
-                        className="flex-1 bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm px-md py-sm rounded-lg transition-all shadow-md"
-                      >
-                        B2C Chatapp
-                      </button>
-                    </div>
+
+                    <button
+                      onClick={() => releaseLLM(selectedModel.id, releaseSegment, releasePrice)}
+                      className="w-full bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md py-3 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(173,198,255,0.2)] flex items-center justify-center gap-xs"
+                    >
+                      <span className="material-symbols-outlined text-[20px]">publish</span>
+                      DEPLOY TO COMMERCE CHANNELS
+                    </button>
                   </div>
                 )}
               </div>

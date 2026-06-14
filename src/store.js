@@ -264,7 +264,16 @@ export const useGameStore = create(
       training: null,
       releaseType: null,
       contractId: null,
-      revenuePerTick: 0
+      revenuePerTick: 0,
+      productionGpus: 0,
+      priceTag: 0,
+      targetSegment: null,
+      marketMetrics: {
+        users: 0,
+        gpusRequired: 0,
+        latency: 0,
+        satisfaction: 100
+      }
     };
     return {
       llms: [...state.llms, newModel],
@@ -277,10 +286,11 @@ export const useGameStore = create(
     const model = state.llms.find(m => m.id === modelId);
     if (!model || model.status === 'training') return state;
 
-    // Check available GPUs
+    // Check available GPUs (excluding training and production allocated gpus)
     const activeTrainingGpus = state.llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
+    const activeProductionGpus = state.llms.reduce((sum, m) => sum + (m.productionGpus || 0), 0);
     const totalAvailableGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
-    const idleGpus = totalAvailableGpus - activeTrainingGpus;
+    const idleGpus = totalAvailableGpus - activeTrainingGpus - activeProductionGpus;
 
     if (allocatedGpus > idleGpus) return state; // Not enough GPUs
 
@@ -347,28 +357,41 @@ export const useGameStore = create(
     };
   }),
 
-  releaseLLM: (modelId, releaseType) => set((state) => {
+  releaseLLM: (modelId, targetSegment, initialPrice) => set((state) => {
     const model = state.llms.find(m => m.id === modelId);
     if (!model || model.status === 'training' || model.status === 'draft') return state;
 
-    // Calculate revenue yield
     const statSum = model.stats.knowledge + model.stats.coding + model.stats.math + model.stats.creativity;
     const penalty = model.stats.hallucination * 2.5;
     const rating = Math.max(10, statSum - penalty);
+    const hypeGained = Math.min(30, Math.round(rating * 0.15));
 
-    let rev = 0;
-    let hypeGained = 0;
-
-    if (releaseType === 'b2b') {
-      rev = Math.round(rating * 150);
-      hypeGained = Math.floor(rating * 0.1);
-    } else {
-      rev = Math.round(rating * 40);
-      hypeGained = Math.floor(rating * 0.4);
+    let initialUsers = 0;
+    let segmentLabel = '';
+    
+    switch (targetSegment) {
+      case 'consumer':
+        initialUsers = 500;
+        segmentLabel = 'B2C App Store';
+        break;
+      case 'dev':
+        initialUsers = 50;
+        segmentLabel = 'Developer API Gateway';
+        break;
+      case 'business':
+        initialUsers = 10;
+        segmentLabel = 'Business SaaS Portal';
+        break;
+      case 'enterprise':
+        initialUsers = 1;
+        segmentLabel = 'Enterprise Cloud';
+        break;
+      default:
+        break;
     }
 
-    const emailSubject = `Model Publicly Deployed: ${model.name} v${model.version.toFixed(1)}`;
-    const emailBody = `Operations team has successfully published your model '${model.name}' v${model.version.toFixed(1)} weights to the ${releaseType === 'b2b' ? 'Enterprise B2B API gateway' : 'B2C public app store'}.\n\nModel stats at deployment:\n- Rating score: ${rating.toFixed(0)}\n- Hype gained: +${hypeGained}\n- Revenue yield: +$${rev.toLocaleString()}/tick.`;
+    const emailSubject = `Model Deployed: ${model.name} v${model.version.toFixed(1)} on ${segmentLabel}`;
+    const emailBody = `Operations team has successfully published your model '${model.name}' v${model.version.toFixed(1)} to the ${segmentLabel}.\n\nModel stats at deployment:\n- Rating score: ${rating.toFixed(0)}\n- Hype gained: +${hypeGained}\n- Initial Price Tag: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nNote: You must allocate Production GPUs to this model from the Infrastructure tab to serve active user traffic and keep latency optimal.`;
 
     const newEmail = {
       id: 'rel_' + Date.now().toString(),
@@ -382,12 +405,52 @@ export const useGameStore = create(
     };
 
     return {
-      llms: state.llms.map(m => m.id === modelId ? { ...m, status: 'released', releaseType, revenuePerTick: rev } : m),
+      llms: state.llms.map(m => m.id === modelId ? { 
+        ...m, 
+        status: 'released', 
+        targetSegment, 
+        priceTag: initialPrice,
+        productionGpus: 0,
+        marketMetrics: {
+          users: initialUsers,
+          gpusRequired: 0,
+          latency: 10,
+          satisfaction: 100
+        }
+      } : m),
       resources: { ...state.resources, hype: Math.min(100, state.resources.hype + hypeGained) },
       emails: [newEmail, ...state.emails],
-      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version.toFixed(1)} to the public. Expected revenue: $${rev.toLocaleString()}/day.`, iconColor: 'text-primary' }, ...state.newsFeed]
+      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version.toFixed(1)} to ${segmentLabel} at price $${initialPrice}.`, iconColor: 'text-primary' }, ...state.newsFeed]
     };
   }),
+
+  allocateProductionGpus: (modelId, amount) => set((state) => {
+    const totalGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
+    const allocatedToOthers = state.llms.reduce((sum, m) => {
+      if (m.id === modelId) return sum;
+      const trainingGpus = m.training?.allocatedGpus || 0;
+      const productionGpus = m.productionGpus || 0;
+      return sum + trainingGpus + productionGpus;
+    }, 0);
+    const trainingForCurrentModel = state.llms.find(m => m.id === modelId)?.training?.allocatedGpus || 0;
+    const maxAvailableForProduction = totalGpus - allocatedToOthers - trainingForCurrentModel;
+
+    const finalAmount = Math.max(0, Math.min(amount, maxAvailableForProduction));
+
+    return {
+      llms: state.llms.map(m => m.id === modelId ? { ...m, productionGpus: finalAmount } : m),
+      newsFeed: [{ 
+        tick: state.resources.currentTick, 
+        type: 'memory', 
+        text: `Adjusted GPU allocation for '${state.llms.find(m => m.id === modelId)?.name}' to ${finalAmount} GPUs.`, 
+        iconColor: 'text-outline-variant' 
+      }, ...state.newsFeed]
+    };
+  }),
+
+  setModelPrice: (modelId, priceVal) => set((state) => ({
+    llms: state.llms.map(m => m.id === modelId ? { ...m, priceTag: priceVal } : m)
+  })),
 
   // Progressive Research Actions
   startResearch: (techId, costCash, durationTicks) => set((state) => {
@@ -496,14 +559,14 @@ export const useGameStore = create(
       }
     }
 
-    // 3. Train models progress and heat calculations
+    // 3. Train models progress
     let activeTrainingCount = 0;
-    let totalAllocatedGpus = 0;
+    let totalTrainingGpus = 0;
 
-    const nextLlms = state.llms.map(m => {
+    let nextLlms = state.llms.map(m => {
       if (m.status === 'training' && m.training) {
         activeTrainingCount++;
-        totalAllocatedGpus += m.training.allocatedGpus;
+        totalTrainingGpus += m.training.allocatedGpus;
         
         const newProgress = m.training.progress + 1;
         const total = m.training.totalTicks;
@@ -559,10 +622,114 @@ export const useGameStore = create(
       return m;
     });
 
-    // Calculate Heat Load
+    // 4. Released models economics, user adoption, required compute, and billing revenue
+    const segmentConfigs = {
+      consumer: { basePrice: 15, weightStats: ['creativity', 'knowledge'], userGrowthFactor: 1.5, computePerUser: 0.005, maxMarket: 50000 },
+      dev: { basePrice: 5, weightStats: ['coding', 'math'], userGrowthFactor: 0.8, computePerUser: 0.05, maxMarket: 5000 },
+      business: { basePrice: 25, weightStats: ['coding', 'knowledge'], userGrowthFactor: 0.2, computePerUser: 0.15, maxMarket: 1000 },
+      enterprise: { basePrice: 5000, weightStats: ['math', 'knowledge'], userGrowthFactor: 0.005, computePerUser: 2.0, maxMarket: 50 }
+    };
+
+    let totalProductionGpus = 0;
+
+    nextLlms = nextLlms.map(m => {
+      if (m.status === 'released' && m.targetSegment) {
+        totalProductionGpus += m.productionGpus || 0;
+        const cfg = segmentConfigs[m.targetSegment];
+        
+        // Quality score: mean of key stats, penalized by hallucination
+        const rating = (m.stats[cfg.weightStats[0]] + m.stats[cfg.weightStats[1]]) / 2;
+        const penalty = m.stats.hallucination * 1.5;
+        const qualityScore = Math.max(5, rating - penalty);
+
+        // Competitor baseline quality score (best rival in that segment)
+        let maxRivalScore = 30;
+        state.rivals.forEach(r => {
+          const rRating = (r.stats[cfg.weightStats[0]] + r.stats[cfg.weightStats[1]]) / 2;
+          const rPenalty = r.stats.hallucination * 1.5;
+          const rScore = Math.max(5, rRating - rPenalty);
+          if (rScore > maxRivalScore) maxRivalScore = rScore;
+        });
+
+        // Price comparison
+        const finalPrice = m.priceTag || cfg.basePrice;
+        const valueScore = qualityScore / Math.max(0.1, finalPrice);
+        const rivalValueScore = maxRivalScore / cfg.basePrice;
+        const competitiveness = valueScore / Math.max(0.01, rivalValueScore);
+
+        // Hype scaling
+        const hypeFactor = 0.5 + (state.resources.hype / 50);
+
+        // Growth or decay rate
+        let growth = 0;
+        if (competitiveness > 1.25) {
+          growth = Math.round(cfg.userGrowthFactor * competitiveness * hypeFactor * 12);
+        } else if (competitiveness < 0.75) {
+          growth = -Math.round(cfg.userGrowthFactor * (1 / Math.max(0.01, competitiveness)) * 6);
+        } else {
+          growth = Math.round(cfg.userGrowthFactor * 2 * (state.resources.hype / 100));
+        }
+
+        // Apply satisfaction penalty to growth
+        const currentSat = m.marketMetrics?.satisfaction || 100;
+        if (currentSat < 75) {
+          growth -= Math.round((m.marketMetrics?.users || 100) * 0.05 + 2);
+        }
+
+        // Constrain users/clients count to segment limit
+        const nextUsers = Math.max(1, Math.min(cfg.maxMarket, (m.marketMetrics?.users || 0) + growth));
+
+        // Calculate Production GPUs required
+        const gpusRequired = Math.ceil(nextUsers * cfg.computePerUser);
+        
+        // Latency and throttling
+        const allocated = m.productionGpus || 0;
+        let latency = 10;
+        let satisfaction = currentSat;
+
+        if (allocated === 0) {
+          latency = 999;
+          satisfaction = Math.max(0, satisfaction - 6);
+        } else if (allocated < gpusRequired) {
+          latency = Math.round(10 * (gpusRequired / allocated));
+          satisfaction = Math.max(0, satisfaction - 3);
+        } else {
+          latency = 10;
+          satisfaction = Math.min(100, satisfaction + 2);
+        }
+
+        // Calculate tick revenue based on users and pricing model
+        let mRev = 0;
+        if (m.targetSegment === 'dev') {
+          // Token pricing: users represent queries/tick (in millions)
+          mRev = nextUsers * finalPrice;
+        } else {
+          // Subscription or monthly leases: users represent monthly recurring contracts/subscribers
+          mRev = nextUsers * finalPrice;
+        }
+        
+        // Latency penalty to billing yields
+        mRev = mRev * (satisfaction / 100);
+        cashChange += Math.round(mRev);
+
+        return {
+          ...m,
+          marketMetrics: {
+            users: nextUsers,
+            gpusRequired,
+            latency,
+            satisfaction
+          }
+        };
+      }
+      return m;
+    });
+
+    // 5. Calculate Server Cluster Temperature
     let targetHeat = 20; // nominal base heat
-    if (activeTrainingCount > 0) {
-      targetHeat = Math.min(100, 20 + Math.round((totalAllocatedGpus / 12) / state.infrastructure.coolingLevel));
+    const activeGpuLoad = totalTrainingGpus + (totalProductionGpus * 0.3);
+    if (activeGpuLoad > 0) {
+      targetHeat = Math.min(100, 20 + Math.round((activeGpuLoad / 12) / state.infrastructure.coolingLevel));
     }
     
     // Smooth heat movement
@@ -575,14 +742,13 @@ export const useGameStore = create(
 
     // Heat Throttling check
     if (currentHeat > 85 && Math.random() < 0.05) {
-      // High heat has a 5% chance of disrupting a random active training run
       const trainingModel = nextLlms.find(m => m.status === 'training');
       if (trainingModel) {
         nextEmails = [{
           id: 't_abort_' + Date.now().toString(),
           sender: 'Facility Operations',
           subject: 'CRITICAL: GPU Cluster Thermal Shutdown Alert',
-          body: `Emergency thermal failsafes triggered. Server temperatures exceeded the safety threshold of 85% (hit ${currentHeat}%). To prevent critical hardware degradation of GPU stacks, the active training pipeline for model '${trainingModel.name}' has been aborted.\n\nAll weights in training are lost. Action Required: Upgrade HVAC cooling facility level or allocate fewer GPUs to avoid thermal overloading.`,
+          body: `Emergency thermal failsafes triggered. Server temperatures exceeded the safety threshold of 85% (hit ${currentHeat}%). To prevent hardware damage, the active training pipeline for model '${trainingModel.name}' has been aborted.\n\nAll weights in training are lost. Action Required: Upgrade HVAC cooling facility level or allocate fewer GPUs to avoid thermal overloading.`,
           tick: currentTick,
           read: false,
           reward: null,
@@ -600,7 +766,7 @@ export const useGameStore = create(
       }
     }
 
-    // 4. Contract payouts and time elapsed
+    // 6. Contract payouts and time elapsed (Enterprise Leases)
     let activeContractPayouts = 0;
     const nextContracts = state.marketContracts.map(c => {
       if (c.activeModelId) {
@@ -655,22 +821,13 @@ export const useGameStore = create(
     });
     cashChange += activeContractPayouts;
 
-    // 5. Released model revenue
-    let releasedRevenue = 0;
-    nextLlms.forEach(m => {
-      if (m.status === 'released') {
-        releasedRevenue += m.revenuePerTick;
-      }
-    });
-    cashChange += releasedRevenue;
-
     // Hype decay
     let nextHype = state.resources.hype;
     if (currentTick % 10 === 0) {
       nextHype = Math.max(5, nextHype - 1);
     }
 
-    // Rival releases & Market updates
+    // 7. Rivals releases & Dynamic Price Adjustments
     let nextRivals = state.rivals;
     if (currentTick > 0 && currentTick % 120 === 0) {
       // Rival upgrades their model!
@@ -715,7 +872,39 @@ export const useGameStore = create(
       }, ...nextNewsFeed];
     }
 
-    // 6. Milestone Detections & VC Grant Emails
+    // Dynamic Competitor Pricing Actions
+    nextLlms.forEach(m => {
+      if (m.status === 'released' && m.targetSegment) {
+        const cfg = segmentConfigs[m.targetSegment];
+        const playerShare = (m.marketMetrics.users / cfg.maxMarket) * 100;
+        
+        // If player market share grows over 30%, and a random trigger is hit, rivals cut prices!
+        if (playerShare > 30 && Math.random() < 0.03) {
+          // Find rival which holds that segment
+          const randomRival = nextRivals[Math.floor(Math.random() * nextRivals.length)];
+          
+          nextEmails = [{
+            id: 'rival_cut_' + Date.now().toString(),
+            sender: 'Market Watch',
+            subject: `RIVAL ACTIONS: ${randomRival.name} Cuts Pricing`,
+            body: `Alert: ${randomRival.name} has cut pricing rates for their core instances in the ${m.targetSegment.toUpperCase()} segment by 15% to defend their market share.\n\nThis pricing pressure raises the rival Value-for-Money score. You may need to upgrade your model benchmarks or cut your own prices to stay competitive.`,
+            tick: currentTick,
+            read: false,
+            reward: null,
+            claimed: false
+          }, ...nextEmails];
+
+          nextNewsFeed = [{
+            tick: currentTick,
+            type: 'warning',
+            text: `MARKET ALERTS: ${randomRival.name} cut pricing in ${m.targetSegment.toUpperCase()} to fight your market share!`,
+            iconColor: 'text-error'
+          }, ...nextNewsFeed];
+        }
+      }
+    });
+
+    // 8. Milestone Detections & VC Grant Emails
     const nextMilestones = { ...state.milestones };
     
     // GPU Milestone: 128 physical + cloud leased
