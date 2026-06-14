@@ -24,12 +24,12 @@ export default function LeftMenu({ activeTab, setActiveTab }) {
           {activeTab === 'infrastructure' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
         </button>
         <button 
-          onClick={() => setActiveTab('llm')}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold w-full text-left transition-transform duration-200 group ${activeTab === 'llm' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-bright/10'}`}
+          onClick={() => setActiveTab('model')}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl font-bold w-full text-left transition-transform duration-200 group ${activeTab === 'model' ? 'bg-secondary-container text-on-secondary-container' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-bright/10'}`}
         >
-          <span className={`material-symbols-outlined ${activeTab !== 'llm' ? 'opacity-70 group-hover:opacity-100 transition-opacity' : ''}`}>model_training</span>
-          <span className="font-label-md text-label-md">LLM Manager</span>
-          {activeTab === 'llm' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
+          <span className={`material-symbols-outlined ${activeTab !== 'model' ? 'opacity-70 group-hover:opacity-100 transition-opacity' : ''}`}>model_training</span>
+          <span className="font-label-md text-label-md">Model</span>
+          {activeTab === 'model' && <span className="ml-auto w-2 h-2 rounded-full bg-secondary-fixed"></span>}
         </button>
         <button 
           onClick={() => setActiveTab('research')}

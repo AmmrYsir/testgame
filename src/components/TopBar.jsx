@@ -1,14 +1,14 @@
 import { useGameStore } from '../store';
 
 export default function TopBar() {
-  const { resources, companyName, simulationSpeed } = useGameStore();
+  const { resources, company, simulationSpeed } = useGameStore();
 
   return (
     <header className="bg-surface/80 dark:bg-surface/80 backdrop-blur-xl w-full z-50 border-b border-white/10 shadow-sm flex-none">
       <div className="flex justify-between items-center w-full px-lg py-sm max-w-container-max mx-auto h-16">
         <div className="flex items-center gap-4">
           <span className="font-display-lg text-display-lg font-bold tracking-tighter text-primary dark:text-primary text-2xl uppercase">
-            {companyName || 'AETHER CORP'}
+            {company?.name || 'AETHER CORP'}
           </span>
         </div>
         <div className="flex items-center gap-8 h-full">

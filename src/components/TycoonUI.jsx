@@ -2,7 +2,7 @@ import { useState } from 'react';
 import TopBar from './TopBar';
 import LeftMenu from './LeftMenu';
 import InfrastructureView from './InfrastructureView';
-import LLMManagerView from './LLMManagerView';
+import ModelView from './ModelView';
 import RightPanel from './RightPanel';
 import ResearchView from './ResearchView';
 import MarketView from './MarketView';
@@ -24,7 +24,7 @@ export default function TycoonUI() {
           
           <div className="relative z-10 flex-1 p-6 h-full overflow-hidden flex flex-col">
             {activeTab === 'infrastructure' && <InfrastructureView />}
-            {activeTab === 'llm' && <LLMManagerView />}
+            {activeTab === 'model' && <ModelView />}
             {activeTab === 'research' && <ResearchView />}
             {activeTab === 'market' && <MarketView />}
           </div>
