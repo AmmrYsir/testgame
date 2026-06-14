@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useGameStore } from '../store';
+import { useGameStore, formatDateFromTick } from '../store';
 
 export default function BottomLogsDrawer({ isOpen, onClose }) {
   const { newsFeed } = useGameStore();
@@ -64,7 +64,7 @@ export default function BottomLogsDrawer({ isOpen, onClose }) {
           <p className="text-outline italic text-center pt-8">No diagnostics logged under this filter.</p>
         ) : (
           filteredLogs.map((log, index) => {
-            const time = `[DAY ${String(log.tick).padStart(3, '0')}]`;
+            const time = `[${formatDateFromTick(log.tick)}]`;
             
             // Map types to console colors
             let colorClass = 'text-on-surface';

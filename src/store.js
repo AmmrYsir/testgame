@@ -1,6 +1,19 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-export const useGameStore = create((set, get) => ({
+export const formatDateFromTick = (tick) => {
+  const startDate = new Date(2020, 0, 1); // January 1, 2020
+  const currentDate = new Date(startDate.getTime() + tick * 24 * 60 * 60 * 1000);
+  return currentDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+};
+
+export const useGameStore = create(
+  persist(
+    (set, get) => ({
   // Game Flow State
   gameStage: 'menu', // 'menu', 'newGameSetup', 'playing'
   simulationSpeed: 1, // 0 = paused, 1 = normal, 2 = fast, etc.
@@ -48,8 +61,8 @@ export const useGameStore = create((set, get) => ({
 
   // Rivals
   rivals: [
-    { name: 'OpenAI', bestModel: 'GPT-4.0', share: 60, stats: { knowledge: 75, coding: 80, math: 75, creativity: 70, hallucination: 5 } },
-    { name: 'Anthropic', bestModel: 'Claude 3.5 Sonnet', share: 30, stats: { knowledge: 80, coding: 75, math: 70, creativity: 80, hallucination: 3 } }
+    { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
+    { name: 'Anthropic', bestModel: 'Claude 1.0', share: 30, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
   ],
 
   // Mailbox System
@@ -78,6 +91,63 @@ export const useGameStore = create((set, get) => ({
   ],
 
   // Actions
+  resetGame: () => set((state) => ({
+    company: {
+      name: '',
+      founder: '',
+      color: '#3b82f6',
+      logo: 'memory',
+    },
+    resources: {
+      cash: 1000000,
+      compute: 50,
+      hype: 10,
+      currentTick: 0,
+    },
+    infrastructure: {
+      gpus: 64,
+      cloudGpusRented: 0,
+      coolingLevel: 1,
+      serverHeat: 20,
+    },
+    llms: [],
+    research: {
+      unlockedTech: ['transformer'],
+      activeResearch: null,
+    },
+    marketContracts: [
+      { id: 'c1', client: 'Alpha Corp', requirement: { stat: 'coding', value: 30 }, rewardPerTick: 4000, duration: 120, timeLeft: 120, activeModelId: null },
+      { id: 'c2', client: 'EduLearn Inc', requirement: { stat: 'knowledge', value: 45 }, rewardPerTick: 7500, duration: 180, timeLeft: 180, activeModelId: null }
+    ],
+    rivals: [
+      { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
+      { name: 'Anthropic', bestModel: 'Claude 1.0', share: 30, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+    ],
+    emails: [
+      {
+        id: 'welcome_email',
+        sender: 'Corporate Board',
+        subject: 'Founders Memo: Welcome to the AI Race',
+        body: 'Initialization protocol complete. We have secured $1,000,000 in starting seed capital for your venture.\n\nYour mandate is clear: acquire GPU cluster hardware, fund progressive lab research pipelines, and align advanced neural weights to build models that dominate the commercial B2B contract board. Watch your server heat index carefully, and beware of OpenAI and Anthropic—they are aggressively expanding their frontrunner model benchmarks. Good luck.',
+        tick: 0,
+        read: false,
+        reward: null,
+        claimed: false
+      }
+    ],
+    milestones: {
+      gpu128: false,
+      cash2m: false
+    },
+    newsFeed: [
+      { tick: 0, type: 'trending_up', text: 'Silicon Valley AI race heats up. Rivals prepare next-gen LLMs.', iconColor: 'text-primary' }
+    ],
+    gameStage: 'newGameSetup',
+    simulationSpeed: 1,
+    lastActiveSpeed: 1,
+    isPaused: false
+  })),
+
   setGameStage: (stage) => set({ gameStage: stage }),
   
   setCompanyDetails: (details) => set((state) => ({
@@ -704,4 +774,13 @@ export const useGameStore = create((set, get) => ({
       newsFeed: nextNewsFeed
     };
   }),
-}));
+  }),
+  {
+    name: 'ai-tycoon-save-state',
+    partialize: (state) => {
+      // Exclude UI flow state like gameStage, simulationSpeed, isPaused, lastActiveSpeed from persistence
+      const { gameStage, simulationSpeed, lastActiveSpeed, isPaused, ...rest } = state;
+      return rest;
+    }
+  }
+));

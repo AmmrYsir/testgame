@@ -1,7 +1,8 @@
 import { useGameStore } from '../store';
 
 export default function MainMenu() {
-  const { setGameStage } = useGameStore();
+  const { company, setGameStage, resetGame } = useGameStore();
+  const hasSavedGame = !!company.name;
 
   return (
     <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-background overflow-hidden dark">
@@ -18,18 +19,28 @@ export default function MainMenu() {
         </div>
         <div className="bg-surface-container/60 backdrop-blur-xl border border-white/10 rounded-xl p-xl w-full flex flex-col gap-md shadow-2xl">
           <button
-            onClick={() => setGameStage('newGameSetup')}
-            className="w-full bg-primary text-on-primary py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-primary-container transition-colors group relative overflow-hidden"
+            onClick={resetGame}
+            className="w-full bg-primary text-on-primary py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-primary-container transition-colors group relative overflow-hidden cursor-pointer"
           >
             <span className="material-symbols-outlined text-on-primary text-[20px] transition-transform group-hover:scale-110">rocket_launch</span>
             <span>New Game</span>
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
           </button>
-          <button className="w-full bg-surface-bright/50 border border-white/5 text-on-surface py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-surface-container-high hover:border-white/20 transition-all group">
-            <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">play_arrow</span>
+          
+          <button 
+            disabled={!hasSavedGame}
+            onClick={() => setGameStage('playing')}
+            className={`w-full py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm transition-all group border ${
+              hasSavedGame
+                ? 'bg-surface-bright/50 border-white/5 text-on-surface hover:bg-surface-container-high hover:border-white/20 cursor-pointer'
+                : 'bg-surface-dim/20 border-white/5 text-outline opacity-40 cursor-not-allowed'
+            }`}
+          >
+            <span className={`material-symbols-outlined text-[20px] ${hasSavedGame ? 'text-outline group-hover:text-primary transition-colors' : 'text-outline-variant'}`}>play_arrow</span>
             <span>Continue</span>
           </button>
-          <button className="w-full bg-surface-bright/30 border border-white/5 text-outline py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-surface-container hover:text-on-surface transition-all group">
+
+          <button className="w-full bg-surface-bright/30 border border-white/5 text-outline py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-surface-container hover:text-on-surface transition-all group opacity-50 cursor-not-allowed">
             <span className="material-symbols-outlined text-outline group-hover:text-on-surface transition-colors text-[20px]">settings</span>
             <span>Settings</span>
           </button>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useGameStore } from '../store';
+import { useGameStore, formatDateFromTick } from '../store';
 
 export default function MailboxModal({ isOpen, onClose }) {
   const { emails, markEmailAsRead, claimEmailReward } = useGameStore();
@@ -75,7 +75,7 @@ export default function MailboxModal({ isOpen, onClose }) {
                           <span className={`text-xs truncate font-semibold block ${isUnread ? 'text-on-surface' : 'text-outline'}`}>
                             {email.sender}
                           </span>
-                          <span className="text-[9px] text-outline shrink-0 font-mono">Day {email.tick}</span>
+                          <span className="text-[9px] text-outline shrink-0 font-mono">{formatDateFromTick(email.tick)}</span>
                         </div>
                         <h4 className={`text-xs truncate font-bold ${isUnread ? 'text-on-surface' : 'text-outline-variant'}`}>
                           {email.subject}
@@ -100,7 +100,7 @@ export default function MailboxModal({ isOpen, onClose }) {
                       <span className="text-xs text-outline font-semibold">From: </span>
                       <span className="text-xs text-primary font-bold">{activeEmail.sender}</span>
                     </div>
-                    <span className="text-xs text-outline font-mono">Day {activeEmail.tick}</span>
+                    <span className="text-xs text-outline font-mono">{formatDateFromTick(activeEmail.tick)}</span>
                   </div>
                   <div>
                     <span className="text-xs text-outline font-semibold">Subject: </span>

@@ -1,4 +1,4 @@
-import { useGameStore } from '../store';
+import { useGameStore, formatDateFromTick } from '../store';
 
 export default function TopBar({ onMailboxToggle }) {
   const { resources, company, simulationSpeed, setSimulationSpeed, emails } = useGameStore();
@@ -128,7 +128,7 @@ export default function TopBar({ onMailboxToggle }) {
             <span className="font-label-sm text-label-sm text-outline uppercase leading-tight text-[10px]">
               {simulationSpeed === 0 ? 'PAUSED' : `${simulationSpeed}x Speed`}
             </span>
-            <span className="font-label-md text-label-md text-on-surface font-semibold font-mono leading-tight">Day {resources.currentTick}</span>
+            <span className="font-label-md text-label-md text-on-surface font-semibold font-mono leading-tight">{formatDateFromTick(resources.currentTick)}</span>
           </div>
         </div>
       </div>
