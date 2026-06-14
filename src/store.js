@@ -51,7 +51,27 @@ export const useGameStore = create((set, get) => ({
     { name: 'Anthropic', bestModel: 'Claude 3.5 Sonnet', share: 30, stats: { knowledge: 80, coding: 75, math: 70, creativity: 80, hallucination: 3 } }
   ],
 
-  // News Feed
+  // Mailbox System
+  emails: [
+    {
+      id: 'welcome_email',
+      sender: 'Corporate Board',
+      subject: 'Founders Memo: Welcome to the AI Race',
+      body: 'Initialization protocol complete. We have secured $1,000,000 in starting seed capital for your venture.\n\nYour mandate is clear: acquire GPU cluster hardware, fund progressive lab research pipelines, and align advanced neural weights to build models that dominate the commercial B2B contract board. Watch your server heat index carefully, and beware of OpenAI and Anthropic—they are aggressively expanding their frontrunner model benchmarks. Good luck.',
+      tick: 0,
+      read: false,
+      reward: null,
+      claimed: false
+    }
+  ],
+
+  // Milestone Emails Flags
+  milestones: {
+    gpu128: false,
+    cash2m: false
+  },
+
+  // Operational Logs (Diagnostics Logs Console Drawer)
   newsFeed: [
     { tick: 0, type: 'trending_up', text: 'Silicon Valley AI race heats up. Rivals prepare next-gen LLMs.', iconColor: 'text-primary' }
   ],
@@ -77,6 +97,35 @@ export const useGameStore = create((set, get) => ({
   }),
 
   startGame: () => set({ gameStage: 'playing' }),
+
+  // Mailbox Actions
+  markEmailAsRead: (emailId) => set((state) => ({
+    emails: state.emails.map(e => e.id === emailId ? { ...e, read: true } : e)
+  })),
+
+  claimEmailReward: (emailId) => set((state) => {
+    const email = state.emails.find(e => e.id === emailId);
+    if (!email || !email.reward || email.claimed) return {};
+
+    const reward = email.reward;
+    return {
+      resources: {
+        ...state.resources,
+        cash: state.resources.cash + (reward.cash || 0),
+        hype: Math.min(100, state.resources.hype + (reward.hype || 0))
+      },
+      emails: state.emails.map(e => e.id === emailId ? { ...e, claimed: true, read: true } : e),
+      newsFeed: [
+        { 
+          tick: state.resources.currentTick, 
+          type: 'monetization_on', 
+          text: `Claimed reward from VC message: $${(reward.cash || 0).toLocaleString()}`, 
+          iconColor: 'text-secondary' 
+        }, 
+        ...state.newsFeed
+      ]
+    };
+  }),
 
   // Hardware Actions
   buyGPUs: (amount, cost) => set((state) => {
@@ -122,11 +171,17 @@ export const useGameStore = create((set, get) => ({
     return state;
   }),
 
-  // Model Actions
   createModel: (name, architecture) => set((state) => {
+    // Clean name to avoid having any version numbers or version strings in it
+    const cleanedName = name
+      .replace(/\s*[vV](?:er(?:sion)?)?\.?\s*\d+(?:\.\d+)*\b/g, '')
+      .replace(/\s+\d+(?:\.\d+)*\b/g, '')
+      .replace(/\s+/g, ' ')
+      .trim() || 'Aether';
+
     const newModel = {
       id: Date.now().toString(),
-      name: name,
+      name: cleanedName,
       version: 1.0,
       architecture: architecture,
       status: 'draft',
@@ -237,10 +292,25 @@ export const useGameStore = create((set, get) => ({
       hypeGained = Math.floor(rating * 0.4);
     }
 
+    const emailSubject = `Model Publicly Deployed: ${model.name} v${model.version.toFixed(1)}`;
+    const emailBody = `Operations team has successfully published your model '${model.name}' v${model.version.toFixed(1)} weights to the ${releaseType === 'b2b' ? 'Enterprise B2B API gateway' : 'B2C public app store'}.\n\nModel stats at deployment:\n- Rating score: ${rating.toFixed(0)}\n- Hype gained: +${hypeGained}\n- Revenue yield: +$${rev.toLocaleString()}/tick.`;
+
+    const newEmail = {
+      id: 'rel_' + Date.now().toString(),
+      sender: 'Facility Operations',
+      subject: emailSubject,
+      body: emailBody,
+      tick: state.resources.currentTick,
+      read: false,
+      reward: null,
+      claimed: false
+    };
+
     return {
       llms: state.llms.map(m => m.id === modelId ? { ...m, status: 'released', releaseType, revenuePerTick: rev } : m),
       resources: { ...state.resources, hype: Math.min(100, state.resources.hype + hypeGained) },
-      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version.toFixed(1)} to the public (${releaseType === 'b2b' ? 'Enterprise API' : 'Consumer Chatapp'}). Expected revenue: $${rev.toLocaleString()}/day.`, iconColor: 'text-primary' }, ...state.newsFeed]
+      emails: [newEmail, ...state.emails],
+      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version.toFixed(1)} to the public. Expected revenue: $${rev.toLocaleString()}/day.`, iconColor: 'text-primary' }, ...state.newsFeed]
     };
   }),
 
@@ -275,7 +345,6 @@ export const useGameStore = create((set, get) => ({
     const reqVal = contract.requirement.value;
     const modelVal = model.stats[reqStat];
 
-    // Hallucination requirement is "less than or equal"
     if (reqStat === 'hallucination') {
       if (modelVal > reqVal) return state;
     } else {
@@ -317,6 +386,7 @@ export const useGameStore = create((set, get) => ({
     let nextActiveResearch = state.research.activeResearch;
     let nextUnlockedTech = [...state.research.unlockedTech];
     let nextNewsFeed = [...state.newsFeed];
+    let nextEmails = [...state.emails];
 
     if (nextActiveResearch) {
       cashChange -= nextActiveResearch.fundingPerTick;
@@ -325,6 +395,20 @@ export const useGameStore = create((set, get) => ({
       if (newProgress >= nextActiveResearch.totalTicks) {
         // Research Completed!
         nextUnlockedTech.push(nextActiveResearch.techId);
+        
+        // Send email
+        const techName = nextActiveResearch.techId.toUpperCase();
+        nextEmails = [{
+          id: 'r_done_' + Date.now().toString(),
+          sender: 'Labs Director',
+          subject: `Research Completed: ${techName} Protocol Enabled`,
+          body: `Superb news! Our research team has completed the study on '${techName}' after ${nextActiveResearch.totalTicks} ticks of progressive labs funding.\n\nThis framework has been officially deployed to our network architecture pipeline. You can now build and upgrade model profiles using these parameters.`,
+          tick: currentTick,
+          read: false,
+          reward: null,
+          claimed: false
+        }, ...nextEmails];
+
         nextNewsFeed = [{ 
           tick: currentTick, 
           type: 'science', 
@@ -360,6 +444,18 @@ export const useGameStore = create((set, get) => ({
         if (newProgress >= total) {
           // Training completed!
           const nextVer = m.version === 1.0 && m.status === 'draft' ? 1.0 : m.version + 1.0;
+          
+          nextEmails = [{
+            id: 't_done_' + Date.now().toString(),
+            sender: 'Facility Operations',
+            subject: `Training Complete: ${m.name} v${nextVer.toFixed(1)}`,
+            body: `Operations reports success. Model weights for '${m.name}' have been aligned and baked to version v${nextVer.toFixed(1)}.\n\nOptimized Benchmark Stats:\n- Knowledge: ${m.training.targetStats.knowledge}%\n- Coding: ${m.training.targetStats.coding}%\n- Math & Reasoning: ${m.training.targetStats.math}%\n- Creativity: ${m.training.targetStats.creativity}%\n- Hallucination: ${m.training.targetStats.hallucination}%\n\nThe model weights are hot and ready to release to public B2B/B2C channels or lease to private enterprise client contracts.`,
+            tick: currentTick,
+            read: false,
+            reward: null,
+            claimed: false
+          }, ...nextEmails];
+
           nextNewsFeed = [{ 
             tick: currentTick, 
             type: 'check_circle', 
@@ -391,7 +487,6 @@ export const useGameStore = create((set, get) => ({
     // Calculate Heat Load
     let targetHeat = 20; // nominal base heat
     if (activeTrainingCount > 0) {
-      // Heat goes up with GPU usage and is mitigated by cooling level
       targetHeat = Math.min(100, 20 + Math.round((totalAllocatedGpus / 12) / state.infrastructure.coolingLevel));
     }
     
@@ -408,6 +503,17 @@ export const useGameStore = create((set, get) => ({
       // High heat has a 5% chance of disrupting a random active training run
       const trainingModel = nextLlms.find(m => m.status === 'training');
       if (trainingModel) {
+        nextEmails = [{
+          id: 't_abort_' + Date.now().toString(),
+          sender: 'Facility Operations',
+          subject: 'CRITICAL: GPU Cluster Thermal Shutdown Alert',
+          body: `Emergency thermal failsafes triggered. Server temperatures exceeded the safety threshold of 85% (hit ${currentHeat}%). To prevent critical hardware degradation of GPU stacks, the active training pipeline for model '${trainingModel.name}' has been aborted.\n\nAll weights in training are lost. Action Required: Upgrade HVAC cooling facility level or allocate fewer GPUs to avoid thermal overloading.`,
+          tick: currentTick,
+          read: false,
+          reward: null,
+          claimed: false
+        }, ...nextEmails];
+
         nextNewsFeed = [{
           tick: currentTick,
           type: 'warning',
@@ -428,13 +534,23 @@ export const useGameStore = create((set, get) => ({
 
         if (nextTime <= 0) {
           // Contract completed!
+          nextEmails = [{
+            id: 'c_done_' + Date.now().toString(),
+            sender: 'Finance Dept',
+            subject: `Contract Fulfilled: ${c.client}`,
+            body: `Congratulations, lease contract with ${c.client} has been fully completed over the ${c.duration} day duration.\n\nThe client has released the model weights and wired the milestone completion bonus of $50,000 to our accounts. Claim the funding below to unlock it.`,
+            tick: currentTick,
+            read: false,
+            reward: { cash: 50000 },
+            claimed: false
+          }, ...nextEmails];
+
           nextNewsFeed = [{ 
             tick: currentTick, 
             type: 'handshake', 
-            text: `Contract completed with ${c.client}. Earned $50,000 completion bonus!`, 
+            text: `Contract completed with ${c.client}. Wired completion bonus!`, 
             iconColor: 'text-secondary' 
           }, ...nextNewsFeed];
-          cashChange += 50000;
 
           // Free model
           const modelToFree = nextLlms.find(m => m.id === c.activeModelId);
@@ -503,12 +619,60 @@ export const useGameStore = create((set, get) => ({
         }
       });
       nextRivals = upgradedRivals;
+
+      const updatedRival = nextRivals[randomRivalIdx];
+      nextEmails = [{
+        id: 'rival_' + Date.now().toString(),
+        sender: 'Market Watch',
+        subject: `RIVAL UPDATE: ${rival.name} deploys ${updatedRival.bestModel}`,
+        body: `Market reports show ${rival.name} has launched a major version upgrade, releasing '${updatedRival.bestModel}' directly into production.\n\nThey have captured additional market share, rising to ${updatedRival.share}%. Their diagnostic metrics show high performance, particularly on ${statName.toUpperCase()} (${updatedRival.stats[statName]}%).\n\nUpgrade your models immediately to retain competitive positioning.`,
+        tick: currentTick,
+        read: false,
+        reward: null,
+        claimed: false
+      }, ...nextEmails];
+
       nextNewsFeed = [{
         tick: currentTick,
         type: 'warning',
         text: `MARKET UPDATE: ${rival.name} released a new model upgrade! Benchmarks raised.`,
         iconColor: 'text-error'
       }, ...nextNewsFeed];
+    }
+
+    // 6. Milestone Detections & VC Grant Emails
+    const nextMilestones = { ...state.milestones };
+    
+    // GPU Milestone: 128 physical + cloud leased
+    const currentTotalGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
+    if (currentTotalGpus >= 128 && !nextMilestones.gpu128) {
+      nextMilestones.gpu128 = true;
+      nextEmails = [{
+        id: 'm_gpu_' + Date.now().toString(),
+        sender: 'VC Lead Investor',
+        subject: 'Compute Expansion Grant Milestone Reached',
+        body: `We are thrilled to see you scale your compute infrastructure to over 128 GPUs. This is a critical compute density milestone that positions us to train next-generation backbones.\n\nThe investment board has approved a matching capital grant of $200,000 to assist in funding synthetic training or RLHF datasets.\n\nClaim the funding bonus below.`,
+        tick: currentTick,
+        read: false,
+        reward: { cash: 200000 },
+        claimed: false
+      }, ...nextEmails];
+    }
+
+    // Cash Milestone: $2M cash
+    const currentCash = state.resources.cash + cashChange;
+    if (currentCash >= 2000000 && !nextMilestones.cash2m) {
+      nextMilestones.cash2m = true;
+      nextEmails = [{
+        id: 'm_cash_' + Date.now().toString(),
+        sender: 'Silicon Venture Capital',
+        subject: 'Series A Milestone: Hype Expansion Capital',
+        body: `Your accounts have reached over $2,000,000 in capital reserves. This financial runway has sparked major press buzz, raising your brand valuation and industry standing.\n\nWe have coordinated an official PR release to capitalize on this hype milestone, yielding +25 Hype Index points.\n\nClaim below to announce.`,
+        tick: currentTick,
+        read: false,
+        reward: { hype: 25 },
+        claimed: false
+      }, ...nextEmails];
     }
 
     return {
@@ -530,6 +694,8 @@ export const useGameStore = create((set, get) => ({
       },
       marketContracts: nextContracts,
       rivals: nextRivals,
+      emails: nextEmails,
+      milestones: nextMilestones,
       newsFeed: nextNewsFeed
     };
   }),

@@ -3,16 +3,19 @@ import TopBar from './TopBar';
 import LeftMenu from './LeftMenu';
 import InfrastructureView from './InfrastructureView';
 import ModelView from './ModelView';
-import RightPanel from './RightPanel';
+import BottomLogsDrawer from './BottomLogsDrawer';
+import MailboxModal from './MailboxModal';
 import ResearchView from './ResearchView';
 import MarketView from './MarketView';
 
 export default function TycoonUI() {
   const [activeTab, setActiveTab] = useState('infrastructure');
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
+  const [isMailboxOpen, setIsMailboxOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background text-on-surface overflow-hidden dark">
-      <TopBar />
+    <div className="flex flex-col h-screen w-screen bg-background text-on-surface overflow-hidden dark relative pb-12">
+      <TopBar onMailboxToggle={() => setIsMailboxOpen(true)} />
 
       <div className="flex flex-1 overflow-hidden relative">
         <LeftMenu activeTab={activeTab} setActiveTab={setActiveTab} />
@@ -28,10 +31,29 @@ export default function TycoonUI() {
             {activeTab === 'research' && <ResearchView />}
             {activeTab === 'market' && <MarketView />}
           </div>
-        </main>
 
-        <RightPanel />
+          {/* Bottom logs console */}
+          <BottomLogsDrawer isOpen={isLogsOpen} onClose={() => setIsLogsOpen(false)} />
+
+          {/* Interactive Mailbox Modal */}
+          <MailboxModal isOpen={isMailboxOpen} onClose={() => setIsMailboxOpen(false)} />
+        </main>
       </div>
+
+      <footer className="bg-surface-container-lowest/90 dark:bg-surface-container-lowest/90 backdrop-blur-md absolute bottom-0 left-0 right-0 flex items-center justify-between px-lg z-50 h-12 border-t border-white/10">
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={() => setIsLogsOpen(!isLogsOpen)}
+            className={`font-label-sm text-label-sm font-semibold uppercase tracking-wider px-3 py-1 rounded transition-colors ${
+              isLogsOpen 
+                ? 'bg-primary/20 text-primary border border-primary/20' 
+                : 'text-outline hover:text-surface-tint border border-transparent'
+            }`}
+          >
+            Diagnostics Logs
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }
