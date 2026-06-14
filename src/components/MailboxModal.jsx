@@ -21,7 +21,7 @@ export default function MailboxModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-fade-in">
-      <div 
+      <div
         className="glass-panel w-full max-w-[900px] h-[550px] rounded-xl flex flex-col overflow-hidden shadow-2xl relative border border-white/10"
         onClick={(e) => e.stopPropagation()}
       >
@@ -31,7 +31,7 @@ export default function MailboxModal({ isOpen, onClose }) {
             <span className="material-symbols-outlined text-primary text-xl">mail</span>
             Corporate Communications Center
           </h3>
-          <button 
+          <button
             onClick={onClose}
             className="text-outline hover:text-on-surface transition-colors p-1 flex items-center justify-center rounded-lg hover:bg-white/5"
           >
@@ -46,7 +46,7 @@ export default function MailboxModal({ isOpen, onClose }) {
             <div className="p-2 border-b border-white/5 bg-surface-container-low/30 text-[10px] text-outline uppercase font-semibold tracking-wider px-4">
               Inbox ({emails.filter(e => !e.read).length} Unread)
             </div>
-            
+
             <div className="flex-1 overflow-y-auto divide-y divide-white/5">
               {emails.length === 0 ? (
                 <div className="p-lg text-center text-outline italic text-xs">No emails in inbox.</div>
@@ -54,22 +54,23 @@ export default function MailboxModal({ isOpen, onClose }) {
                 emails.map((email) => {
                   const isSelected = activeEmail?.id === email.id;
                   const isUnread = !email.read;
-                  
+
                   return (
                     <div
                       key={email.id}
                       onClick={() => handleSelectEmail(email.id)}
-                      className={`p-4 cursor-pointer text-left transition-colors flex items-start gap-3 relative ${
-                        isSelected 
-                          ? 'bg-primary/10' 
-                          : 'hover:bg-white/5'
-                      }`}
+                      className={`p-4 cursor-pointer text-left transition-colors flex items-start gap-3 relative ${isSelected
+                        ? 'bg-primary/10'
+                        : 'hover:bg-white/5'
+                        }`}
                     >
                       {/* Unread indicator dot */}
-                      {isUnread && (
-                        <span className="w-2.5 h-2.5 rounded-full bg-primary absolute left-1.5 top-5 shadow-[0_0_8px_rgba(173,198,255,0.8)]"></span>
-                      )}
-                      
+                      <div className="w-2.5 h-2.5 flex items-center justify-center shrink-0 mt-1">
+                        {isUnread && (
+                          <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(173,198,255,0.8)]"></span>
+                        )}
+                      </div>
+
                       <div className="flex-1 min-w-0 space-y-0.5">
                         <div className="flex justify-between items-center">
                           <span className={`text-xs truncate font-semibold block ${isUnread ? 'text-on-surface' : 'text-outline'}`}>
@@ -92,7 +93,7 @@ export default function MailboxModal({ isOpen, onClose }) {
           <div className="w-[62%] flex flex-col h-full bg-surface-container-low/20">
             {activeEmail ? (
               <div className="p-lg flex flex-col h-full overflow-y-auto gap-md">
-                
+
                 {/* Detail Header */}
                 <div className="border-b border-white/10 pb-md space-y-sm flex-none">
                   <div className="flex justify-between items-start">
@@ -128,11 +129,10 @@ export default function MailboxModal({ isOpen, onClose }) {
                       <button
                         onClick={() => handleClaim(activeEmail.id)}
                         disabled={activeEmail.claimed}
-                        className={`font-label-sm text-label-sm font-semibold uppercase tracking-wider px-md py-2.5 rounded-xl transition-all ${
-                          activeEmail.claimed
-                            ? 'bg-surface-dim border border-white/5 text-outline cursor-default'
-                            : 'bg-primary hover:bg-primary-container text-on-primary shadow-[0_0_15px_rgba(173,198,255,0.3)]'
-                        }`}
+                        className={`font-label-sm text-label-sm font-semibold uppercase tracking-wider px-md py-2.5 rounded-xl transition-all ${activeEmail.claimed
+                          ? 'bg-surface-dim border border-white/5 text-outline cursor-default'
+                          : 'bg-primary hover:bg-primary-container text-on-primary shadow-[0_0_15px_rgba(173,198,255,0.3)]'
+                          }`}
                       >
                         {activeEmail.claimed ? 'Claimed' : 'Claim Reward'}
                       </button>
