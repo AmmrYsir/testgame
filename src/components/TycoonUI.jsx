@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import TopBar from './TopBar';
 import ModelView from './ModelView';
 import InfrastructureView from './InfrastructureView';
@@ -27,67 +27,9 @@ export default function TycoonUI() {
 
   const country = countries[selectedCountryId];
 
-  // Adjust SVG attributes once on mount or when svg content changes
-  useEffect(() => {
-    const container = document.getElementById('world-map-svg-container');
-    if (!container) return;
-    const svg = container.querySelector('svg');
-    if (!svg) return;
-    
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
-    svg.setAttribute('viewBox', '0 0 1010 666');
-    svg.style.maxWidth = '100%';
-    svg.style.maxHeight = '100%';
-  }, []);
 
-  // Update country path colors dynamically when state or selection changes
-  useEffect(() => {
-    const container = document.getElementById('world-map-svg-container');
-    if (!container) return;
-    const svg = container.querySelector('svg');
-    if (!svg) return;
 
-    const paths = svg.querySelectorAll('path');
-    paths.forEach(path => {
-      const id = path.getAttribute('id');
-      if (!id) return;
-      const countryState = countries[id];
-      const playerShare = countryState ? countryState.playerShare : 0;
-      
-      path.style.cursor = 'pointer';
-      
-      let fill = '#161920'; // Deep slate base
-      let stroke = 'rgba(255, 255, 255, 0.05)';
-      let strokeWidth = '0.8';
-      
-      if (playerShare > 0) {
-        // Interpolate HSL from slate grey HSL(220, 20%, 15%) to active HSL(221, 83%, 45%)
-        const ratio = playerShare / 100;
-        const h = 221;
-        const s = Math.round(20 + (83 - 20) * ratio);
-        const l = Math.round(15 + (45 - 15) * ratio);
-        fill = `hsl(${h}, ${s}%, ${l}%)`;
-        stroke = 'rgba(59, 130, 246, 0.3)';
-        strokeWidth = '1.2';
-      }
-      
-      if (id === selectedCountryId) {
-        stroke = '#3b82f6';
-        strokeWidth = '2.2';
-        path.style.filter = 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.6)) brightness(1.25)';
-      } else {
-        path.style.filter = '';
-      }
-      
-      path.setAttribute('fill', fill);
-      path.setAttribute('stroke', stroke);
-      path.setAttribute('stroke-width', strokeWidth);
-      path.style.transition = 'fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease';
-    });
-  }, [countries, selectedCountryId]);
-
-  const handleMapClick = (e) => {
+  const handleMapClick = useCallback((e) => {
     const path = e.target.closest('path');
     if (path) {
       const id = path.getAttribute('id');
@@ -95,9 +37,9 @@ export default function TycoonUI() {
       initCountry(id, title);
       setSelectedCountryId(id);
     }
-  };
+  }, [initCountry, setSelectedCountryId]);
 
-  const handleMapMouseMove = (e) => {
+  const handleMapMouseMove = useCallback((e) => {
     const path = e.target.closest('path');
     if (path) {
       const id = path.getAttribute('id');
@@ -115,11 +57,11 @@ export default function TycoonUI() {
     } else {
       setHoveredCountry(null);
     }
-  };
+  }, [countries]);
 
-  const handleMapMouseLeave = () => {
+  const handleMapMouseLeave = useCallback(() => {
     setHoveredCountry(null);
-  };
+  }, []);
 
   // Filter logs for bottom-left console
   const filteredLogs = newsFeed.filter(log => {
@@ -351,10 +293,9 @@ export default function TycoonUI() {
 
         {/* CENTER MAIN SCREEN: INTERACTIVE SVG WORLD MAP */}
         <main className="flex-1 h-full relative overflow-hidden bg-[#07090e] flex items-center justify-center">
-          <div
-            id="world-map-svg-container"
-            className="w-full h-full p-6 flex items-center justify-center select-none"
-            dangerouslySetInnerHTML={{ __html: worldSvg }}
+          <WorldMap
+            countries={countries}
+            selectedCountryId={selectedCountryId}
             onClick={handleMapClick}
             onMouseMove={handleMapMouseMove}
             onMouseLeave={handleMapMouseLeave}
@@ -434,3 +375,90 @@ export default function TycoonUI() {
     </div>
   );
 }
+
+const WorldMap = memo(function WorldMap({ countries, selectedCountryId, onClick, onMouseMove, onMouseLeave }) {
+  // Adjust SVG attributes once on mount or when svg content changes
+  useEffect(() => {
+    const container = document.getElementById('world-map-svg-container');
+    if (!container) return;
+    const svg = container.querySelector('svg');
+    if (!svg) return;
+    
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', '0 0 1010 666');
+    svg.style.maxWidth = '100%';
+    svg.style.maxHeight = '100%';
+  }, []);
+
+  // Update country path colors dynamically when state or selection changes
+  useEffect(() => {
+    const container = document.getElementById('world-map-svg-container');
+    if (!container) return;
+    const svg = container.querySelector('svg');
+    if (!svg) return;
+
+    const paths = svg.querySelectorAll('path');
+    paths.forEach(path => {
+      const id = path.getAttribute('id');
+      if (!id) return;
+      const countryState = countries[id];
+      const playerShare = countryState ? countryState.playerShare : 0;
+      
+      path.style.cursor = 'pointer';
+      
+      let fill = '#1e2330'; // Sleek slate base with clear visibility
+      let stroke = 'rgba(255, 255, 255, 0.15)'; // High-visibility fine border lines
+      let strokeWidth = '0.6';
+      
+      if (playerShare > 0) {
+        // Interpolate HSL from slate grey HSL(220, 20%, 15%) to active HSL(221, 83%, 45%)
+        const ratio = playerShare / 100;
+        const h = 221;
+        const s = Math.round(20 + (83 - 20) * ratio);
+        const l = Math.round(15 + (45 - 15) * ratio);
+        fill = `hsl(${h}, ${s}%, ${l}%)`;
+        stroke = 'rgba(59, 130, 246, 0.4)';
+        strokeWidth = '1.0';
+      }
+      
+      if (id === selectedCountryId) {
+        stroke = '#3b82f6';
+        strokeWidth = '2.2';
+        path.style.filter = 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.6)) brightness(1.25)';
+      } else {
+        path.style.filter = '';
+      }
+      
+      path.setAttribute('fill', fill);
+      path.setAttribute('stroke', stroke);
+      path.setAttribute('stroke-width', strokeWidth);
+      path.style.transition = 'fill 0.3s ease, stroke 0.3s ease, filter 0.3s ease';
+
+      // Mouse interactive hover effects
+      path.onmouseenter = () => {
+        if (id !== selectedCountryId) {
+          path.setAttribute('stroke', 'rgba(255, 255, 255, 0.4)');
+          path.style.filter = 'brightness(1.15)';
+        }
+      };
+      path.onmouseleave = () => {
+        if (id !== selectedCountryId) {
+          path.setAttribute('stroke', playerShare > 0 ? 'rgba(59, 130, 246, 0.4)' : 'rgba(255, 255, 255, 0.15)');
+          path.style.filter = '';
+        }
+      };
+    });
+  }, [countries, selectedCountryId]);
+
+  return (
+    <div
+      id="world-map-svg-container"
+      className="w-full h-full p-6 flex items-center justify-center select-none"
+      dangerouslySetInnerHTML={{ __html: worldSvg }}
+      onClick={onClick}
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+    />
+  );
+});
