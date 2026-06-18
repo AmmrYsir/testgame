@@ -87,7 +87,7 @@ export const useGameStore = create(
       id: 'welcome_email',
       sender: 'Corporate Board',
       subject: 'Founders Memo: Welcome to the AI Race',
-      body: 'Initialization protocol complete. We have secured $1,000,000 in starting seed capital for your venture.\n\nYour mandate is clear: acquire GPU cluster hardware, fund progressive lab research pipelines, and align advanced neural weights to build models that dominate the commercial B2B contract board. Watch your server heat index carefully, and beware of OpenAI and Anthropic—they are aggressively expanding their frontrunner model benchmarks. Good luck.',
+      body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from OpenAI and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
       tick: 0,
       read: false,
       reward: null,
@@ -145,7 +145,7 @@ export const useGameStore = create(
         id: 'welcome_email',
         sender: 'Corporate Board',
         subject: 'Founders Memo: Welcome to the AI Race',
-        body: 'Initialization protocol complete. We have secured $1,000,000 in starting seed capital for your venture.\n\nYour mandate is clear: acquire GPU cluster hardware, fund progressive lab research pipelines, and align advanced neural weights to build models that dominate the commercial B2B contract board. Watch your server heat index carefully, and beware of OpenAI and Anthropic—they are aggressively expanding their frontrunner model benchmarks. Good luck.',
+        body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from OpenAI and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
         tick: 0,
         read: false,
         reward: null,
@@ -294,7 +294,7 @@ export const useGameStore = create(
     };
     return {
       llms: [...state.llms, newModel],
-      newsFeed: [{ tick: state.resources.currentTick, type: 'schema', text: `Model configuration profile '${name}' initialized. Ready for training.`, iconColor: 'text-primary' }, ...state.newsFeed]
+      newsFeed: [{ tick: state.resources.currentTick, type: 'schema', text: `Model '${name}' created. Ready for training.`, iconColor: 'text-primary' }, ...state.newsFeed]
     };
   }),
 
@@ -407,8 +407,8 @@ export const useGameStore = create(
         break;
     }
 
-    const emailSubject = `Model Deployed: ${model.name} v${model.version.toFixed(1)} on ${segmentLabel}`;
-    const emailBody = `Operations team has successfully published your model '${model.name}' v${model.version.toFixed(1)} to the ${segmentLabel}.\n\nModel stats at deployment:\n- Rating score: ${rating.toFixed(0)}\n- Hype gained: +${hypeGained}\n- Initial Price Tag: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nNote: You must allocate Production GPUs to this model from the Infrastructure tab to serve active user traffic and keep latency optimal.`;
+    const emailSubject = `Model Released: ${model.name} v${model.version.toFixed(1)} on ${segmentLabel}`;
+    const emailBody = `We have successfully released your model '${model.name}' v${model.version.toFixed(1)} to the ${segmentLabel}.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Hype gained: +${hypeGained}\n- Price: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
 
     const newEmail = {
       id: 'rel_' + Date.now().toString(),
@@ -616,8 +616,8 @@ export const useGameStore = create(
         nextEmails = [{
           id: 'r_done_' + Date.now().toString(),
           sender: 'Labs Director',
-          subject: `Research Completed: ${techName} Protocol Enabled`,
-          body: `Superb news! Our research team has completed the study on '${techName}' after ${nextActiveResearch.totalTicks} ticks of progressive labs funding.\n\nThis framework has been officially deployed to our network architecture pipeline. You can now build and upgrade model profiles using these parameters.`,
+          subject: `Research Finished: ${techName} unlocked`,
+          body: `Good news! Our research team has finished studying ${techName}.\n\nThis technology is now available. You can now select it when creating or training models.`,
           tick: currentTick,
           read: false,
           reward: null,
@@ -663,8 +663,8 @@ export const useGameStore = create(
           nextEmails = [{
             id: 't_done_' + Date.now().toString(),
             sender: 'Facility Operations',
-            subject: `Training Complete: ${m.name} v${nextVer.toFixed(1)}`,
-            body: `Operations reports success. Model weights for '${m.name}' have been aligned and baked to version v${nextVer.toFixed(1)}.\n\nOptimized Benchmark Stats:\n- Knowledge: ${m.training.targetStats.knowledge}%\n- Coding: ${m.training.targetStats.coding}%\n- Math & Reasoning: ${m.training.targetStats.math}%\n- Creativity: ${m.training.targetStats.creativity}%\n- Hallucination: ${m.training.targetStats.hallucination}%\n\nThe model weights are hot and ready to release to public B2B/B2C channels or lease to private enterprise client contracts.`,
+            subject: `Training Finished: ${m.name} v${nextVer.toFixed(1)}`,
+            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.\n\nBenchmark Stats:\n- Knowledge: ${m.training.targetStats.knowledge}%\n- Coding: ${m.training.targetStats.coding}%\n- Math: ${m.training.targetStats.math}%\n- Creativity: ${m.training.targetStats.creativity}%\n- Hallucinations: ${m.training.targetStats.hallucination}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
             tick: currentTick,
             read: false,
             reward: null,
@@ -884,8 +884,8 @@ export const useGameStore = create(
         nextEmails = [{
           id: 't_abort_' + Date.now().toString(),
           sender: 'Facility Operations',
-          subject: 'CRITICAL: GPU Cluster Thermal Shutdown Alert',
-          body: `Emergency thermal failsafes triggered. Server temperatures exceeded the safety threshold of 85% (hit ${currentHeat}%). To prevent hardware damage, the active training pipeline for model '${trainingModel.name}' has been aborted.\n\nAll weights in training are lost. Action Required: Upgrade HVAC cooling facility level or allocate fewer GPUs to avoid thermal overloading.`,
+          subject: 'Overheating: Training Stopped',
+          body: `Our servers overheated and reached ${currentHeat}%, exceeding the safe limit of 85%. To prevent physical damage, we had to stop training ${trainingModel.name}.\n\nAll progress on this training run has been lost. To avoid this in the future, please upgrade your cooling system or allocate fewer GPUs.`,
           tick: currentTick,
           read: false,
           reward: null,
@@ -915,8 +915,8 @@ export const useGameStore = create(
           nextEmails = [{
             id: 'c_done_' + Date.now().toString(),
             sender: 'Finance Dept',
-            subject: `Contract Fulfilled: ${c.client}`,
-            body: `Congratulations, lease contract with ${c.client} has been fully completed over the ${c.duration} day duration.\n\nThe client has released the model weights and wired the milestone completion bonus of $50,000 to our accounts. Claim the funding below to unlock it.`,
+            subject: `Contract Completed: ${c.client}`,
+            body: `Our contract with ${c.client} has ended.\n\nThe client has sent the completion bonus of $50,000. Claim the funds below.`,
             tick: currentTick,
             read: false,
             reward: { cash: 50000 },
@@ -993,8 +993,8 @@ export const useGameStore = create(
       nextEmails = [{
         id: 'rival_' + Date.now().toString(),
         sender: 'Market Watch',
-        subject: `RIVAL UPDATE: ${rival.name} deploys ${updatedRival.bestModel}`,
-        body: `Market reports show ${rival.name} has launched a major version upgrade, releasing '${updatedRival.bestModel}' directly into production.\n\nThey have captured additional market share, rising to ${updatedRival.share}%. Their diagnostic metrics show high performance, particularly on ${statName.toUpperCase()} (${updatedRival.stats[statName]}%).\n\nUpgrade your models immediately to retain competitive positioning.`,
+        subject: `Competitor Update: ${rival.name} releases ${updatedRival.bestModel}`,
+        body: `We noticed that ${rival.name} has released a major update, launching '${updatedRival.bestModel}'.\n\nThey have gained market share and now hold ${updatedRival.share}%. Their new model performs very well, especially in ${statName} (${updatedRival.stats[statName]}%).\n\nWe need to train and release updated models to stay competitive.`,
         tick: currentTick,
         read: false,
         reward: null,
@@ -1023,8 +1023,8 @@ export const useGameStore = create(
           nextEmails = [{
             id: 'rival_cut_' + Date.now().toString(),
             sender: 'Market Watch',
-            subject: `RIVAL ACTIONS: ${randomRival.name} Cuts Pricing`,
-            body: `Alert: ${randomRival.name} has cut pricing rates for their core instances in the ${m.targetSegment.toUpperCase()} segment by 15% to defend their market share.\n\nThis pricing pressure raises the rival Value-for-Money score. You may need to upgrade your model benchmarks or cut your own prices to stay competitive.`,
+            subject: `Competitor Action: ${randomRival.name} cuts prices`,
+            body: `We've received word that ${randomRival.name} has cut their prices in the ${m.targetSegment} segment by 15% to protect their market share.\n\nThis price cut makes their services more attractive. You might need to lower your prices or upgrade your model's stats to keep your customers.`,
             tick: currentTick,
             read: false,
             reward: null,
@@ -1051,8 +1051,8 @@ export const useGameStore = create(
       nextEmails = [{
         id: 'm_gpu_' + Date.now().toString(),
         sender: 'VC Lead Investor',
-        subject: 'Compute Expansion Grant Milestone Reached',
-        body: `We are thrilled to see you scale your compute infrastructure to over 128 GPUs. This is a critical compute density milestone that positions us to train next-generation backbones.\n\nThe investment board has approved a matching capital grant of $200,000 to assist in funding synthetic training or RLHF datasets.\n\nClaim the funding bonus below.`,
+        subject: 'Hardware Milestone: Compute Expansion Grant',
+        body: `Great job expanding your hardware cluster to over 128 GPUs. To support your growth, the board has approved a $200,000 grant to help you fund more advanced training datasets.\n\nClaim the funds below.`,
         tick: currentTick,
         read: false,
         reward: { cash: 200000 },
@@ -1067,8 +1067,8 @@ export const useGameStore = create(
       nextEmails = [{
         id: 'm_cash_' + Date.now().toString(),
         sender: 'Silicon Venture Capital',
-        subject: 'Series A Milestone: Hype Expansion Capital',
-        body: `Your accounts have reached over $2,000,000 in capital reserves. This financial runway has sparked major press buzz, raising your brand valuation and industry standing.\n\nWe have coordinated an official PR release to capitalize on this hype milestone, yielding +25 Hype Index points.\n\nClaim below to announce.`,
+        subject: 'Financial Milestone: PR Campaign Launched',
+        body: `Congratulations on reaching $2,000,000 in cash reserves. This milestone has generated a lot of positive press for the company.\n\nWe've put together a PR announcement that will boost our hype by +25 points.\n\nClaim the reward below to publish the news.`,
         tick: currentTick,
         read: false,
         reward: { hype: 25 },

@@ -28,9 +28,9 @@ export default function InfrastructureView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter max-w-container-max mx-auto w-full pt-6 pb-24 overflow-y-auto">
       <div className="col-span-1 lg:col-span-12 mb-sm">
-        <h2 className="font-headline-lg text-headline-lg text-on-surface">Compute Infrastructure</h2>
+        <h2 className="font-headline-lg text-headline-lg text-on-surface">Compute Hardware</h2>
         <p className="font-body-md text-body-md text-on-surface-variant mt-xs">
-          Manage hardware resources, server cooling efficiency, and lease cloud clusters.
+          Manage hardware, cooling systems, and cloud leases.
         </p>
       </div>
 
@@ -38,15 +38,15 @@ export default function InfrastructureView() {
       <div className="col-span-1 lg:col-span-12">
         <section className="glass-panel p-lg rounded-xl flex flex-col gap-md">
           <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest border-b border-white/10 pb-xs flex justify-between items-center">
-            <span>Cluster Compute Allocation Split</span>
+            <span>Compute Allocation</span>
             <span className="text-primary font-bold">Live Status</span>
           </h3>
 
           <div className="space-y-md">
             <div className="flex justify-between items-end text-xs text-outline">
               <div>
-                <span className="text-on-surface font-semibold">Total Cluster Compute Capacity</span>
-                <p className="text-[11px] mt-0.5">Physical H100s + Cloud rented nodes</p>
+                <span className="text-on-surface font-semibold">Total Compute Capacity</span>
+                <p className="text-[11px] mt-0.5">On-premise GPUs + rented Cloud GPUs</p>
               </div>
               <span className="font-headline-md text-headline-md text-on-surface font-bold">
                 {totalGpus} GPUs <span className="text-sm font-normal text-outline">({(totalGpus * 5).toFixed(0)} PFLOPS)</span>
@@ -83,24 +83,24 @@ export default function InfrastructureView() {
 
             {/* Grid Legends */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-md pt-xs">
-              <div className="flex items-center gap-sm bg-surface-dim/40 p-3 rounded-lg border border-white/5">
+               <div className="flex items-center gap-sm bg-surface-dim/40 p-3 rounded-lg border border-white/5">
                 <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-400 shrink-0 animate-pulse"></span>
                 <div>
-                  <span className="block font-label-md text-label-md text-outline">Training Nodes</span>
+                  <span className="block font-label-md text-label-md text-outline">Training</span>
                   <span className="font-label-md text-label-md text-on-surface font-semibold">{totalTrainingGpus} GPUs</span>
                 </div>
               </div>
               <div className="flex items-center gap-sm bg-surface-dim/40 p-3 rounded-lg border border-white/5">
                 <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-cyan-600 to-cyan-400 shrink-0"></span>
                 <div>
-                  <span className="block font-label-md text-label-md text-outline">Production Nodes</span>
+                  <span className="block font-label-md text-label-md text-outline">Deployment</span>
                   <span className="font-label-md text-label-md text-on-surface font-semibold">{totalProductionGpus} GPUs</span>
                 </div>
               </div>
               <div className="flex items-center gap-sm bg-surface-dim/40 p-3 rounded-lg border border-white/5">
                 <span className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-emerald-600 to-emerald-400 shrink-0"></span>
                 <div>
-                  <span className="block font-label-md text-label-md text-outline">Idle Pool</span>
+                  <span className="block font-label-md text-label-md text-outline">Idle</span>
                   <span className="font-label-md text-label-md text-on-surface font-semibold">{idleGpus} GPUs</span>
                 </div>
               </div>
@@ -113,18 +113,18 @@ export default function InfrastructureView() {
       <div className="col-span-1 lg:col-span-6 flex flex-col gap-gutter">
         {/* Physical Nodes */}
         <section className="glass-panel p-lg rounded-xl flex flex-col gap-md">
-          <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest border-b border-white/10 pb-xs flex justify-between items-center">
-            <span>Physical GPU Nodes</span>
-            <span className="text-primary font-bold">On-Premises</span>
+           <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest border-b border-white/10 pb-xs flex justify-between items-center">
+            <span>On-Premise GPUs</span>
+            <span className="text-primary font-bold">On-Premise</span>
           </h3>
           
           <div className="space-y-sm mt-xs">
             <div className="flex justify-between items-center">
-              <span className="font-label-md text-label-md text-outline">Owned H100 Hardware</span>
-              <span className="font-headline-md text-headline-md text-on-surface font-bold">{infrastructure.gpus}x H100s</span>
+              <span className="font-label-md text-label-md text-outline">Owned GPUs</span>
+              <span className="font-headline-md text-headline-md text-on-surface font-bold">{infrastructure.gpus}x GPUs</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="font-label-md text-label-md text-outline">On-Prem Compute Yield</span>
+              <span className="font-label-md text-label-md text-outline">Compute Capacity</span>
               <span className="font-label-md text-label-md text-primary font-semibold">{(infrastructure.gpus * 5).toFixed(0)} PFLOPS</span>
             </div>
           </div>
@@ -135,31 +135,31 @@ export default function InfrastructureView() {
             className="w-full bg-surface-container-highest border border-outline-variant hover:border-primary text-on-surface hover:text-primary font-label-md text-label-md py-md rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed mt-md flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-sm">memory</span>
-            Acquire 64x H100 Node ($250,000)
+            Buy 64x GPUs ($250,000)
           </button>
         </section>
 
         {/* Cloud Cluster Rental */}
         <section className="glass-panel p-lg rounded-xl flex flex-col gap-md">
-          <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest border-b border-white/10 pb-xs flex justify-between items-center">
-            <span>Cloud Compute Rental</span>
-            <span className="text-secondary font-bold">On-Demand</span>
+           <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest border-b border-white/10 pb-xs flex justify-between items-center">
+            <span>Cloud Compute</span>
+            <span className="text-secondary font-bold">Cloud</span>
           </h3>
           
           <p className="font-body-md text-body-md text-outline text-xs">
-            Instantly scale compute by leasing cloud nodes. No upfront capital expense, but incurs continuous rental charges per tick.
+            Rent cloud GPUs to instantly increase compute capacity without upfront cost. Increases costs per tick.
           </p>
 
           <div className="space-y-sm mt-xs">
             <div className="flex justify-between items-center">
-              <span className="font-label-md text-label-md text-outline">Leased H100 Clusters</span>
+              <span className="font-label-md text-label-md text-outline">Rented Cloud GPUs</span>
               <span className="font-headline-md text-headline-md text-on-surface font-bold">
                 {infrastructure.cloudGpusRented}x Cloud GPUs
               </span>
             </div>
             {isCloudRented && (
               <div className="flex justify-between items-center">
-                <span className="font-label-md text-label-md text-outline">Rental Flat Cost</span>
+                <span className="font-label-md text-label-md text-outline">Rental Cost</span>
                 <span className="font-label-md text-label-md text-error font-semibold">
                   -${(infrastructure.cloudGpusRented * 15).toLocaleString()}/tick
                 </span>
@@ -176,7 +176,7 @@ export default function InfrastructureView() {
             }`}
           >
             <span className="material-symbols-outlined text-sm">{isCloudRented ? 'cloud_off' : 'cloud_queue'}</span>
-            {isCloudRented ? 'Terminate 128x GPU Lease' : 'Lease 128x Cloud GPUs'}
+            {isCloudRented ? 'Cancel Cloud GPU Lease' : 'Rent 128x Cloud GPUs'}
           </button>
         </section>
       </div>
@@ -187,13 +187,13 @@ export default function InfrastructureView() {
         <section className="glass-panel p-lg rounded-xl relative overflow-hidden flex flex-col gap-md h-full justify-between">
           <div>
             <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-md border-b border-white/10 pb-xs">
-              Thermal Diagnostics
+              Temperature
             </h3>
             
             <div className="space-y-md mt-md">
               <div>
                 <div className="flex justify-between mb-xs">
-                  <span className="font-label-md text-label-md text-on-surface">Data Center Heat Load</span>
+                  <span className="font-label-md text-label-md text-on-surface">System Temperature</span>
                   <span className={`font-label-md text-label-md font-bold ${infrastructure.serverHeat > 80 ? 'text-error animate-pulse' : 'text-primary'}`}>
                     {infrastructure.serverHeat}%
                   </span>
@@ -212,19 +212,19 @@ export default function InfrastructureView() {
               
               <div className="bg-surface-dim p-4 rounded-xl border border-white/5 space-y-sm">
                 <div className="font-body-md text-body-md text-on-surface-variant text-xs leading-relaxed">
-                  Data center thermal load is driven by active GPU compute:
+                  System temperature is driven by GPU usage:
                   <ul className="list-disc pl-4 mt-2 space-y-1 text-outline">
-                    <li><span className="text-amber-500 font-semibold">Training Nodes</span> run at 100% thermal load.</li>
-                    <li><span className="text-cyan-500 font-semibold">Production Nodes</span> run at 30% thermal load (inference).</li>
-                    <li><span className="text-emerald-500 font-semibold">Idle Nodes</span> generate 0% thermal load.</li>
+                    <li><span className="text-amber-500 font-semibold">Training GPUs</span> run at 100% thermal load.</li>
+                    <li><span className="text-cyan-500 font-semibold">Deployment GPUs</span> run at 30% thermal load (inference).</li>
+                    <li><span className="text-emerald-500 font-semibold">Idle GPUs</span> generate 0% thermal load.</li>
                   </ul>
                   <p className="mt-2">
-                    If temperature exceeds <strong className="text-error">85%</strong>, safety failsafes trigger, aborting active training runs to prevent physical damage.
+                    If temperature exceeds <strong className="text-error">85%</strong>, safety systems will trigger, stopping active training to prevent hardware damage.
                   </p>
                 </div>
                 <div className="flex justify-between text-[11px] text-outline pt-2 border-t border-white/5">
-                  <span>Current Cooling Tier: Lvl {infrastructure.coolingLevel}</span>
-                  <span>Mitigation Factor: -{infrastructure.coolingLevel * 15}% Heat</span>
+                  <span>Cooling System: Level {infrastructure.coolingLevel}</span>
+                  <span>Cooling Bonus: -{infrastructure.coolingLevel * 15}% Heat</span>
                 </div>
               </div>
             </div>
@@ -234,8 +234,8 @@ export default function InfrastructureView() {
           <div className="mt-lg border-t border-white/10 pt-lg space-y-sm">
             <div className="flex justify-between items-center">
               <div>
-                <h4 className="font-label-md text-label-md text-on-surface font-bold">Facility HVAC Coolers</h4>
-                <p className="text-[11px] text-outline">Upgrade air cooling fans to reduce GPU heat output.</p>
+                <h4 className="font-label-md text-label-md text-on-surface font-bold">Cooling System</h4>
+                <p className="text-[11px] text-outline">Upgrade the cooling system to reduce server temperature.</p>
               </div>
               <span className="font-label-md text-label-md text-primary font-bold">Tier {nextCoolingLevel}</span>
             </div>
@@ -246,7 +246,7 @@ export default function InfrastructureView() {
               className="w-full bg-surface-container-highest border border-outline-variant hover:border-primary text-on-surface hover:text-primary font-label-md text-label-md py-md rounded-xl transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined text-sm">ac_unit</span>
-              Upgrade Coolers to Lvl {nextCoolingLevel} (${coolingUpgradeCost.toLocaleString()})
+              Upgrade Cooling to Lvl {nextCoolingLevel} (${coolingUpgradeCost.toLocaleString()})
             </button>
           </div>
         </section>

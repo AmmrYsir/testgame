@@ -8,7 +8,7 @@ export default function ResearchView() {
       id: 'transformer', 
       category: 'Backbone',
       name: 'Transformer Architecture', 
-      desc: 'The baseline neural network architecture for large language models. Baseline stat generation.', 
+      desc: 'The standard architecture for large language models. Provides baseline stats.', 
       cost: 0, 
       ticks: 1,
       unlocked: research.unlockedTech.includes('transformer') 
@@ -17,7 +17,7 @@ export default function ResearchView() {
       id: 'moe', 
       category: 'Backbone',
       name: 'Mixture of Experts (MoE)', 
-      desc: 'Allows scaling parameter counts. Unlocks MoE backbone (+25% bonus to stat gains).', 
+      desc: 'Allows scaling model parameters efficiently. Grants a +25% bonus to training gains.', 
       cost: 500000, 
       ticks: 100,
       unlocked: research.unlockedTech.includes('moe') 
@@ -26,7 +26,7 @@ export default function ResearchView() {
       id: 'ssm', 
       category: 'Backbone',
       name: 'State Space Models (SSM)', 
-      desc: 'Highly efficient attention bypass. Unlocks SSM backbone (+40% bonus to stat gains).', 
+      desc: 'Highly efficient alternative to attention mechanism. Grants a +40% bonus to training gains.', 
       cost: 1500000, 
       ticks: 200,
       unlocked: research.unlockedTech.includes('ssm') 
@@ -35,7 +35,7 @@ export default function ResearchView() {
       id: 'lora', 
       category: 'Technique',
       name: 'Low-Rank Adaptation (LoRA)', 
-      desc: 'Injects low-rank matrices. Reductions in training computational cost by 30%.', 
+      desc: 'Reduces training computing cost by 30%.', 
       cost: 300000, 
       ticks: 60,
       unlocked: research.unlockedTech.includes('lora') 
@@ -43,8 +43,8 @@ export default function ResearchView() {
     { 
       id: 'synthetic', 
       category: 'Technique',
-      name: 'Synthetic Reasoning Gen', 
-      desc: 'Filter synthetic math proofs. Reduces model base hallucination rate by 5%.', 
+      name: 'Synthetic Data Generation', 
+      desc: 'Filter synthetic reasoning datasets. Reduces model hallucination rate by 5%.', 
       cost: 600000, 
       ticks: 90,
       unlocked: research.unlockedTech.includes('synthetic') 
@@ -52,8 +52,8 @@ export default function ResearchView() {
     { 
       id: 'rlhf', 
       category: 'Technique',
-      name: 'RLHF Alignment Pipeline', 
-      desc: 'Reinforcement Learning from Human Feedback. Increases base model stats by +10 across all branches.', 
+      name: 'RLHF Alignment', 
+      desc: 'Reinforcement Learning from Human Feedback. Increases all model stats by +10.', 
       cost: 1000000, 
       ticks: 140,
       unlocked: research.unlockedTech.includes('rlhf') 
@@ -70,9 +70,9 @@ export default function ResearchView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter max-w-container-max mx-auto w-full pt-6 pb-24 overflow-y-auto">
       <div className="col-span-1 lg:col-span-12 mb-sm">
-        <h2 className="font-headline-lg text-headline-lg text-on-surface">Neural Lab Labs</h2>
+        <h2 className="font-headline-lg text-headline-lg text-on-surface">Research Lab</h2>
         <p className="font-body-md text-body-md text-on-surface-variant mt-xs">
-          Allocate resources to unlock next-generation model backbones and optimization pipelines.
+          Allocate resources to unlock new architectures and training optimizations.
         </p>
       </div>
 
@@ -81,7 +81,7 @@ export default function ResearchView() {
         <div className="col-span-1 lg:col-span-12">
           <div className="glass-panel p-md rounded-xl flex flex-col md:flex-row justify-between items-center gap-md border-l-4 border-l-primary bg-primary/5">
             <div>
-              <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-widest block">Active Lab Research Project</span>
+              <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-widest block">Active Research Project</span>
               <h4 className="font-label-md text-label-md text-on-surface font-bold mt-1">
                 Studying: {technologies.find(t => t.id === activeTech.techId)?.name || activeTech.techId.toUpperCase()}
               </h4>
@@ -107,7 +107,7 @@ export default function ResearchView() {
       <div className="col-span-1 lg:col-span-12 flex flex-col gap-gutter mt-sm">
         <section className="glass-panel p-lg rounded-xl">
           <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest mb-md border-b border-white/10 pb-xs">
-            Advanced Tech Tree
+            Technology Tree
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md mt-md">

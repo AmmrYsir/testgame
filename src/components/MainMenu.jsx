@@ -5,45 +5,63 @@ export default function MainMenu() {
   const hasSavedGame = !!company.name;
 
   return (
-    <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-background overflow-hidden dark">
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-background/80 z-10 backdrop-blur-[2px]"></div>
-        <img className="w-full h-full object-cover object-center opacity-40 mix-blend-luminosity" src="https://lh3.googleusercontent.com/aida/AP1WRLtA-JPQCU7-9YsZoktdk3QrYFJ4xsXQd6JaeXkgwXrFBUGQ7k-uritvK94YFO8JObuzuvCUri2nwzrjhwLP1otKgjzksnepMsKzNP1ys8sXA4GxiXnn0M_AjAYpyz4mZ4jBPU1BCNG-vxe_pL8-tqgUODmFLf0vhI1y-eJseLExt6D0v2-fE5ts-I-u6i360qhSa6TuQofJTkr0VQfKtRjQcA_8xEiKEEd-K-yVSg5fxvPL_zIaGBpgYg" alt="Server Background" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent z-10"></div>
+    <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-[#0d0f14] overflow-hidden dark select-none">
+      {/* Tactical Grid Background */}
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#8080800b_1px,transparent_1px),linear-gradient(to_bottom,#8080800b_1px,transparent_1px)] bg-[size:32px_32px]">
+        {/* Soft Radial Ambient Backlights */}
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-secondary/5 rounded-full blur-[100px] pointer-events-none translate-x-1/2 translate-y-1/2"></div>
       </div>
-      <main className="relative z-20 w-full max-w-[600px] px-lg flex flex-col items-center">
-        <div className="text-center mb-xl">
-          <h1 className="font-display-lg text-2xl text-on-surface">
-            Artificial Intelligence Race
+
+      <main className="relative z-10 w-full max-w-[500px] px-lg flex flex-col items-center gap-xl">
+        {/* Command Center Title & Subtitle */}
+        <div className="text-center space-y-2">
+          <span className="font-mono text-[10px] text-primary font-bold uppercase tracking-[0.25em] block animate-pulse">
+            Welcome Executive
+          </span>
+          <h1 className="font-display-lg text-[28px] md:text-[38px] text-on-surface font-extrabold uppercase tracking-tight leading-none text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/70">
+            AI Race Simulator
           </h1>
+          <p className="font-mono text-[10px] text-outline uppercase tracking-[0.18em]">
+            Management Strategy Tycoon
+          </p>
         </div>
-        <div className="bg-surface-container/60 backdrop-blur-xl border border-white/10 rounded-xl p-xl w-full flex flex-col gap-md shadow-2xl">
+
+        {/* Action Panel Card */}
+        <div className="bg-[#191b23]/70 backdrop-blur-2xl border border-white/10 rounded-xl p-lg w-full flex flex-col gap-sm shadow-[0_25px_60px_rgba(0,0,0,0.6)]">
+          {/* New Game - Primary Button */}
           <button
             onClick={resetGame}
-            className="w-full bg-primary text-on-primary py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-primary-container transition-colors group relative overflow-hidden cursor-pointer"
+            className="w-full bg-[#3b82f6] text-white py-3.5 px-lg rounded-lg font-mono text-xs uppercase tracking-[0.12em] font-bold flex items-center justify-center gap-sm hover:bg-[#2563eb] transition-all hover:scale-[1.01] hover:shadow-[0_0_15px_rgba(59,130,246,0.4)] cursor-pointer"
           >
-            <span className="material-symbols-outlined text-on-primary text-[20px] transition-transform group-hover:scale-110">rocket_launch</span>
+            <span className="material-symbols-outlined text-base">rocket_launch</span>
             <span>New Game</span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 pointer-events-none"></div>
           </button>
           
+          {/* Continue - Secondary Button */}
           <button 
             disabled={!hasSavedGame}
             onClick={() => setGameStage('playing')}
-            className={`w-full py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm transition-all group border ${
+            className={`w-full py-3.5 px-lg rounded-lg font-mono text-xs uppercase tracking-[0.12em] font-bold flex items-center justify-center gap-sm transition-all border ${
               hasSavedGame
-                ? 'bg-surface-bright/50 border-white/5 text-on-surface hover:bg-surface-container-high hover:border-white/20 cursor-pointer'
-                : 'bg-surface-dim/20 border-white/5 text-outline opacity-40 cursor-not-allowed'
+                ? 'bg-transparent border-white/10 text-on-surface hover:bg-white/5 hover:border-white/20 hover:scale-[1.01] cursor-pointer'
+                : 'bg-white/5 border-transparent text-outline opacity-30 cursor-not-allowed'
             }`}
           >
-            <span className={`material-symbols-outlined text-[20px] ${hasSavedGame ? 'text-outline group-hover:text-primary transition-colors' : 'text-outline-variant'}`}>play_arrow</span>
+            <span className={`material-symbols-outlined text-base ${hasSavedGame ? 'text-primary' : 'text-outline'}`}>play_arrow</span>
             <span>Continue</span>
           </button>
 
-          <button className="w-full bg-surface-bright/30 border border-white/5 text-outline py-md px-lg rounded-lg font-label-md text-label-md uppercase tracking-wider flex items-center justify-center gap-sm hover:bg-surface-container hover:text-on-surface transition-all group opacity-50 cursor-not-allowed">
-            <span className="material-symbols-outlined text-outline group-hover:text-on-surface transition-colors text-[20px]">settings</span>
+          {/* Settings - Ghost/Disabled Button */}
+          <button className="w-full bg-transparent border-transparent text-outline/40 py-3.5 px-lg rounded-lg font-mono text-xs uppercase tracking-[0.12em] font-bold flex items-center justify-center gap-sm hover:text-outline hover:bg-white/5 transition-all opacity-50 cursor-not-allowed">
+            <span className="material-symbols-outlined text-base">settings</span>
             <span>Settings</span>
           </button>
+        </div>
+
+        {/* Footer Credit info */}
+        <div className="text-center font-mono text-[9px] text-outline/40 uppercase tracking-[0.1em] mt-md">
+          Corporate System Version 1.2.0-LTS • Secure Connection
         </div>
       </main>
     </div>

@@ -203,14 +203,14 @@ export default function ModelView() {
             className="glass-panel p-lg rounded-xl flex flex-col gap-lg h-full overflow-y-auto"
           >
             <div className="border-b border-white/10 pb-sm">
-              <h2 className="font-headline-md text-headline-md text-on-surface">Initialize Model Architecture</h2>
+              <h2 className="font-headline-md text-headline-md text-on-surface">Create New Model</h2>
               <p className="font-body-md text-body-md text-on-surface-variant mt-xs">
-                Design the baseline network configuration for your next neural project.
+                Design and configure your next AI model.
               </p>
             </div>
 
             <div className="flex flex-col gap-xs">
-              <label className="font-label-sm text-label-sm text-on-surface-variant" htmlFor="m-name">Model Designation Name</label>
+              <label className="font-label-sm text-label-sm text-on-surface-variant" htmlFor="m-name">Model Name</label>
               <input
                 id="m-name"
                 type="text"
@@ -315,7 +315,7 @@ export default function ModelView() {
                 type="submit"
                 className="bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md px-lg py-2 rounded-xl transition-all shadow-[0_0_15px_rgba(173,198,255,0.2)]"
               >
-                Create Model Profile
+                Create Model
               </button>
             </div>
           </form>
@@ -365,7 +365,7 @@ export default function ModelView() {
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
               <div className="space-y-sm">
-                <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Evaluation Benchmarks</span>
+                <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Benchmarks</span>
                 
                 {/* Knowledge */}
                 <div>
@@ -414,7 +414,7 @@ export default function ModelView() {
 
               {/* Safety metrics */}
               <div className="bg-surface-dim/40 rounded-xl border border-white/5 p-4 flex flex-col justify-center items-center text-center gap-sm">
-                <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Alignment Safety Report</span>
+                <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Safety & Alignment</span>
                 <div className="w-24 h-24 rounded-full border-4 border-error/25 flex flex-col justify-center items-center relative mt-2">
                   {/* Circle background indicator */}
                   <div className="absolute inset-0 rounded-full border-4 border-error" style={{ clipPath: `polygon(50% 50%, -50% -50%, ${selectedModel.stats.hallucination}% -50%)`, transform: 'rotate(-90deg)' }}></div>
@@ -424,7 +424,7 @@ export default function ModelView() {
                 <p className="font-body-md text-body-md text-outline text-xs mt-2 max-w-[200px]">
                   {selectedModel.stats.hallucination > 20
                     ? 'Caution: Model exhibits high hallucination rates. Safety training advised.'
-                    : 'Stable: Model outputs align within safe corporate compliance bounds.'}
+                    : 'Stable: Model outputs are within safe limits.'}
                 </p>
               </div>
             </div>
@@ -459,7 +459,7 @@ export default function ModelView() {
                 {/* Progress bar */}
                 <div className="space-y-sm">
                   <div className="flex justify-between text-label-sm text-label-sm text-outline">
-                    <span>Weight Optimization (Day {selectedModel.training.progress}/{selectedModel.training.totalTicks})</span>
+                    <span>Training Progress (Day {selectedModel.training.progress}/{selectedModel.training.totalTicks})</span>
                     <span className="text-secondary font-bold">{Math.round((selectedModel.training.progress / selectedModel.training.totalTicks) * 100)}%</span>
                   </div>
                   <div className="w-full bg-surface-dim rounded-full h-1.5 overflow-hidden">
@@ -475,7 +475,7 @@ export default function ModelView() {
               <div className="mt-md space-y-md border-t border-white/10 pt-md">
                 <div className="flex justify-between items-center">
                   <h3 className="font-label-md text-label-md text-secondary uppercase font-bold tracking-widest flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">cloud_done</span> Serve & Scale Console
+                    <span className="material-symbols-outlined text-sm">cloud_done</span> Deployment Console
                   </h3>
                   <span className="text-xs text-outline font-semibold capitalize">
                     Platform: {selectedModel.targetSegment === 'consumer' ? 'B2C App Store' :
@@ -513,7 +513,7 @@ export default function ModelView() {
                     {/* Customer Satisfaction */}
                     <div className="bg-surface-dim p-3 rounded-lg border border-white/5 space-y-xs">
                       <div className="flex justify-between items-center text-[11px]">
-                        <span className="text-outline uppercase">Customer Retention Index</span>
+                        <span className="text-outline uppercase">Customer Satisfaction</span>
                         <span className={`font-bold ${
                           (selectedModel.marketMetrics?.satisfaction || 100) >= 80 ? 'text-emerald-500' :
                           (selectedModel.marketMetrics?.satisfaction || 100) >= 50 ? 'text-amber-500' : 'text-error'
@@ -535,7 +535,7 @@ export default function ModelView() {
                     {/* Live Yield */}
                     <div className="flex justify-between items-center bg-surface-dim p-3 rounded-lg border border-white/5">
                       <div>
-                        <span className="text-[11px] text-outline block uppercase font-semibold">Dynamic Financial Yield</span>
+                        <span className="text-[11px] text-outline block uppercase font-semibold">Current Revenue</span>
                         <p className="text-[10px] text-outline">Adjusted for Customer Satisfaction</p>
                       </div>
                       <span className="font-headline-sm text-headline-sm text-emerald-500 font-bold">
@@ -574,7 +574,7 @@ export default function ModelView() {
                     {/* Pricing Controller */}
                     <div className="bg-surface-dim p-3 rounded-lg border border-white/5 space-y-xs">
                       <div className="flex justify-between items-center mb-xs">
-                        <span className="text-[11px] text-outline uppercase">Adjust Price Tag</span>
+                        <span className="text-[11px] text-outline uppercase">Adjust Price</span>
                         <span className="font-label-md text-label-md text-primary font-bold">
                           ${(selectedModel.priceTag || 10).toLocaleString()} {
                             selectedModel.targetSegment === 'consumer' ? '/mo' :
@@ -647,7 +647,7 @@ export default function ModelView() {
               <div className="mt-md space-y-md border-t border-white/10 pt-md">
                 <div className="flex justify-between items-center">
                   <h3 className="font-label-md text-label-md text-primary uppercase font-bold tracking-widest">
-                    {selectedModel.status === 'draft' ? 'Schedule Core Training Run' : 'Schedule Training Upgrade (Fine-Tune)'}
+                    {selectedModel.status === 'draft' ? 'Configure Training' : 'Configure Fine-Tuning'}
                   </h3>
                   <span className="text-xs text-outline">
                     Targeting: v{(selectedModel.status === 'draft' ? 1.0 : selectedModel.version + 1.0).toFixed(1)} Upgrade
@@ -701,7 +701,7 @@ export default function ModelView() {
 
                   {/* Dataset Selector */}
                   <div className="space-y-sm flex flex-col">
-                    <label className="font-label-sm text-label-sm text-on-surface">Data Feeding Profile</label>
+                    <label className="font-label-sm text-label-sm text-on-surface">Select Dataset</label>
                     <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[160px]">
                       {Object.entries(datasets).map(([key, dataset]) => (
                         <div
@@ -730,7 +730,7 @@ export default function ModelView() {
                 {/* Estimate & Button */}
                 <div className="flex flex-col md:flex-row justify-between items-center gap-md border-t border-white/10 pt-md bg-surface-container/20 p-4 rounded-xl border border-white/5">
                   <div>
-                    <span className="text-xs text-outline uppercase font-semibold">Total Estimated Capital Cost</span>
+                    <span className="text-xs text-outline uppercase font-semibold">Total Estimated Cost</span>
                     <p className="font-headline-md text-headline-md text-on-surface text-xl font-bold">${calculateTrainingCost().toLocaleString()}</p>
                   </div>
                   <button
@@ -739,7 +739,7 @@ export default function ModelView() {
                     className="w-full md:w-auto bg-secondary hover:bg-secondary-container text-white font-label-md text-label-md px-lg py-3 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(78,222,163,0.3)] flex items-center justify-center gap-xs disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <span className="material-symbols-outlined text-[20px]">rocket_launch</span>
-                    INITIALIZE NEURAL RUN
+                    START TRAINING
                   </button>
                 </div>
 
@@ -747,7 +747,7 @@ export default function ModelView() {
                 {selectedModel.status === 'trained' && (
                   <div className="mt-lg border-t border-white/10 pt-lg space-y-md">
                     <h3 className="font-label-md text-label-md text-primary uppercase font-bold tracking-widest">
-                      Market Release Configuration
+                      Release Settings
                     </h3>
                     
                     <div className="bg-surface-dim/30 p-4 rounded-xl border border-white/5 space-y-md">
@@ -782,7 +782,7 @@ export default function ModelView() {
                       {/* Pricing Tag Input */}
                       <div>
                         <div className="flex justify-between items-center mb-xs">
-                          <label className="font-label-sm text-label-sm text-outline">Initial Pricing Price Tag</label>
+                          <label className="font-label-sm text-label-sm text-outline">Starting Price</label>
                           <span className="font-label-md text-label-md text-primary font-bold">
                             ${releasePrice.toLocaleString()} {
                               releaseSegment === 'consumer' ? '/mo subscription' :
@@ -815,7 +815,7 @@ export default function ModelView() {
                       className="w-full bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md py-3 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(173,198,255,0.2)] flex items-center justify-center gap-xs"
                     >
                       <span className="material-symbols-outlined text-[20px]">publish</span>
-                      DEPLOY TO COMMERCE CHANNELS
+                      RELEASE TO MARKET
                     </button>
                   </div>
                 )}
@@ -824,7 +824,7 @@ export default function ModelView() {
           </div>
         ) : (
           <div className="glass-panel p-lg rounded-xl flex items-center justify-center text-center h-full text-outline italic">
-            Select a model profile from the registry or create a new design backbone.
+            Select a model from the registry or create a new design.
           </div>
         )}
       </div>

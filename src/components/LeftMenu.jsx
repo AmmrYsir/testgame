@@ -60,7 +60,7 @@ export default function LeftMenu({ activeTab, setActiveTab, isLogsOpen, setIsLog
           }`}
         >
           <span className={`material-symbols-outlined ${!isLogsOpen ? 'opacity-70 group-hover:opacity-100 transition-opacity' : ''}`}>terminal</span>
-          <span className="font-label-md text-label-md">Diagnostics Logs</span>
+          <span className="font-label-md text-label-md">Logs</span>
         </button>
       </div>
     </nav>

@@ -29,7 +29,7 @@ export default function MailboxModal({ isOpen, onClose }) {
         <div className="px-lg py-4 border-b border-white/10 bg-surface-container/60 flex justify-between items-center flex-none">
           <h3 className="font-headline-md text-headline-md text-on-surface text-lg font-bold flex items-center gap-2">
             <span className="material-symbols-outlined text-primary text-xl">mail</span>
-            Corporate Communications Center
+            Inbox
           </h3>
           <button
             onClick={onClose}
@@ -119,7 +119,7 @@ export default function MailboxModal({ isOpen, onClose }) {
                   <div className="mt-auto pt-md border-t border-white/10 flex-none">
                     <div className="bg-primary/5 border border-primary/20 rounded-xl p-md flex items-center justify-between">
                       <div>
-                        <span className="text-[10px] text-outline uppercase font-semibold">Attached Funding Reward</span>
+                        <span className="text-[10px] text-outline uppercase font-semibold">Attached Reward</span>
                         <p className="font-label-md text-label-md text-primary font-bold text-sm">
                           {activeEmail.reward.cash && `+$${activeEmail.reward.cash.toLocaleString()} Cash Reserves`}
                           {activeEmail.reward.hype && ` +${activeEmail.reward.hype} Hype Points`}

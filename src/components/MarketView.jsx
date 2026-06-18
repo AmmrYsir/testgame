@@ -53,9 +53,9 @@ export default function MarketView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter max-w-container-max mx-auto w-full pt-6 pb-24 overflow-y-auto">
       <div className="col-span-1 lg:col-span-12 mb-sm">
-        <h2 className="font-headline-lg text-headline-lg text-on-surface">Commercialization & Market</h2>
+        <h2 className="font-headline-lg text-headline-lg text-on-surface">Market & Contracts</h2>
         <p className="font-body-md text-body-md text-on-surface-variant mt-xs">
-          Deploy trained models, scale production compute nodes, and monitor competitor benchmarks.
+          Deploy models to different market segments, allocate GPUs, and monitor competitor benchmarks.
         </p>
       </div>
 
@@ -81,7 +81,7 @@ export default function MarketView() {
 
                 {/* Player Deployments */}
                 <div className="space-y-sm flex-1">
-                  <span className="font-label-sm text-[10px] text-outline uppercase tracking-wider block">Your Deployed Instances</span>
+                  <span className="font-label-sm text-[10px] text-outline uppercase tracking-wider block">Your Deployed Models</span>
                   
                   {activeModels.length === 0 ? (
                     <div className="p-md rounded-xl border border-dashed border-white/10 text-center text-outline text-xs py-6">
@@ -111,24 +111,24 @@ export default function MarketView() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-sm text-[11px] text-outline">
-                              <div>
-                                <span className="block text-[9px] font-semibold text-outline-variant">TRAFFIC / SHARE</span>
-                                <span className="text-on-surface font-semibold">{users.toLocaleString()} ({sharePercent}%)</span>
-                              </div>
-                              <div>
-                                <span className="block text-[9px] font-semibold text-outline-variant">PRICE TAG</span>
-                                <span className="text-on-surface font-semibold">${finalPrice.toLocaleString()}{segment.priceUnit}</span>
-                              </div>
-                              <div>
-                                <span className="block text-[9px] font-semibold text-outline-variant">GPU PROD LOAD</span>
-                                <span className={`font-semibold ${gpusAllocated >= gpusRequired ? 'text-emerald-500' : 'text-error animate-pulse'}`}>
-                                  {gpusAllocated} / {gpusRequired} GPUs
-                                </span>
-                              </div>
-                              <div>
-                                <span className="block text-[9px] font-semibold text-outline-variant">LIVE TICK YIELD</span>
-                                <span className="text-emerald-500 font-semibold">+{liveYield > 0 ? `$${liveYield.toLocaleString()}` : '$0'}/tick</span>
-                              </div>
+                                <div>
+                                  <span className="block text-[9px] font-semibold text-outline-variant">TRAFFIC / SHARE</span>
+                                  <span className="text-on-surface font-semibold">{users.toLocaleString()} ({sharePercent}%)</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-semibold text-outline-variant">PRICE</span>
+                                  <span className="text-on-surface font-semibold">${finalPrice.toLocaleString()}{segment.priceUnit}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-semibold text-outline-variant">GPU PRODUCTION LOAD</span>
+                                  <span className={`font-semibold ${gpusAllocated >= gpusRequired ? 'text-emerald-500' : 'text-error animate-pulse'}`}>
+                                    {gpusAllocated} / {gpusRequired} GPUs
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="block text-[9px] font-semibold text-outline-variant">REVENUE / TICK</span>
+                                  <span className="text-emerald-500 font-semibold">+{liveYield > 0 ? `$${liveYield.toLocaleString()}` : '$0'}/tick</span>
+                                </div>
                             </div>
 
                             {/* Latency & Satisfaction row */}
@@ -177,11 +177,11 @@ export default function MarketView() {
       <div className="col-span-1 lg:col-span-3 flex flex-col gap-gutter">
         <section className="glass-panel p-lg rounded-xl flex flex-col gap-md">
           <h3 className="font-label-sm text-label-sm text-outline uppercase tracking-widest border-b border-white/10 pb-xs">
-            Competitor Diagnostics
+            Competitor Intelligence
           </h3>
           
           <p className="font-body-md text-body-md text-outline text-xs leading-relaxed">
-            Rivals continuously optimize weight paths. Watch benchmark comparisons to maintain market share.
+            Rivals continuously upgrade their models. Watch benchmark comparisons to protect your market share.
           </p>
 
           <div className="space-y-lg mt-md">

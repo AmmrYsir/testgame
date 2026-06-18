@@ -1,61 +1,89 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useGameStore } from '../store';
 
 export default function SetupScreen() {
-  const { startGame, setCompanyDetails } = useGameStore();
+  const { startGame, setCompanyDetails, setGameStage } = useGameStore();
   const [companyName, setCompanyName] = useState('');
   const [founderName, setFounderName] = useState('');
   const [logo, setLogo] = useState('memory');
   const [color, setColor] = useState('primary');
+  const [strategy, setStrategy] = useState('aggressive');
 
   const handleLaunch = () => {
-    setCompanyDetails({ name: companyName, founder: founderName, logo, color });
+    if (!companyName.trim() || !founderName.trim()) return;
+    setCompanyDetails({ name: companyName.toUpperCase(), founder: founderName, logo, color });
     startGame();
   };
 
+  const handleAbort = useCallback(() => {
+    setGameStage('menu');
+  }, [setGameStage]);
+
+  const isValid = companyName.trim() !== '' && founderName.trim() !== '';
+
   return (
-    <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-background overflow-hidden dark">
-      <div className="absolute inset-0 z-0 bg-background"></div>
-      <div className="relative z-10 glass-panel w-full max-w-[800px] rounded-xl shadow-2xl p-lg md:p-xl flex flex-col gap-xl">
-        <div className="flex flex-col items-center text-center gap-sm">
-          <h1 className="font-headline-lg text-headline-lg text-on-surface">Create New Company</h1>
+    <div className="relative w-screen h-screen flex flex-col items-center justify-center bg-[#0d0f14] overflow-hidden dark select-none">
+      {/* Tactical Grid Background */}
+      <div className="absolute inset-0 z-0 bg-[linear-gradient(to_right,#8080800b_1px,transparent_1px),linear-gradient(to_bottom,#8080800b_1px,transparent_1px)] bg-[size:32px_32px]">
+        {/* Soft Radial Ambient Backlights */}
+        <div className="absolute top-1/4 right-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] pointer-events-none -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-1/4 left-1/4 w-[500px] h-[500px] bg-secondary/5 rounded-full blur-[120px] pointer-events-none translate-x-1/2 translate-y-1/2"></div>
+      </div>
+
+      <div className="relative z-10 bg-[#191b23]/75 backdrop-blur-2xl border border-white/10 w-full max-w-[750px] rounded-xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] p-lg md:p-xl flex flex-col gap-lg animate-slide-in mx-4">
+        {/* Header */}
+        <div className="flex flex-col items-center text-center gap-1 border-b border-white/5 pb-md">
+          <span className="font-mono text-[9px] text-primary font-bold uppercase tracking-[0.25em] block">
+            Company Setup
+          </span>
+          <h1 className="font-display-lg text-[22px] md:text-[28px] text-on-surface font-extrabold uppercase tracking-tight">
+            Create New Company
+          </h1>
         </div>
 
-        <form className="flex flex-col gap-lg w-full" onSubmit={e => { e.preventDefault(); handleLaunch(); }}>
-          <div className="flex flex-col gap-md">
-            <h2 className="font-label-md text-label-md text-primary uppercase tracking-widest border-b border-white/5 pb-sm">1. Entity Identification</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-              <div className="flex flex-col gap-xs">
-                <label className="font-label-sm text-label-sm text-on-surface-variant" htmlFor="companyName">Company Name</label>
+        <form className="flex flex-col gap-md w-full" onSubmit={e => { e.preventDefault(); handleLaunch(); }}>
+          
+          {/* Section 1: Entity Identification */}
+          <div className="space-y-sm">
+            <h2 className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> 1. Company Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-md bg-surface-container/20 p-md rounded-lg border border-white/5">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-mono text-[9px] text-outline uppercase tracking-wider" htmlFor="companyName">Company Name</label>
                 <input
                   id="companyName"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
-                  className="bg-surface-dim border border-outline-variant rounded-lg p-sm font-body-md text-body-md text-on-surface focus:border-primary transition-all outline-none"
-                  placeholder="e.g. AETHER CORP"
+                  className="bg-[#0b0e15] border border-white/10 rounded-lg p-2.5 font-sans text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  placeholder="e.g. AETHER INDUSTRIES"
                   type="text"
+                  required
                 />
               </div>
-              <div className="flex flex-col gap-xs">
-                <label className="font-label-sm text-label-sm text-on-surface-variant" htmlFor="founderName">Primary Executive (Founder)</label>
+              <div className="flex flex-col gap-1.5">
+                <label className="font-mono text-[9px] text-outline uppercase tracking-wider" htmlFor="founderName">Founder Name</label>
                 <input
                   id="founderName"
                   value={founderName}
                   onChange={(e) => setFounderName(e.target.value)}
-                  className="bg-surface-dim border border-outline-variant rounded-lg p-sm font-body-md text-body-md text-on-surface focus:border-primary transition-all outline-none"
-                  placeholder="Enter Full Name"
+                  className="bg-[#0b0e15] border border-white/10 rounded-lg p-2.5 font-sans text-sm text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none"
+                  placeholder="Your Name"
                   type="text"
+                  required
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col gap-md">
-            <h2 className="font-label-md text-label-md text-primary uppercase tracking-widest border-b border-white/5 pb-sm">2. Visual Signifier</h2>
-            <p className="font-label-sm text-label-sm text-on-surface-variant">Select a corporate logo archetype.</p>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-sm">
+          {/* Section 2: Logo archetype */}
+          <div className="space-y-sm">
+            <h2 className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> 2. Select Logo
+            </h2>
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-sm bg-surface-container/20 p-md rounded-lg border border-white/5">
               {['memory', 'blur_on', 'architecture', 'eco', 'hub', 'bolt'].map((icon) => (
-                <label key={icon} className="cursor-pointer group">
+                <label key={icon} className="cursor-pointer group relative">
                   <input
                     type="radio"
                     name="logo"
@@ -63,23 +91,27 @@ export default function SetupScreen() {
                     onChange={() => setLogo(icon)}
                     className="peer sr-only"
                   />
-                  <div className="h-16 flex items-center justify-center bg-surface-dim border border-outline-variant rounded-lg peer-checked:border-primary peer-checked:bg-primary/10 transition-colors group-hover:bg-surface-bright/50">
-                    <span className="material-symbols-outlined text-on-surface-variant peer-checked:text-primary transition-colors">{icon}</span>
+                  <div className="h-14 flex items-center justify-center bg-[#0b0e15] border border-white/10 rounded-lg peer-checked:border-primary peer-checked:bg-primary/15 transition-all group-hover:bg-white/5 peer-checked:shadow-[0_0_12px_rgba(59,130,246,0.3)]">
+                    <span className="material-symbols-outlined text-outline peer-checked:text-primary transition-colors text-xl">{icon}</span>
                   </div>
                 </label>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-            <div className="flex flex-col gap-md">
-              <h2 className="font-label-md text-label-md text-primary uppercase tracking-widest border-b border-white/5 pb-sm">3. Color Accent</h2>
-              <div className="flex gap-sm h-full items-center">
+          {/* Section 3: Accent and Strategy */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+            {/* Color Accent */}
+            <div className="space-y-sm">
+              <h2 className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> 3. Select Theme Color
+              </h2>
+              <div className="flex gap-md bg-surface-container/20 p-md rounded-lg border border-white/5 h-[62px] items-center justify-around">
                 {[
-                  { id: 'primary', bg: 'bg-primary', ring: 'peer-checked:ring-primary/50' },
-                  { id: 'secondary', bg: 'bg-secondary', ring: 'peer-checked:ring-secondary/50' },
-                  { id: 'tertiary', bg: 'bg-tertiary', ring: 'peer-checked:ring-tertiary/50' },
-                  { id: 'surface-variant', bg: 'bg-surface-variant', ring: 'peer-checked:ring-surface-variant/50' },
+                  { id: 'primary', bg: 'bg-[#3b82f6]', ring: 'peer-checked:ring-[#3b82f6]/40' },
+                  { id: 'secondary', bg: 'bg-[#10b981]', ring: 'peer-checked:ring-[#10b981]/40' },
+                  { id: 'tertiary', bg: 'bg-[#f59e0b]', ring: 'peer-checked:ring-[#f59e0b]/40' },
+                  { id: 'surface-variant', bg: 'bg-[#94a3b8]', ring: 'peer-checked:ring-[#94a3b8]/40' },
                 ].map((c) => (
                   <label key={c.id} className="cursor-pointer">
                     <input
@@ -89,34 +121,73 @@ export default function SetupScreen() {
                       onChange={() => setColor(c.id)}
                       className="peer sr-only"
                     />
-                    <div className={`w-8 h-8 rounded-full ${c.bg} border-2 border-transparent peer-checked:border-white transition-all ring-2 ring-transparent ${c.ring}`}></div>
+                    <div className={`w-8 h-8 rounded-full ${c.bg} border-2 border-transparent peer-checked:border-white transition-all ring-4 ring-transparent ${c.ring}`}></div>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="flex flex-col gap-md">
-              <h2 className="font-label-md text-label-md text-primary uppercase tracking-widest border-b border-white/5 pb-sm">4. Initial Strategy</h2>
-              <div className="bg-surface-dim border border-outline-variant rounded-lg p-xs flex relative">
-                <label className="flex-1 text-center py-sm z-10 cursor-pointer font-label-sm text-label-sm">
-                  <input defaultChecked className="peer sr-only" name="strategy" type="radio" value="aggressive" />
-                  <span className="text-on-surface-variant peer-checked:text-on-surface transition-colors">Aggressive Growth</span>
-                </label>
-                <label className="flex-1 text-center py-sm z-10 cursor-pointer font-label-sm text-label-sm">
-                  <input className="peer sr-only" name="strategy" type="radio" value="research" />
-                  <span className="text-on-surface-variant peer-checked:text-on-surface transition-colors">Sustainable Research</span>
-                </label>
+            {/* Initial Strategy */}
+            <div className="space-y-sm">
+              <h2 className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> 4. Select Initial Strategy
+              </h2>
+              <div className="bg-surface-container/20 p-sm rounded-lg border border-white/5 flex h-[62px] items-center">
+                <div className="bg-[#0b0e15] border border-white/10 rounded-lg p-1 flex w-full">
+                  <label className="flex-1 text-center py-1.5 z-10 cursor-pointer font-mono text-[9px] uppercase tracking-wider">
+                    <input 
+                      checked={strategy === 'aggressive'} 
+                      onChange={() => setStrategy('aggressive')} 
+                      className="peer sr-only" 
+                      name="strategy" 
+                      type="radio" 
+                      value="aggressive" 
+                    />
+                    <span className="text-outline peer-checked:text-primary peer-checked:font-bold transition-all px-2 block">
+                      Aggressive Growth
+                    </span>
+                  </label>
+                  <label className="flex-1 text-center py-1.5 z-10 cursor-pointer font-mono text-[9px] uppercase tracking-wider">
+                    <input 
+                      checked={strategy === 'research'} 
+                      onChange={() => setStrategy('research')} 
+                      className="peer sr-only" 
+                      name="strategy" 
+                      type="radio" 
+                      value="research" 
+                    />
+                    <span className="text-outline peer-checked:text-primary peer-checked:font-bold transition-all px-2 block">
+                      Research Hub
+                    </span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-md pt-lg border-t border-white/10 flex justify-end">
+          {/* Bottom actions */}
+          <div className="mt-md pt-md border-t border-white/5 flex justify-between items-center">
+            {/* Cancel/Abort */}
+            <button
+              type="button"
+              onClick={handleAbort}
+              className="px-5 py-2.5 rounded-lg border border-white/10 text-outline hover:text-on-surface hover:bg-white/5 font-mono text-xs uppercase tracking-wider font-bold transition-colors cursor-pointer"
+            >
+              Back
+            </button>
+
+            {/* Launch */}
             <button
               type="submit"
-              className="bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md px-lg py-sm rounded-lg transition-colors shadow-sm flex items-center gap-xs"
+              disabled={!isValid}
+              className={`px-5 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider font-bold flex items-center gap-sm transition-all border ${
+                isValid
+                  ? 'bg-[#3b82f6] text-white border-transparent hover:bg-[#2563eb] hover:shadow-[0_0_12px_rgba(59,130,246,0.4)] cursor-pointer'
+                  : 'bg-white/5 border-transparent text-outline opacity-30 cursor-not-allowed'
+              }`}
             >
-              <span className="material-symbols-outlined text-[18px]">add_business</span>
-              Found Company
+              <span className="material-symbols-outlined text-base">add_business</span>
+              <span>Start Game</span>
             </button>
           </div>
         </form>

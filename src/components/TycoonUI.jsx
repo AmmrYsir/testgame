@@ -155,8 +155,8 @@ export default function TycoonUI() {
                     return (
                       <>
                         <div className="flex justify-between text-[9px] text-outline uppercase tracking-wider font-bold">
-                          <span>Compute Allocation</span>
-                          <span>Idle: {maxAllocatable - currentAllocated} H100s</span>
+                          <span>Allocate GPUs</span>
+                          <span>Idle: {maxAllocatable - currentAllocated} GPUs</span>
                         </div>
                         
                         <div className="flex items-center gap-sm bg-surface-container-high border border-white/5 rounded-lg px-2.5 py-1.5">
@@ -175,7 +175,7 @@ export default function TycoonUI() {
 
                         <div className="flex justify-between items-center text-[10px] text-outline mt-1">
                           <span>Latency: <strong className={country.latency > 100 ? "text-error" : "text-emerald-500"}>{country.latency}ms</strong></span>
-                          <span>Req. Compute: <strong>{country.gpusRequired || 0} H100s</strong></span>
+                          <span>Required: <strong>{country.gpusRequired || 0} GPUs</strong></span>
                         </div>
                       </>
                     );
@@ -240,7 +240,7 @@ export default function TycoonUI() {
             <div className="px-md py-2 border-b border-white/5 bg-surface-container/30 flex flex-col gap-1.5 flex-none">
               <h3 className="font-label-md text-label-md text-on-surface flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]">
                 <span className="material-symbols-outlined text-[13px] text-primary animate-pulse">terminal</span>
-                Intel & Operations Logs
+                Operations Log
               </h3>
               
               <div className="flex gap-1">
@@ -319,10 +319,10 @@ export default function TycoonUI() {
           {/* FLOATING ACTION OVERLAY BUTTONS (Right Side) */}
           <div className="absolute right-6 top-6 z-20 flex flex-col gap-sm">
             {[
-              { id: 'models', label: 'Model Registry', icon: 'psychology' },
-              { id: 'infrastructure', label: 'Compute Clusters', icon: 'dns' },
-              { id: 'research', label: 'Research Lab', icon: 'science' },
-              { id: 'market', label: 'Contracts Board', icon: 'handshake' }
+              { id: 'models', label: 'Models', icon: 'psychology' },
+              { id: 'infrastructure', label: 'Hardware', icon: 'dns' },
+              { id: 'research', label: 'Research', icon: 'science' },
+              { id: 'market', label: 'Contracts', icon: 'handshake' }
             ].map(drawer => (
               <button
                 key={drawer.id}
@@ -345,10 +345,10 @@ export default function TycoonUI() {
               {/* Drawer Header */}
               <div className="flex justify-between items-center px-lg py-md border-b border-white/5 bg-surface-container/30">
                 <h3 className="font-bold text-on-surface flex items-center gap-2 text-xs uppercase tracking-wider">
-                  {activeDrawer === 'models' && <><span className="material-symbols-outlined text-primary text-base">psychology</span> Model Registry</>}
-                  {activeDrawer === 'infrastructure' && <><span className="material-symbols-outlined text-primary text-base">dns</span> Compute Clusters & Hardware</>}
-                  {activeDrawer === 'research' && <><span className="material-symbols-outlined text-primary text-base">science</span> Labs & Progressive Research</>}
-                  {activeDrawer === 'market' && <><span className="material-symbols-outlined text-primary text-base">handshake</span> Commercial Contracts Board</>}
+                  {activeDrawer === 'models' && <><span className="material-symbols-outlined text-primary text-base">psychology</span> Models</>}
+                  {activeDrawer === 'infrastructure' && <><span className="material-symbols-outlined text-primary text-base">dns</span> Hardware & Cooling</>}
+                  {activeDrawer === 'research' && <><span className="material-symbols-outlined text-primary text-base">science</span> Research Lab</>}
+                  {activeDrawer === 'market' && <><span className="material-symbols-outlined text-primary text-base">handshake</span> Contracts</>}
                 </h3>
                 <button
                   onClick={() => setActiveDrawer(null)}
@@ -377,19 +377,10 @@ export default function TycoonUI() {
 }
 
 const WorldMap = memo(function WorldMap({ countries, selectedCountryId, onClick, onMouseMove, onMouseLeave }) {
-  // Adjust SVG attributes once on mount or when svg content changes
-  useEffect(() => {
-    const container = document.getElementById('world-map-svg-container');
-    if (!container) return;
-    const svg = container.querySelector('svg');
-    if (!svg) return;
-    
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
-    svg.setAttribute('viewBox', '0 0 1010 666');
-    svg.style.maxWidth = '100%';
-    svg.style.maxHeight = '100%';
-  }, []);
+  // Pre-process raw SVG to make it fluid from the very first render (preventing size jump)
+  const processedWorldSvg = worldSvg
+    .replace('width="1009.6727"', 'viewBox="0 0 1010 666" width="100%"')
+    .replace('height="665.96301"', 'height="100%" style="max-width: 100%; max-height: 100%;"');
 
   // Update country path colors dynamically when state or selection changes
   useEffect(() => {
@@ -455,7 +446,7 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, onClick,
     <div
       id="world-map-svg-container"
       className="w-full h-full p-6 flex items-center justify-center select-none"
-      dangerouslySetInnerHTML={{ __html: worldSvg }}
+      dangerouslySetInnerHTML={{ __html: processedWorldSvg }}
       onClick={onClick}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
