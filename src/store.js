@@ -52,7 +52,8 @@ export const useGameStore = create(
   },
 
   // Active deals & training bonuses
-  activeApiLeases: [], // Array of { company, ticksLeft }
+  activeApiLeases: [], // Array of { company, type, ticksLeft }
+  activeSharedRuns: [], // Array of { company }
   sharedTrainingRunBonuses: {
     player: 0,
     google: 0,
@@ -135,6 +136,7 @@ export const useGameStore = create(
       currentTick: 0,
     },
     activeApiLeases: [],
+    activeSharedRuns: [],
     sharedTrainingRunBonuses: {
       player: 0,
       google: 0,
@@ -359,15 +361,23 @@ export const useGameStore = create(
 
         let nextApiLeases = [...(state.activeApiLeases || [])];
         if (playerRequest.apiLease) {
-          nextApiLeases.push({ company: rivalName, ticksLeft: 60 });
+          nextApiLeases.push({ company: rivalName, type: 'incoming', ticksLeft: 60 });
+        }
+        if (playerOffer.apiLease) {
+          nextApiLeases.push({ company: rivalName, type: 'outgoing', ticksLeft: 60 });
         }
 
         let nextSharedTrainingRunBonuses = { ...(state.sharedTrainingRunBonuses || { player: 0, google: 0, openai: 0, anthropic: 0 }) };
+        let nextActiveSharedRuns = [...(state.activeSharedRuns || [])];
         if (playerOffer.sharedRun || playerRequest.sharedRun) {
           nextSharedTrainingRunBonuses.player += 5;
           if (rivalName === 'Google') nextSharedTrainingRunBonuses.google += 5;
           if (rivalName === 'OpenAI') nextSharedTrainingRunBonuses.openai += 5;
           if (rivalName === 'Anthropic') nextSharedTrainingRunBonuses.anthropic += 5;
+
+          if (!nextActiveSharedRuns.some(r => r.company === rivalName)) {
+            nextActiveSharedRuns.push({ company: rivalName });
+          }
         }
 
         const currentTick = state.resources.currentTick;
@@ -383,6 +393,7 @@ export const useGameStore = create(
           },
           rivals: nextRivals,
           activeApiLeases: nextApiLeases,
+          activeSharedRuns: nextActiveSharedRuns,
           sharedTrainingRunBonuses: nextSharedTrainingRunBonuses,
           newsFeed: [{ tick: currentTick, type: 'handshake', text: dealText, iconColor: 'text-[#10b981]' }, ...state.newsFeed]
         };
@@ -899,10 +910,12 @@ export const useGameStore = create(
       .map(lease => ({ ...lease, ticksLeft: lease.ticksLeft - 1 }))
       .filter(lease => lease.ticksLeft > 0);
 
-    const speedMultiplier = nextApiLeases.length > 0 ? 1.2 : 1.0;
+    const hasIncomingLease = nextApiLeases.some(lease => lease.type === 'incoming' || !lease.type);
+    const speedMultiplier = hasIncomingLease ? 1.2 : 1.0;
     
     let playerBonusApplied = false;
     let nextSharedTrainingRunBonuses = { ...(state.sharedTrainingRunBonuses || { player: 0, google: 0, openai: 0, anthropic: 0 }) };
+    let nextActiveSharedRuns = [...(state.activeSharedRuns || [])];
 
     // 3. Train models progress
     let activeTrainingCount = 0;
@@ -979,6 +992,7 @@ export const useGameStore = create(
 
     if (playerBonusApplied) {
       nextSharedTrainingRunBonuses.player = 0;
+      nextActiveSharedRuns = [];
     }
 
     // 4. Released models economics, user adoption, required compute, and billing revenue
@@ -1424,6 +1438,7 @@ export const useGameStore = create(
       },
       rivals: nextRivals,
       activeApiLeases: nextApiLeases,
+      activeSharedRuns: nextActiveSharedRuns,
       sharedTrainingRunBonuses: nextSharedTrainingRunBonuses,
       infrastructure: {
         ...state.infrastructure,

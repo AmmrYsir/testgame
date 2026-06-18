@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store';
 
 export default function CompanyModal({ isOpen, onClose }) {
-  const { company, rivals, countries, llms, resources, executeDeal } = useGameStore();
+  const { company, rivals, countries, llms, resources, executeDeal, activeApiLeases, activeSharedRuns } = useGameStore();
   const [selectedTab, setSelectedTab] = useState('player'); // 'player', 'google', 'openai', 'anthropic'
 
   // Deal Modal State
@@ -314,31 +314,7 @@ export default function CompanyModal({ isOpen, onClose }) {
                       </div>
 
                       {/* Dynamic Content: Benchmarks for Player, Action Panel for Rivals */}
-                      {isPlayer ? (
-                        /* Player Benchmarks view */
-                        <div className="space-y-md border-t border-white/5 pt-sm">
-                          <h3 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[10px]">Model Capability Benchmarks</h3>
-                          <div className="space-y-3">
-                            {Object.entries(playerStats).map(([stat, val]) => (
-                              <div key={stat} className="space-y-1">
-                                <div className="flex justify-between text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
-                                  <span className="text-[10px]">{stat}</span>
-                                  <span className="font-bold text-primary">{val} / 100</span>
-                                </div>
-                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                  <div 
-                                    className="h-full rounded-full" 
-                                    style={{ 
-                                      width: `${val}%`, 
-                                      background: `linear-gradient(to right, #3b82f6cc, #3b82f6)` 
-                                    }}
-                                  ></div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
+                      {isPlayer ? null : (
                         /* Rivals Action Panel: Request For Deal */
                         <div className="space-y-md border-t border-white/5 pt-sm">
                           <h3 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[10px]">Commercial Relations</h3>
@@ -355,6 +331,58 @@ export default function CompanyModal({ isOpen, onClose }) {
                               Request For Deal
                             </button>
                           </div>
+
+                          {/* Active Agreements section */}
+                          {(() => {
+                            const rivalApiLeases = (activeApiLeases || []).filter(l => l.company === name);
+                            const rivalSharedRuns = (activeSharedRuns || []).filter(r => r.company === name);
+                            const hasActiveAgreements = rivalApiLeases.length > 0 || rivalSharedRuns.length > 0;
+                            if (!hasActiveAgreements) return null;
+                            return (
+                              <div className="mt-md space-y-sm bg-[#12151c]/40 p-md rounded-xl border border-white/5">
+                                <h4 className="font-bold text-[10px] text-on-surface uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1.5">
+                                  <span className="material-symbols-outlined text-sm text-[#10b981]">verified_user</span>
+                                  Active Agreements ({rivalApiLeases.length + rivalSharedRuns.length})
+                                </h4>
+                                <div className="space-y-2">
+                                  {rivalApiLeases.map((lease, idx) => (
+                                    <div key={`lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
+                                      <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[#10b981] text-md">
+                                          {lease.type === 'outgoing' ? 'upload' : 'download'}
+                                        </span>
+                                        <div>
+                                          <span className="font-semibold text-on-surface block">
+                                            {lease.type === 'outgoing' ? 'Model API Leased to Them' : 'Lease Model API Access'}
+                                          </span>
+                                          <span className="text-[9px] text-outline">
+                                            {lease.type === 'outgoing' ? 'Outbound API Funnel' : 'Inbound Training speed (+20%)'}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <span className="font-mono text-outline bg-white/5 px-2 py-0.5 rounded text-[10px]">
+                                        {lease.ticksLeft} days left
+                                      </span>
+                                    </div>
+                                  ))}
+                                  {rivalSharedRuns.map((run, idx) => (
+                                    <div key={`run-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
+                                      <div className="flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary text-md">sync</span>
+                                        <div>
+                                          <span className="font-semibold text-on-surface block">Shared Training Run</span>
+                                          <span className="text-[9px] text-outline">Co-training compute pool</span>
+                                        </div>
+                                      </div>
+                                      <span className="font-mono text-primary font-bold bg-primary/10 px-2 py-0.5 rounded text-[10px] uppercase animate-pulse">
+                                        Pending next training
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
                     </>
