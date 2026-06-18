@@ -1,17 +1,37 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../store';
 
+const colorMap = {
+  primary: '#3b82f6',
+  secondary: '#10b981',
+  tertiary: '#f59e0b',
+  'surface-variant': '#94a3b8'
+};
+
+const strategyCashMap = {
+  bootstrapped: 5000000,
+  corporate: 10000000,
+  vc: 25000000
+};
+
 export default function SetupScreen() {
-  const { startGame, setCompanyDetails, setGameStage } = useGameStore();
+  const { startGame, setCompanyDetails, setGameStage, setStartingCash } = useGameStore();
   const [companyName, setCompanyName] = useState('');
   const [founderName, setFounderName] = useState('');
   const [logo, setLogo] = useState('memory');
   const [color, setColor] = useState('primary');
-  const [strategy, setStrategy] = useState('aggressive');
+  const [strategy, setStrategy] = useState('corporate');
 
   const handleLaunch = () => {
     if (!companyName.trim() || !founderName.trim()) return;
-    setCompanyDetails({ name: companyName.toUpperCase(), founder: founderName, logo, color });
+    const startingCash = strategyCashMap[strategy] || 10000000;
+    setCompanyDetails({ 
+      name: companyName.toUpperCase(), 
+      founder: founderName, 
+      logo, 
+      color: colorMap[color] || '#3b82f6' 
+    });
+    setStartingCash(startingCash);
     startGame();
   };
 
@@ -42,6 +62,37 @@ export default function SetupScreen() {
         </div>
 
         <form className="flex flex-col gap-md w-full" onSubmit={e => { e.preventDefault(); handleLaunch(); }}>
+          
+          {/* Live Logo/Identity Preview Card */}
+          <div className="bg-[#0b0e15]/60 border border-white/5 rounded-xl p-md flex items-center gap-md select-none animate-fade-in">
+            <div 
+              className="w-14 h-14 rounded-xl flex items-center justify-center border transition-all duration-300 shadow-[0_0_20px_rgba(0,0,0,0.3)]"
+              style={{ 
+                backgroundColor: `${colorMap[color]}15`, 
+                borderColor: `${colorMap[color]}40`,
+                boxShadow: `0 0 15px ${colorMap[color]}15`
+              }}
+            >
+              <span 
+                className="material-symbols-outlined text-2xl transition-all duration-300"
+                style={{ color: colorMap[color] }}
+              >
+                {logo}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-outline font-semibold">Corporate Identity Preview</span>
+              <h3 
+                className="font-display-md text-base font-bold uppercase truncate tracking-wide transition-all duration-300 mt-0.5"
+                style={{ color: companyName.trim() ? '#ffffff' : 'rgba(255,255,255,0.2)' }}
+              >
+                {companyName.trim() ? companyName : 'Your Company Name'}
+              </h3>
+              <p className="font-mono text-[9px] text-outline mt-0.5 truncate">
+                Founder: <span className="text-on-surface/80">{founderName.trim() ? founderName : '---'}</span>
+              </p>
+            </div>
+          </div>
           
           {/* Section 1: Entity Identification */}
           <div className="space-y-sm">
@@ -130,36 +181,30 @@ export default function SetupScreen() {
             {/* Initial Strategy */}
             <div className="space-y-sm">
               <h2 className="font-mono text-[10px] text-primary uppercase tracking-widest font-bold flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> 4. Select Initial Strategy
+                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> 4. Select Funding Strategy
               </h2>
               <div className="bg-surface-container/20 p-sm rounded-lg border border-white/5 flex h-[62px] items-center">
-                <div className="bg-[#0b0e15] border border-white/10 rounded-lg p-1 flex w-full">
-                  <label className="flex-1 text-center py-1.5 z-10 cursor-pointer font-mono text-[9px] uppercase tracking-wider">
-                    <input 
-                      checked={strategy === 'aggressive'} 
-                      onChange={() => setStrategy('aggressive')} 
-                      className="peer sr-only" 
-                      name="strategy" 
-                      type="radio" 
-                      value="aggressive" 
-                    />
-                    <span className="text-outline peer-checked:text-primary peer-checked:font-bold transition-all px-2 block">
-                      Aggressive Growth
-                    </span>
-                  </label>
-                  <label className="flex-1 text-center py-1.5 z-10 cursor-pointer font-mono text-[9px] uppercase tracking-wider">
-                    <input 
-                      checked={strategy === 'research'} 
-                      onChange={() => setStrategy('research')} 
-                      className="peer sr-only" 
-                      name="strategy" 
-                      type="radio" 
-                      value="research" 
-                    />
-                    <span className="text-outline peer-checked:text-primary peer-checked:font-bold transition-all px-2 block">
-                      Research Hub
-                    </span>
-                  </label>
+                <div className="bg-[#0b0e15] border border-white/10 rounded-lg p-0.5 flex w-full gap-0.5">
+                  {[
+                    { id: 'bootstrapped', label: 'Bootstrapped', desc: '5 Million' },
+                    { id: 'corporate', label: 'Corporate Backed', desc: '10 Million' },
+                    { id: 'vc', label: 'VC Funded', desc: '25 Million' }
+                  ].map((opt) => (
+                    <label key={opt.id} className="flex-1 text-center py-1 z-10 cursor-pointer font-mono text-[8px] uppercase tracking-wider">
+                      <input 
+                        checked={strategy === opt.id} 
+                        onChange={() => setStrategy(opt.id)} 
+                        className="peer sr-only" 
+                        name="strategy" 
+                        type="radio" 
+                        value={opt.id} 
+                      />
+                      <span className="text-outline peer-checked:text-primary peer-checked:font-bold transition-all px-1 block py-0.5 bg-transparent peer-checked:bg-primary/10 rounded-md">
+                        {opt.label}
+                        <span className="block text-[7px] text-outline-variant font-semibold mt-0.5">{opt.desc}</span>
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
             </div>

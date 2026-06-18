@@ -281,6 +281,13 @@ export const useGameStore = create(
     company: { ...state.company, ...details }
   })),
 
+  setStartingCash: (amount) => set((state) => ({
+    resources: {
+      ...state.resources,
+      cash: amount
+    }
+  })),
+
   setSimulationSpeed: (speed) => set((state) => {
     const isZero = speed === 0;
     return { 
