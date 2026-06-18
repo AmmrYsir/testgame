@@ -83,9 +83,58 @@ export const useGameStore = create(
 
   // Rivals
   rivals: [
-    { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, cash: 30000000, compute: 8500, data: 1200, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
-    { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, cash: 15000000, compute: 6000, data: 500, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
-    { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, cash: 8000000, compute: 3500, data: 300, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+    { 
+      name: 'Google', 
+      bestModel: 'PaLM 1.0', 
+      share: 30, 
+      color: '#4285F4', 
+      logo: 'search', 
+      yearEst: 1998, 
+      active: true, 
+      cash: 30000000, 
+      compute: 8500, 
+      data: 1200, 
+      stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 },
+      models: [
+        { name: 'BERT-Large', stats: { knowledge: 15, coding: 5, math: 5, creativity: 10, hallucination: 60 } },
+        { name: 'T5-XXL', stats: { knowledge: 25, coding: 10, math: 15, creativity: 20, hallucination: 45 } },
+        { name: 'PaLM 1.0', stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } }
+      ]
+    },
+    { 
+      name: 'OpenAI', 
+      bestModel: 'GPT 3.0', 
+      share: 60, 
+      color: '#ea580c', 
+      logo: 'smart_toy', 
+      yearEst: 2015, 
+      active: true, 
+      cash: 15000000, 
+      compute: 6000, 
+      data: 500, 
+      stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 },
+      models: [
+        { name: 'GPT 2.0', stats: { knowledge: 20, coding: 10, math: 5, creativity: 25, hallucination: 50 } },
+        { name: 'GPT 3.0', stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } }
+      ]
+    },
+    { 
+      name: 'Anthropic', 
+      bestModel: 'Claude 1.0', 
+      share: 0, 
+      color: '#a78bfa', 
+      logo: 'radar', 
+      yearEst: 2021, 
+      active: false, 
+      cash: 8000000, 
+      compute: 3500, 
+      data: 300, 
+      stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 },
+      models: [
+        { name: 'Claude Instant', stats: { knowledge: 30, coding: 20, math: 15, creativity: 35, hallucination: 40 } },
+        { name: 'Claude 1.0', stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+      ]
+    }
   ],
 
   // Mailbox System
@@ -148,9 +197,58 @@ export const useGameStore = create(
       { id: 'c2', client: 'EduLearn Inc', requirement: { stat: 'knowledge', value: 45 }, rewardPerTick: 7500, duration: 180, timeLeft: 180, activeModelId: null }
     ],
     rivals: [
-      { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, cash: 30000000, compute: 8500, data: 1200, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
-      { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, cash: 15000000, compute: 6000, data: 500, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
-      { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, cash: 8000000, compute: 3500, data: 300, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+      { 
+        name: 'Google', 
+        bestModel: 'PaLM 1.0', 
+        share: 30, 
+        color: '#4285F4', 
+        logo: 'search', 
+        yearEst: 1998, 
+        active: true, 
+        cash: 30000000, 
+        compute: 8500, 
+        data: 1200, 
+        stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 },
+        models: [
+          { name: 'BERT-Large', stats: { knowledge: 15, coding: 5, math: 5, creativity: 10, hallucination: 60 } },
+          { name: 'T5-XXL', stats: { knowledge: 25, coding: 10, math: 15, creativity: 20, hallucination: 45 } },
+          { name: 'PaLM 1.0', stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } }
+        ]
+      },
+      { 
+        name: 'OpenAI', 
+        bestModel: 'GPT 3.0', 
+        share: 60, 
+        color: '#ea580c', 
+        logo: 'smart_toy', 
+        yearEst: 2015, 
+        active: true, 
+        cash: 15000000, 
+        compute: 6000, 
+        data: 500, 
+        stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 },
+        models: [
+          { name: 'GPT 2.0', stats: { knowledge: 20, coding: 10, math: 5, creativity: 25, hallucination: 50 } },
+          { name: 'GPT 3.0', stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } }
+        ]
+      },
+      { 
+        name: 'Anthropic', 
+        bestModel: 'Claude 1.0', 
+        share: 0, 
+        color: '#a78bfa', 
+        logo: 'radar', 
+        yearEst: 2021, 
+        active: false, 
+        cash: 8000000, 
+        compute: 3500, 
+        data: 300, 
+        stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 },
+        models: [
+          { name: 'Claude Instant', stats: { knowledge: 30, coding: 20, math: 15, creativity: 35, hallucination: 40 } },
+          { name: 'Claude 1.0', stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+        ]
+      }
     ],
     emails: [
       {
@@ -1280,24 +1378,23 @@ export const useGameStore = create(
       
       const upgradedRivals = nextRivals.map((r, i) => {
         if (i === randomRivalIdx) {
-          const rNameLower = r.name.toLowerCase();
-          const rBonus = nextSharedTrainingRunBonuses[rNameLower] || 0;
-          if (rBonus > 0) {
-            nextSharedTrainingRunBonuses[rNameLower] = 0; // Reset
-          }
-          const nextVal = Math.min(99, r.stats[statName] + 5 + rBonus);
+          const nextVal = Math.min(99, r.stats[statName] + 5);
           const nextModelVer = parseFloat(r.bestModel.split(' ')[1] || '4.0') + 0.5;
+          const nextModelName = `${r.name === 'OpenAI' ? 'GPT' : r.name === 'Google' ? 'Gemini' : 'Claude'} ${nextModelVer.toFixed(1)}`;
+          const nextStats = {
+            ...r.stats,
+            [statName]: nextVal
+          };
+          const nextModels = [
+            ...(r.models || []),
+            { name: nextModelName, stats: nextStats }
+          ];
+
           return {
             ...r,
-            bestModel: `${r.name === 'OpenAI' ? 'GPT' : r.name === 'Google' ? 'Gemini' : 'Claude'} ${nextModelVer.toFixed(1)}`,
-            stats: { 
-              ...r.stats, 
-              [statName]: nextVal,
-              knowledge: Math.min(99, r.stats.knowledge + (statName === 'knowledge' ? 0 : rBonus)),
-              coding: Math.min(99, r.stats.coding + (statName === 'coding' ? 0 : rBonus)),
-              math: Math.min(99, r.stats.math + (statName === 'math' ? 0 : rBonus)),
-              creativity: Math.min(99, r.stats.creativity + (statName === 'creativity' ? 0 : rBonus))
-            },
+            bestModel: nextModelName,
+            stats: nextStats,
+            models: nextModels,
             share: Math.min(70, r.share + 2)
           };
         } else {

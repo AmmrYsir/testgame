@@ -26,6 +26,10 @@ export default function CompanyModal({ isOpen, onClose }) {
 
   const [dealFeedback, setDealFeedback] = useState(null); // { dealStatus: 'accepted'|'declined'|'error', dealMessage: '' }
 
+  // Models Catalog Modal State
+  const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
+  const [catalogCompany, setCatalogCompany] = useState(null);
+
   if (!isOpen) return null;
 
   // Find HQ Country Name
@@ -319,6 +323,19 @@ export default function CompanyModal({ isOpen, onClose }) {
                           <span className="text-[9px] text-outline block uppercase tracking-wider">Flagship Model</span>
                           <span className="font-bold text-sm text-on-surface truncate block" title={flagshipVal}>{flagshipVal}</span>
                         </div>
+                      </div>
+
+                      <div className="flex justify-end mt-2">
+                        <button
+                          onClick={() => {
+                            setCatalogCompany(isPlayer ? 'player' : name);
+                            setIsCatalogModalOpen(true);
+                          }}
+                          className="px-4 py-1.5 rounded-lg border border-white/10 bg-[#12151c]/60 hover:bg-[#12151c]/90 text-on-surface text-xs font-semibold font-mono uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 hover:border-white/20 hover:shadow-[0_0_12px_rgba(255,255,255,0.05)]"
+                        >
+                          <span className="material-symbols-outlined text-sm">visibility</span>
+                          View Released Models
+                        </button>
                       </div>
 
                       {/* Dynamic Content: Benchmarks for Player, Action Panel for Rivals */}
@@ -761,6 +778,111 @@ export default function CompanyModal({ isOpen, onClose }) {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* NESTED MODELS CATALOG MODAL */}
+      {isCatalogModalOpen && catalogCompany && (
+        <div className="fixed inset-0 bg-background/90 backdrop-blur-lg flex items-center justify-center z-[120] p-6 animate-fade-in text-left">
+          <div className="glass-panel w-full max-w-[650px] rounded-xl flex flex-col overflow-hidden shadow-2xl border border-white/10 bg-[#161a24] p-lg gap-md relative">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center border-b border-white/10 pb-md">
+              <h3 className="font-bold text-md text-on-surface uppercase tracking-wider flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">visibility</span>
+                Models Catalogue: {catalogCompany === 'player' ? company.name || 'Your Corporation' : catalogCompany}
+              </h3>
+              <button
+                onClick={() => setIsCatalogModalOpen(false)}
+                className="text-outline hover:text-on-surface transition-colors p-1 flex items-center justify-center rounded-lg hover:bg-white/5"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Models List Scrollable Container */}
+            <div className="space-y-md overflow-y-auto max-h-[450px] pr-2 mt-sm">
+              {(() => {
+                let companyModels = [];
+                if (catalogCompany === 'player') {
+                  companyModels = llms
+                    .filter(m => m.status === 'released')
+                    .map(m => ({
+                      name: `${m.name} v${m.version.toFixed(1)}`,
+                      stats: m.stats,
+                      isPlayerModel: true,
+                      releaseType: m.releaseType
+                    }));
+                } else {
+                  const targetRival = rivals.find(r => r.name === catalogCompany);
+                  companyModels = (targetRival?.models || []).map(m => ({
+                    name: m.name,
+                    stats: m.stats,
+                    isPlayerModel: false
+                  }));
+                }
+
+                if (companyModels.length === 0) {
+                  return (
+                    <div className="py-8 text-center text-xs text-outline border border-dashed border-white/10 rounded-lg">
+                      No released models found for this company.
+                    </div>
+                  );
+                }
+
+                // Sort models in reverse order so newest are on top
+                return companyModels.slice().reverse().map((model, index) => (
+                  <div key={index} className="bg-[#12151c]/60 p-md rounded-xl border border-white/5 space-y-sm">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                      <span className="font-bold text-xs text-on-surface uppercase tracking-wider font-mono flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                        {model.name}
+                      </span>
+                      {model.isPlayerModel && (
+                        <span className="text-[9px] font-bold font-mono text-[#10b981] bg-[#10b981]/15 px-2 py-0.5 rounded uppercase">
+                          {model.releaseType || 'Commercial'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Stats bar grid */}
+                    <div className="grid grid-cols-2 gap-x-lg gap-y-2 pt-1">
+                      {Object.entries(model.stats || {}).map(([stat, val]) => (
+                        <div key={stat} className="space-y-1">
+                          <div className="flex justify-between text-[10px] font-mono uppercase tracking-wider text-outline">
+                            <span>{stat}</span>
+                            <span className="font-bold text-on-surface">{val}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                            <div 
+                              className="h-full rounded-full" 
+                              style={{ 
+                                width: `${val}%`, 
+                                background: stat === 'hallucination' 
+                                  ? 'linear-gradient(to right, #ef4444, #f87171)' 
+                                  : 'linear-gradient(to right, #3b82f6, #60a5fa)' 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end border-t border-white/10 pt-md mt-sm">
+              <button
+                onClick={() => setIsCatalogModalOpen(false)}
+                className="px-5 py-2 rounded-lg font-mono text-xs uppercase tracking-wider font-bold transition-all border border-white/10 bg-white/5 hover:bg-white/10 text-on-surface cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+            
           </div>
         </div>
       )}
