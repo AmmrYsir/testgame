@@ -20,6 +20,7 @@ export default function TycoonUI() {
     deployModelToCountry, 
     allocateGpusToCountry,
     company,
+    rivals,
     establishHq
   } = useGameStore();
 
@@ -55,7 +56,8 @@ export default function TycoonUI() {
         name: title,
         playerShare: countryState ? countryState.playerShare : 0,
         openaiShare: countryState ? countryState.openaiShare : 60,
-        anthropicShare: countryState ? countryState.anthropicShare : 40,
+        googleShare: countryState ? (countryState.googleShare || 0) : 40,
+        anthropicShare: countryState ? countryState.anthropicShare : 0,
         x: e.clientX - rect.left + 15,
         y: e.clientY - rect.top + 15
       });
@@ -151,31 +153,26 @@ export default function TycoonUI() {
                         </div>
                       </div>
 
-                      {/* OpenAI */}
-                      <div className="space-y-0.5">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-outline flex items-center gap-1 text-[10px]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span> OpenAI
-                          </span>
-                          <span className="text-outline font-semibold text-[11px]">{country.openaiShare}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${country.openaiShare}%` }}></div>
-                        </div>
-                      </div>
-
-                      {/* Anthropic */}
-                      <div className="space-y-0.5">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-outline flex items-center gap-1 text-[10px]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Anthropic
-                          </span>
-                          <span className="text-outline font-semibold text-[11px]">{country.anthropicShare}%</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${country.anthropicShare}%` }}></div>
-                        </div>
-                      </div>
+                      {/* Rivals */}
+                      {rivals.map(rival => {
+                        const shareKey = `${rival.name.toLowerCase()}Share`;
+                        const share = country[shareKey] || 0;
+                        if (rival.name === 'Anthropic' && share <= 0) return null;
+                        
+                        return (
+                          <div key={rival.name} className="space-y-0.5 animate-fade-in">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-outline flex items-center gap-1 text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: rival.color }}></span> {rival.name}
+                              </span>
+                              <span className="text-outline font-semibold text-[11px]">{share}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${share}%`, backgroundColor: rival.color }}></div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </>
@@ -203,8 +200,16 @@ export default function TycoonUI() {
               <span className="font-bold text-on-surface">{hoveredCountry.name}</span>
               <div className="flex flex-col gap-0.5 font-mono text-[9px] mt-0.5">
                 <span className="text-primary font-bold">Player Share: {hoveredCountry.playerShare}%</span>
-                <span className="text-orange-400">OpenAI Share: {hoveredCountry.openaiShare}%</span>
-                <span className="text-purple-400">Anthropic Share: {hoveredCountry.anthropicShare}%</span>
+                {rivals.map(rival => {
+                  const shareKey = `${rival.name.toLowerCase()}Share`;
+                  const share = hoveredCountry[shareKey] || 0;
+                  if (rival.name === 'Anthropic' && share <= 0) return null;
+                  return (
+                    <span key={rival.name} style={{ color: rival.color }}>
+                      {rival.name} Share: {share}%
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}

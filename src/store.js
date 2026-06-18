@@ -12,16 +12,16 @@ export const formatDateFromTick = (tick) => {
 };
 
 export const INITIAL_COUNTRIES = {
-  US: { name: 'United States', demand: 25000, playerShare: 0, openaiShare: 60, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  CN: { name: 'China', demand: 30000, playerShare: 0, openaiShare: 70, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  JP: { name: 'Japan', demand: 12000, playerShare: 0, openaiShare: 65, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  DE: { name: 'Germany', demand: 10000, playerShare: 0, openaiShare: 62, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  GB: { name: 'United Kingdom', demand: 9000, playerShare: 0, openaiShare: 63, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  FR: { name: 'France', demand: 8000, playerShare: 0, openaiShare: 64, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  IN: { name: 'India', demand: 20000, playerShare: 0, openaiShare: 68, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  BR: { name: 'Brazil', demand: 7000, playerShare: 0, openaiShare: 66, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  CA: { name: 'Canada', demand: 6000, playerShare: 0, openaiShare: 58, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  AU: { name: 'Australia', demand: 5000, playerShare: 0, openaiShare: 59, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 }
+  US: { name: 'United States', demand: 25000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  CN: { name: 'China', demand: 30000, playerShare: 0, openaiShare: 65, googleShare: 35, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  JP: { name: 'Japan', demand: 12000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  DE: { name: 'Germany', demand: 10000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  GB: { name: 'United Kingdom', demand: 9000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  FR: { name: 'France', demand: 8000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  IN: { name: 'India', demand: 20000, playerShare: 0, openaiShare: 65, googleShare: 35, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  BR: { name: 'Brazil', demand: 7000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  CA: { name: 'Canada', demand: 6000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  AU: { name: 'Australia', demand: 5000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 }
 };
 
 export const useGameStore = create(
@@ -78,8 +78,9 @@ export const useGameStore = create(
 
   // Rivals
   rivals: [
-    { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
-    { name: 'Anthropic', bestModel: 'Claude 1.0', share: 30, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+    { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
+    { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
+    { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
   ],
 
   // Mailbox System
@@ -88,7 +89,7 @@ export const useGameStore = create(
       id: 'welcome_email',
       sender: 'Corporate Board',
       subject: 'Founders Memo: Welcome to the AI Race',
-      body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from OpenAI and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
+      body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from Google, OpenAI, and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
       tick: 0,
       read: false,
       reward: null,
@@ -139,15 +140,16 @@ export const useGameStore = create(
       { id: 'c2', client: 'EduLearn Inc', requirement: { stat: 'knowledge', value: 45 }, rewardPerTick: 7500, duration: 180, timeLeft: 180, activeModelId: null }
     ],
     rivals: [
-      { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
-      { name: 'Anthropic', bestModel: 'Claude 1.0', share: 30, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+      { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
+      { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
+      { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
     ],
     emails: [
       {
         id: 'welcome_email',
         sender: 'Corporate Board',
         subject: 'Founders Memo: Welcome to the AI Race',
-        body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from OpenAI and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
+        body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from Google, OpenAI, and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
         tick: 0,
         read: false,
         reward: null,
@@ -573,8 +575,21 @@ export const useGameStore = create(
   initCountry: (id, name) => set((state) => {
     if (state.countries[id]) return {};
     const demand = Math.floor(Math.random() * 8000) + 2000;
-    const openaiShare = Math.floor(Math.random() * 20) + 50; // 50-70
-    const anthropicShare = 100 - openaiShare;
+    
+    const anthropicRival = state.rivals.find(r => r.name === 'Anthropic');
+    const isAnthropicActive = anthropicRival ? anthropicRival.active : false;
+
+    let openaiShare = Math.floor(Math.random() * 15) + 45; // 45-60
+    let googleShare = 100 - openaiShare;
+    let anthropicShare = 0;
+
+    if (isAnthropicActive) {
+      anthropicShare = Math.floor(Math.random() * 15) + 15; // 15-30
+      const totalRival = openaiShare + googleShare;
+      openaiShare = (openaiShare / totalRival) * (100 - anthropicShare);
+      googleShare = (googleShare / totalRival) * (100 - anthropicShare);
+    }
+
     return {
       countries: {
         ...state.countries,
@@ -582,8 +597,9 @@ export const useGameStore = create(
           name: name || id,
           demand,
           playerShare: 0,
-          openaiShare,
-          anthropicShare,
+          openaiShare: parseFloat(openaiShare.toFixed(2)),
+          googleShare: parseFloat(googleShare.toFixed(2)),
+          anthropicShare: parseFloat(anthropicShare.toFixed(2)),
           allocatedGpus: 0,
           deployedModelId: null,
           latency: 10,
@@ -646,6 +662,39 @@ export const useGameStore = create(
     let nextUnlockedTech = [...state.research.unlockedTech];
     let nextNewsFeed = [...state.newsFeed];
     let nextEmails = [...state.emails];
+    let nextRivals = [...state.rivals];
+
+    const startDate = new Date(2020, 0, 1);
+    const currentDate = new Date(startDate.getTime() + currentTick * 24 * 60 * 60 * 1000);
+    const currentYear = currentDate.getFullYear();
+
+    const anthropicIndex = nextRivals.findIndex(r => r.name === 'Anthropic');
+    let anthropicJustActivated = false;
+    if (anthropicIndex !== -1 && !nextRivals[anthropicIndex].active && currentYear >= 2021) {
+      anthropicJustActivated = true;
+      nextRivals[anthropicIndex] = {
+        ...nextRivals[anthropicIndex],
+        active: true
+      };
+
+      nextNewsFeed = [{
+        tick: currentTick,
+        type: 'public',
+        text: "INDUSTRY ALERT: Anthropic has been established by former researchers. They enter the market with Claude 1.0!",
+        iconColor: 'text-purple-400'
+      }, ...nextNewsFeed];
+
+      nextEmails = [{
+        id: 'rival_anthropic_' + Date.now().toString(),
+        sender: 'AI Market Intelligence',
+        subject: 'New Competitor Detected: Anthropic',
+        body: `Industry Alert:\n\nAnthropic has been officially founded. Led by former senior researchers, they are entering the market with a strong focus on alignment and safety.\n\nThey have deployed their Claude 1.0 model, which is highly competitive in reasoning, coding, and safety benchmarks. We must step up our own research to maintain competitiveness.`,
+        tick: currentTick,
+        read: false,
+        reward: null,
+        claimed: false
+      }, ...nextEmails];
+    }
 
     if (nextActiveResearch) {
       cashChange -= nextActiveResearch.fundingPerTick;
@@ -758,7 +807,20 @@ export const useGameStore = create(
     for (const [cid, country] of Object.entries(state.countries)) {
       let playerShare = country.playerShare || 0;
       let openaiShare = country.openaiShare || 0;
+      let googleShare = country.googleShare || 0;
       let anthropicShare = country.anthropicShare || 0;
+
+      if (anthropicJustActivated) {
+        anthropicShare = 15;
+        const totalRival = openaiShare + googleShare;
+        if (totalRival > 0) {
+          openaiShare = (openaiShare / totalRival) * (100 - playerShare - anthropicShare);
+          googleShare = (googleShare / totalRival) * (100 - playerShare - anthropicShare);
+        } else {
+          openaiShare = (100 - playerShare - anthropicShare) * 0.6;
+          googleShare = (100 - playerShare - anthropicShare) * 0.4;
+        }
+      }
       let latency = country.latency || 10;
       let satisfaction = country.satisfaction || 100;
       let playerUsers = 0;
@@ -811,13 +873,15 @@ export const useGameStore = create(
         playerShare = Math.max(0, Math.min(100, playerShare + shareChange));
         
         // Normalize rival shares to fill the rest
-        const totalRivalShare = openaiShare + anthropicShare;
+        const totalRivalShare = openaiShare + googleShare + anthropicShare;
         if (totalRivalShare > 0) {
           openaiShare = (openaiShare / totalRivalShare) * (100 - playerShare);
+          googleShare = (googleShare / totalRivalShare) * (100 - playerShare);
           anthropicShare = (anthropicShare / totalRivalShare) * (100 - playerShare);
         } else {
-          openaiShare = (100 - playerShare) * 0.67;
-          anthropicShare = (100 - playerShare) * 0.33;
+          openaiShare = (100 - playerShare) * 0.4;
+          googleShare = (100 - playerShare) * 0.4;
+          anthropicShare = (100 - playerShare) * 0.2;
         }
 
         playerUsers = Math.round(country.demand * (playerShare / 100));
@@ -852,13 +916,15 @@ export const useGameStore = create(
       } else {
         // Decay player share if no model deployed
         playerShare = Math.max(0, playerShare - 2);
-        const totalRivalShare = openaiShare + anthropicShare;
+        const totalRivalShare = openaiShare + googleShare + anthropicShare;
         if (totalRivalShare > 0) {
           openaiShare = (openaiShare / totalRivalShare) * (100 - playerShare);
+          googleShare = (googleShare / totalRivalShare) * (100 - playerShare);
           anthropicShare = (anthropicShare / totalRivalShare) * (100 - playerShare);
         } else {
-          openaiShare = (100 - playerShare) * 0.67;
-          anthropicShare = (100 - playerShare) * 0.33;
+          openaiShare = (100 - playerShare) * 0.4;
+          googleShare = (100 - playerShare) * 0.4;
+          anthropicShare = (100 - playerShare) * 0.2;
         }
         playerUsers = 0;
         gpusRequired = 0;
@@ -870,6 +936,7 @@ export const useGameStore = create(
         ...country,
         playerShare: parseFloat(playerShare.toFixed(2)),
         openaiShare: parseFloat(openaiShare.toFixed(2)),
+        googleShare: parseFloat(googleShare.toFixed(2)),
         anthropicShare: parseFloat(anthropicShare.toFixed(2)),
         playerUsers,
         gpusRequired,
@@ -1009,7 +1076,6 @@ export const useGameStore = create(
     }
 
     // 7. Rivals releases & Dynamic Price Adjustments
-    let nextRivals = state.rivals;
     if (currentTick > 0 && currentTick % 120 === 0) {
       // Rival upgrades their model!
       const randomRivalIdx = Math.floor(Math.random() * nextRivals.length);
@@ -1023,7 +1089,7 @@ export const useGameStore = create(
           const nextModelVer = parseFloat(r.bestModel.split(' ')[1] || '4.0') + 0.5;
           return {
             ...r,
-            bestModel: `${r.name === 'OpenAI' ? 'GPT' : 'Claude'} ${nextModelVer.toFixed(1)}`,
+            bestModel: `${r.name === 'OpenAI' ? 'GPT' : r.name === 'Google' ? 'Gemini' : 'Claude'} ${nextModelVer.toFixed(1)}`,
             stats: { ...r.stats, [statName]: nextVal },
             share: Math.min(70, r.share + 2)
           };
@@ -1127,6 +1193,7 @@ export const useGameStore = create(
         hype: nextHype,
         currentTick
       },
+      rivals: nextRivals,
       infrastructure: {
         ...state.infrastructure,
         serverHeat: currentHeat
@@ -1139,7 +1206,6 @@ export const useGameStore = create(
         unlockedTech: nextUnlockedTech
       },
       marketContracts: nextContracts,
-      rivals: nextRivals,
       emails: nextEmails,
       milestones: nextMilestones,
       newsFeed: nextNewsFeed

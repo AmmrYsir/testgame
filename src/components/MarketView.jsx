@@ -154,7 +154,7 @@ export default function MarketView() {
                     Rival benchmarks ({segment.labels[0]} & {segment.labels[1]})
                   </span>
                   <div className="space-y-1">
-                    {rivals.map((rival, idx) => {
+                    {rivals.filter(r => r.active !== false).map((rival, idx) => {
                       const rivalRating = (rival.stats[segment.stats[0]] + rival.stats[segment.stats[1]]) / 2;
                       const rivalPenalty = rival.stats.hallucination * 1.5;
                       const rivalScore = Math.max(5, rivalRating - rivalPenalty).toFixed(0);
@@ -185,25 +185,38 @@ export default function MarketView() {
           </p>
 
           <div className="space-y-lg mt-md">
-            {rivals.map((rival, i) => (
-              <div key={i} className="space-y-xs pb-sm border-b border-white/5 last:border-0 last:pb-0">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-label-md text-label-md text-on-surface font-bold">{rival.name}</h4>
-                  <span className="text-xs text-outline font-semibold">{rival.share}% Market Share</span>
+            {rivals.map((rival, i) => {
+              const isActive = rival.active !== false;
+              return (
+                <div key={i} className="space-y-xs pb-sm border-b border-white/5 last:border-0 last:pb-0">
+                  <div className="flex justify-between items-center">
+                    <h4 className="font-label-md text-label-md text-on-surface font-bold">{rival.name}</h4>
+                    <span className="text-xs text-outline font-semibold">
+                      {isActive ? `${rival.share}% Market Share` : 'Stealth Mode'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-outline">
+                    <span>
+                      {isActive ? `Frontrunner: ${rival.bestModel}` : `Projected Entry: ${rival.yearEst}`}
+                    </span>
+                  </div>
+                  
+                  {/* Stats row */}
+                  {isActive ? (
+                    <div className="grid grid-cols-2 gap-2 text-[10px] text-outline-variant font-semibold pt-1">
+                      <div>KNOW: {rival.stats.knowledge}%</div>
+                      <div>CREA: {rival.stats.creativity}%</div>
+                      <div>CODE: {rival.stats.coding}%</div>
+                      <div className="text-error/85">HAL: {rival.stats.hallucination}%</div>
+                    </div>
+                  ) : (
+                    <div className="text-[10px] text-outline italic pt-1">
+                      R&D benchmarks currently unavailable
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between text-[11px] text-outline">
-                  <span>Frontrunner: {rival.bestModel}</span>
-                </div>
-                
-                {/* Stats row */}
-                <div className="grid grid-cols-2 gap-2 text-[10px] text-outline-variant font-semibold pt-1">
-                  <div>KNOW: {rival.stats.knowledge}%</div>
-                  <div>CREA: {rival.stats.creativity}%</div>
-                  <div>CODE: {rival.stats.coding}%</div>
-                  <div className="text-error/85">HAL: {rival.stats.hallucination}%</div>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
       </div>

@@ -19,9 +19,8 @@ export default function CompanyModal({ isOpen, onClose }) {
   const playerShareWeighted = activeCountries.reduce((sum, c) => sum + (c.playerShare * c.demand), 0);
   const playerGlobalShare = totalDemand > 0 ? Math.round(playerShareWeighted / totalDemand) : 0;
 
-  // Find OpenAI and Anthropic details from store
-  const openaiRival = rivals.find(r => r.name === 'OpenAI') || { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } };
-  const anthropicRival = rivals.find(r => r.name === 'Anthropic') || { name: 'Anthropic', bestModel: 'Claude 1.0', share: 30, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } };
+  // Find OpenAI, Google, and Anthropic details from store
+  const activeRivals = rivals || [];
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-fade-in">
@@ -72,7 +71,7 @@ export default function CompanyModal({ isOpen, onClose }) {
                     {company.name || 'Your Company'}
                   </span>
                   <span className="text-[9px] text-primary font-mono uppercase tracking-wider font-semibold">
-                    Player (HQ: {hqCountry})
+                    Player (Est. 2020)
                   </span>
                 </div>
                 {selectedTab === 'player' && (
@@ -80,55 +79,46 @@ export default function CompanyModal({ isOpen, onClose }) {
                 )}
               </button>
 
-              {/* OpenAI Tab */}
-              <button
-                onClick={() => setSelectedTab('openai')}
-                className={`w-full p-3.5 rounded-xl text-left border transition-all flex items-center gap-3 relative ${
-                  selectedTab === 'openai'
-                    ? 'bg-[#ea580c]/10 border-[#ea580c]/30 shadow-[0_0_12px_rgba(234,88,12,0.15)]'
-                    : 'hover:bg-white/5 border-transparent'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-[#ea580c]/10 text-[#ea580c] flex items-center justify-center shrink-0 border border-white/10">
-                  <span className="material-symbols-outlined text-base">smart_toy</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-bold text-on-surface truncate block">
-                    OpenAI
-                  </span>
-                  <span className="text-[9px] text-orange-400 font-mono uppercase tracking-wider font-semibold">
-                    Rival Corporation
-                  </span>
-                </div>
-                {selectedTab === 'openai' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 absolute right-3"></span>
-                )}
-              </button>
+              {/* Rivals Tabs */}
+              {activeRivals.map((rival) => {
+                const rivalId = rival.name.toLowerCase();
+                const isSelected = selectedTab === rivalId;
+                const isRivalActive = rival.active;
+                const activeColor = rival.color || '#ea580c';
 
-              {/* Anthropic Tab */}
-              <button
-                onClick={() => setSelectedTab('anthropic')}
-                className={`w-full p-3.5 rounded-xl text-left border transition-all flex items-center gap-3 relative ${
-                  selectedTab === 'anthropic'
-                    ? 'bg-[#8b5cf6]/10 border-[#8b5cf6]/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]'
-                    : 'hover:bg-white/5 border-transparent'
-                }`}
-              >
-                <div className="w-8 h-8 rounded-lg bg-[#8b5cf6]/10 text-[#8b5cf6] flex items-center justify-center shrink-0 border border-white/10">
-                  <span className="material-symbols-outlined text-base">radar</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-bold text-on-surface truncate block">
-                    Anthropic
-                  </span>
-                  <span className="text-[9px] text-purple-400 font-mono uppercase tracking-wider font-semibold">
-                    Rival Corporation
-                  </span>
-                </div>
-                {selectedTab === 'anthropic' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500 absolute right-3"></span>
-                )}
-              </button>
+                return (
+                  <button
+                    key={rival.name}
+                    onClick={() => setSelectedTab(rivalId)}
+                    className={`w-full p-3.5 rounded-xl text-left border transition-all flex items-center gap-3 relative ${
+                      isSelected
+                        ? 'bg-surface-bright/10 border-white/20'
+                        : 'hover:bg-white/5 border-transparent'
+                    }`}
+                  >
+                    <div 
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-white/10"
+                      style={{ 
+                        backgroundColor: `${activeColor}20`, 
+                        color: isRivalActive ? activeColor : '#94a3b8' 
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-base">{rival.logo || 'smart_toy'}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-xs font-bold truncate block ${isRivalActive ? 'text-on-surface' : 'text-outline-variant'}`}>
+                        {rival.name}
+                      </span>
+                      <span className="text-[9px] font-mono uppercase tracking-wider font-semibold" style={{ color: isRivalActive ? activeColor : '#64748b' }}>
+                        {isRivalActive ? `Established ${rival.yearEst}` : `Launches in ${rival.yearEst}`}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <span className="w-1.5 h-1.5 rounded-full absolute right-3" style={{ backgroundColor: activeColor }}></span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -137,7 +127,7 @@ export default function CompanyModal({ isOpen, onClose }) {
             
             {/* Player Company details */}
             {selectedTab === 'player' && (
-              <div className="space-y-lg text-left">
+              <div className="space-y-lg text-left animate-fade-in">
                 {/* Header Profile */}
                 <div className="flex items-start justify-between border-b border-white/5 pb-md">
                   <div>
@@ -197,99 +187,92 @@ export default function CompanyModal({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* OpenAI details */}
-            {selectedTab === 'openai' && (
-              <div className="space-y-lg text-left">
-                {/* Header Profile */}
-                <div className="flex items-start justify-between border-b border-white/5 pb-md">
-                  <div>
-                    <h2 className="text-xl font-bold text-on-surface tracking-tight">OPENAI</h2>
-                    <p className="text-xs text-outline mt-1">Leading silicon valley rival corporation • San Francisco, CA, US</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-[#ea580c]/10 text-[#ea580c] flex items-center justify-center border border-white/10">
-                    <span className="material-symbols-outlined text-2xl">smart_toy</span>
-                  </div>
-                </div>
+            {/* Rival details inspector */}
+            {selectedTab !== 'player' && (() => {
+              const selectedRival = activeRivals.find(r => r.name.toLowerCase() === selectedTab);
+              if (!selectedRival) return null;
 
-                {/* Core Stats Overview */}
-                <div className="grid grid-cols-2 gap-sm">
-                  <div className="bg-[#12151c]/60 p-3 rounded-lg border border-white/5">
-                    <span className="text-[9px] text-outline block uppercase tracking-wider">Flagship Model</span>
-                    <span className="font-bold text-sm text-on-surface">{openaiRival.bestModel}</span>
-                  </div>
-                  <div className="bg-[#12151c]/60 p-3 rounded-lg border border-white/5">
-                    <span className="text-[9px] text-outline block uppercase tracking-wider">Global Target Share</span>
-                    <span className="font-bold text-sm text-orange-400">{openaiRival.share}%</span>
-                  </div>
-                </div>
+              const isRivalActive = selectedRival.active;
+              const rivalColor = selectedRival.color || '#ea580c';
 
-                {/* Capabilities Grid */}
-                <div className="space-y-md border-t border-white/5 pt-sm">
-                  <h3 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[10px]">Model Capability Benchmarks</h3>
-                  
-                  <div className="space-y-3">
-                    {Object.entries(openaiRival.stats).map(([stat, val]) => (
-                      <div key={stat} className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
-                          <span className="text-[10px]">{stat}</span>
-                          <span className="font-bold text-orange-400">{val} / 100</span>
+              return (
+                <div className="space-y-lg text-left animate-fade-in">
+                  {/* Header Profile */}
+                  <div className="flex items-start justify-between border-b border-white/5 pb-md">
+                    <div>
+                      <h2 className="text-xl font-bold text-on-surface tracking-tight uppercase">{selectedRival.name}</h2>
+                      <p className="text-xs text-outline mt-1">
+                        {isRivalActive 
+                          ? `Active rival corporation established in ${selectedRival.yearEst}` 
+                          : `Projected market entry in the year ${selectedRival.yearEst}`}
+                      </p>
+                    </div>
+                    <div 
+                      className="w-12 h-12 rounded-xl flex items-center justify-center border border-white/10"
+                      style={{ 
+                        backgroundColor: `${rivalColor}20`, 
+                        color: isRivalActive ? rivalColor : '#94a3b8' 
+                      }}
+                    >
+                      <span className="material-symbols-outlined text-2xl">{selectedRival.logo || 'smart_toy'}</span>
+                    </div>
+                  </div>
+
+                  {!isRivalActive ? (
+                    /* Locked Rival Screen */
+                    <div className="py-12 border border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center text-center p-lg gap-sm bg-surface-dim/10">
+                      <span className="material-symbols-outlined text-outline text-4xl animate-pulse">lock</span>
+                      <h3 className="font-bold text-sm text-on-surface uppercase tracking-wider">Startup Stage (Inactive)</h3>
+                      <p className="text-xs text-outline max-w-sm leading-relaxed">
+                        {selectedRival.name} is currently in stealth mode and has not yet launched. They will officially enter the global AI market and begin competing for share in the year <strong>{selectedRival.yearEst}</strong>.
+                      </p>
+                    </div>
+                  ) : (
+                    /* Active Rival Screen */
+                    <>
+                      {/* Core Stats Overview */}
+                      <div className="grid grid-cols-2 gap-sm">
+                        <div className="bg-[#12151c]/60 p-3 rounded-lg border border-white/5">
+                          <span className="text-[9px] text-outline block uppercase tracking-wider">Flagship Model</span>
+                          <span className="font-bold text-sm text-on-surface">{selectedRival.bestModel}</span>
                         </div>
-                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                          <div className="h-full bg-gradient-to-r from-orange-600 to-orange-400 rounded-full" style={{ width: `${val}%` }}></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Anthropic details */}
-            {selectedTab === 'anthropic' && (
-              <div className="space-y-lg text-left">
-                {/* Header Profile */}
-                <div className="flex items-start justify-between border-b border-white/5 pb-md">
-                  <div>
-                    <h2 className="text-xl font-bold text-on-surface tracking-tight">ANTHROPIC</h2>
-                    <p className="text-xs text-outline mt-1">Safety-focused research lab competitor • San Francisco, CA, US</p>
-                  </div>
-                  <div className="w-12 h-12 rounded-xl bg-[#8b5cf6]/10 text-[#8b5cf6] flex items-center justify-center border border-white/10">
-                    <span className="material-symbols-outlined text-2xl">radar</span>
-                  </div>
-                </div>
-
-                {/* Core Stats Overview */}
-                <div className="grid grid-cols-2 gap-sm">
-                  <div className="bg-[#12151c]/60 p-3 rounded-lg border border-white/5">
-                    <span className="text-[9px] text-outline block uppercase tracking-wider">Flagship Model</span>
-                    <span className="font-bold text-sm text-on-surface">{anthropicRival.bestModel}</span>
-                  </div>
-                  <div className="bg-[#12151c]/60 p-3 rounded-lg border border-white/5">
-                    <span className="text-[9px] text-outline block uppercase tracking-wider">Global Target Share</span>
-                    <span className="font-bold text-sm text-purple-400">{anthropicRival.share}%</span>
-                  </div>
-                </div>
-
-                {/* Capabilities Grid */}
-                <div className="space-y-md border-t border-white/5 pt-sm">
-                  <h3 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[10px]">Model Capability Benchmarks</h3>
-                  
-                  <div className="space-y-3">
-                    {Object.entries(anthropicRival.stats).map(([stat, val]) => (
-                      <div key={stat} className="space-y-1">
-                        <div className="flex justify-between text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
-                          <span className="text-[10px]">{stat}</span>
-                          <span className="font-bold text-purple-400">{val} / 100</span>
-                        </div>
-                        <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
-                          <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: `${val}%` }}></div>
+                        <div className="bg-[#12151c]/60 p-3 rounded-lg border border-white/5">
+                          <span className="text-[9px] text-outline block uppercase tracking-wider">Global Target Share</span>
+                          <span className="font-bold text-sm" style={{ color: rivalColor }}>
+                            {selectedRival.share > 0 ? `${selectedRival.share}%` : 'Dynamic'}
+                          </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
+
+                      {/* Capabilities Grid */}
+                      <div className="space-y-md border-t border-white/5 pt-sm">
+                        <h3 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[10px]">Model Capability Benchmarks</h3>
+                        
+                        <div className="space-y-3">
+                          {Object.entries(selectedRival.stats).map(([stat, val]) => (
+                            <div key={stat} className="space-y-1">
+                              <div className="flex justify-between text-[11px] font-medium uppercase tracking-wider text-on-surface-variant">
+                                <span className="text-[10px]">{stat}</span>
+                                <span className="font-bold" style={{ color: rivalColor }}>{val} / 100</span>
+                              </div>
+                              <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+                                <div 
+                                  className="h-full rounded-full" 
+                                  style={{ 
+                                    width: `${val}%`, 
+                                    background: `linear-gradient(to right, ${rivalColor}cc, ${rivalColor})` 
+                                  }}
+                                ></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
           </div>
         </div>
