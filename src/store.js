@@ -209,10 +209,33 @@ export const useGameStore = create(
       };
     });
 
+    // Compute scaled down rival shares in HQ country (remaining 90%)
+    const targetOpenai = country.openaiShare || 0;
+    const targetGoogle = country.googleShare || 0;
+    const targetAnthropic = country.anthropicShare || 0;
+    const totalRival = targetOpenai + targetGoogle + targetAnthropic;
+
+    let newOpenai = 0;
+    let newGoogle = 0;
+    let newAnthropic = 0;
+
+    if (totalRival > 0) {
+      newOpenai = parseFloat(((targetOpenai / totalRival) * 90).toFixed(2));
+      newGoogle = parseFloat(((targetGoogle / totalRival) * 90).toFixed(2));
+      newAnthropic = parseFloat(((targetAnthropic / totalRival) * 90).toFixed(2));
+    } else {
+      newOpenai = 54;
+      newGoogle = 36;
+      newAnthropic = 0;
+    }
+
     // Set the chosen country as HQ with starting stats
     clearedCountries[countryId] = {
       ...clearedCountries[countryId],
       playerShare: 10,
+      openaiShare: newOpenai,
+      googleShare: newGoogle,
+      anthropicShare: newAnthropic,
       allocatedGpus: 10,
       deployedModelId: null,
     };
@@ -831,6 +854,7 @@ export const useGameStore = create(
 
       if (model && model.status === 'released' && model.targetSegment) {
         const cfg = segmentConfigs[model.targetSegment];
+        const allocated = country.allocatedGpus || 0;
         
         // Quality score: mean of key stats, penalized by hallucination
         const rating = (model.stats[cfg.weightStats[0]] + model.stats[cfg.weightStats[1]]) / 2;
@@ -857,7 +881,9 @@ export const useGameStore = create(
 
         // Growth or decay rate of market share in percentage points
         let shareChange = 0;
-        if (competitiveness > 1.25) {
+        if (allocated === 0) {
+          shareChange = -3.0; // Outage = severe decay
+        } else if (competitiveness > 1.25) {
           shareChange = (competitiveness - 1) * hypeFactor * 1.5;
         } else if (competitiveness < 0.75) {
           shareChange = (competitiveness - 1) * 1.5;
@@ -866,7 +892,7 @@ export const useGameStore = create(
         }
 
         // Apply satisfaction penalty to growth
-        if (satisfaction < 75) {
+        if (allocated > 0 && satisfaction < 75) {
           shareChange -= (100 - satisfaction) * 0.05;
         }
 
@@ -886,7 +912,6 @@ export const useGameStore = create(
 
         playerUsers = Math.round(country.demand * (playerShare / 100));
         gpusRequired = Math.ceil(playerUsers * cfg.computePerUser);
-        const allocated = country.allocatedGpus || 0;
         totalProductionGpus += allocated;
 
         if (allocated === 0) {
@@ -903,6 +928,9 @@ export const useGameStore = create(
         // Calculate revenue
         let countryRev = playerUsers * finalPrice;
         countryRev = countryRev * (satisfaction / 100);
+        if (allocated === 0) {
+          countryRev = 0; // Outage = no revenue
+        }
         cashChange += Math.round(countryRev);
 
         // Track metrics for model aggregation

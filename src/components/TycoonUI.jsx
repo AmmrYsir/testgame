@@ -55,8 +55,8 @@ export default function TycoonUI() {
       setHoveredCountry({
         name: title,
         playerShare: countryState ? countryState.playerShare : 0,
-        openaiShare: countryState ? countryState.openaiShare : 60,
-        googleShare: countryState ? (countryState.googleShare || 0) : 40,
+        openaiShare: countryState ? countryState.openaiShare : 0,
+        googleShare: countryState ? (countryState.googleShare || 0) : 0,
         anthropicShare: countryState ? countryState.anthropicShare : 0,
         x: e.clientX - rect.left + 15,
         y: e.clientY - rect.top + 15
