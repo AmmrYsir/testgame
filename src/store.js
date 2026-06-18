@@ -39,6 +39,7 @@ export const useGameStore = create(
     founder: '',
     color: '#3b82f6', // Default sapphire
     logo: 'memory',
+    hqCountryId: '',
   },
 
   // Core Resources
@@ -113,6 +114,7 @@ export const useGameStore = create(
       founder: '',
       color: '#3b82f6',
       logo: 'memory',
+      hqCountryId: '',
     },
     resources: {
       cash: 1000000,
@@ -189,6 +191,48 @@ export const useGameStore = create(
   }),
 
   startGame: () => set({ gameStage: 'playing' }),
+
+  establishHq: (countryId) => set((state) => {
+    const country = state.countries[countryId];
+    if (!country) return {};
+    
+    // Clear initial playerShare & allocatedGpus from all countries
+    const clearedCountries = {};
+    Object.entries(state.countries).forEach(([code, c]) => {
+      clearedCountries[code] = {
+        ...c,
+        playerShare: 0,
+        allocatedGpus: 0,
+        deployedModelId: null,
+      };
+    });
+
+    // Set the chosen country as HQ with starting stats
+    clearedCountries[countryId] = {
+      ...clearedCountries[countryId],
+      playerShare: 10,
+      allocatedGpus: 10,
+      deployedModelId: null,
+    };
+
+    const countryName = country.name;
+
+    return {
+      company: { ...state.company, hqCountryId: countryId },
+      countries: clearedCountries,
+      newsFeed: [
+        { 
+          tick: state.resources.currentTick, 
+          type: 'science', 
+          text: `Establish Headquarters: Corporate headquarters set up in ${countryName}. Global operations online!`, 
+          iconColor: 'text-primary' 
+        },
+        ...state.newsFeed
+      ],
+      simulationSpeed: 1,
+      isPaused: false
+    };
+  }),
 
   // Mailbox Actions
   markEmailAsRead: (emailId) => set((state) => ({
@@ -588,7 +632,7 @@ export const useGameStore = create(
 
   // Game Loop Tick
   tick: () => set((state) => {
-    if (state.simulationSpeed === 0) return state; // Paused
+    if (state.simulationSpeed === 0 || !state.company.hqCountryId) return state; // Paused or no HQ
 
     const currentTick = state.resources.currentTick + 1;
     let cashChange = 0;

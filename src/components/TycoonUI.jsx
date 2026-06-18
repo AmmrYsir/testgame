@@ -16,18 +16,18 @@ export default function TycoonUI() {
     infrastructure, 
     initCountry, 
     deployModelToCountry, 
-    allocateGpusToCountry 
+    allocateGpusToCountry,
+    company,
+    establishHq
   } = useGameStore();
 
-  const [selectedCountryId, setSelectedCountryId] = useState('US');
+  const [selectedCountryId, setSelectedCountryId] = useState(null);
   const [activeDrawer, setActiveDrawer] = useState(null); // null, 'models', 'infrastructure', 'research', 'market'
   const [isMailboxOpen, setIsMailboxOpen] = useState(false);
   const [hoveredCountry, setHoveredCountry] = useState(null);
   const [logFilter, setLogFilter] = useState('all');
 
-  const country = countries[selectedCountryId];
-
-
+  const country = selectedCountryId ? countries[selectedCountryId] : null;
 
   const handleMapClick = useCallback((e) => {
     const path = e.target.closest('path');
@@ -76,168 +76,19 @@ export default function TycoonUI() {
     <div className="flex flex-col h-screen w-screen bg-background text-on-surface overflow-hidden dark relative">
       <TopBar onMailboxToggle={() => setIsMailboxOpen(true)} />
 
+      {/* HQ Setup Alert at top of map */}
+      {!company?.hqCountryId && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50 bg-[#3b82f6]/20 border border-[#3b82f6]/40 text-[#60a5fa] px-lg py-3 rounded-xl backdrop-blur-md font-mono text-[11px] uppercase tracking-wider animate-pulse flex items-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.2)]">
+          <span className="material-symbols-outlined text-base animate-bounce">location_on</span>
+          <span>Establish Headquarters: Select a country on the world map to set up your corporate headquarters</span>
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden relative">
-        {/* LEFT PANEL: OPERATIONS & DIAGNOSTICS */}
+        {/* LEFT PANEL: OPERATIONS LOG ONLY */}
         <aside className="w-80 bg-surface-container/60 dark:bg-surface-container/60 backdrop-blur-2xl border-r border-white/5 z-20 flex-none h-full flex flex-col overflow-hidden">
-          
-          {/* Top Section: Regional Details */}
-          <div className="flex-none p-md border-b border-white/5 bg-surface-container/10">
-            <h2 className="font-label-md text-label-md text-on-surface uppercase tracking-wider text-[11px] font-bold mb-3">
-              Regional Operations
-            </h2>
-            
-            {country ? (
-              <div className="space-y-md">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-xl">public</span>
-                    <h3 className="font-bold text-base text-on-surface leading-tight">{country.name}</h3>
-                  </div>
-                  <span className="text-[10px] px-2 py-0.5 bg-white/5 border border-white/10 rounded font-bold font-mono text-outline">
-                    {selectedCountryId}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-sm">
-                  <div className="bg-surface/30 p-2 rounded-lg border border-white/5">
-                    <span className="text-[9px] text-outline block uppercase tracking-wider">Demand</span>
-                    <span className="font-semibold text-xs text-on-surface">{country.demand?.toLocaleString()} q/tick</span>
-                  </div>
-                  <div className="bg-surface/30 p-2 rounded-lg border border-white/5">
-                    <span className="text-[9px] text-outline block uppercase tracking-wider">Satisfaction</span>
-                    <span className={`font-semibold text-xs flex items-center gap-1 ${
-                      country.satisfaction >= 80 ? 'text-emerald-500' : country.satisfaction >= 50 ? 'text-yellow-500' : 'text-error'
-                    }`}>
-                      {country.satisfaction}%
-                    </span>
-                  </div>
-                </div>
-
-                {/* Deployed Model Selector */}
-                <div className="space-y-xs">
-                  <div className="flex justify-between items-center">
-                    <label className="text-[9px] text-outline uppercase tracking-wider font-bold">Active Model</label>
-                    {country.deployedModelId && (
-                      <button 
-                        onClick={() => deployModelToCountry(selectedCountryId, null)}
-                        className="text-[9px] text-error hover:underline"
-                      >
-                        Undeploy
-                      </button>
-                    )}
-                  </div>
-                  <select
-                    value={country.deployedModelId || ''}
-                    onChange={(e) => deployModelToCountry(selectedCountryId, e.target.value || null)}
-                    className="w-full bg-surface-container-high border border-white/10 text-on-surface rounded-lg p-2 text-xs focus:outline-none focus:border-primary"
-                  >
-                    <option value="">-- No Model Deployed --</option>
-                    {llms.filter(m => m.status === 'released').map(m => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} v{m.version.toFixed(1)} ({m.targetSegment?.toUpperCase()})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* GPU Compute Allocation */}
-                <div className="space-y-xs">
-                  {(() => {
-                    const totalGpus = infrastructure.gpus + infrastructure.cloudGpusRented;
-                    const activeTrainingGpus = llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-                    const allocatedToOthers = Object.entries(countries || {}).reduce((sum, [cid, c]) => {
-                      if (cid === selectedCountryId) return sum;
-                      return sum + (c.allocatedGpus || 0);
-                    }, 0);
-                    const maxAllocatable = totalGpus - activeTrainingGpus - allocatedToOthers;
-                    const currentAllocated = country.allocatedGpus || 0;
-
-                    return (
-                      <>
-                        <div className="flex justify-between text-[9px] text-outline uppercase tracking-wider font-bold">
-                          <span>Allocate GPUs</span>
-                          <span>Idle: {maxAllocatable - currentAllocated} GPUs</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-sm bg-surface-container-high border border-white/5 rounded-lg px-2.5 py-1.5">
-                          <input
-                            type="range"
-                            min="0"
-                            max={maxAllocatable}
-                            value={currentAllocated}
-                            onChange={(e) => allocateGpusToCountry(selectedCountryId, parseInt(e.target.value))}
-                            className="flex-1 accent-primary h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
-                          />
-                          <span className="font-mono text-xs font-bold text-primary shrink-0 w-8 text-right">
-                            {currentAllocated}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-[10px] text-outline mt-1">
-                          <span>Latency: <strong className={country.latency > 100 ? "text-error" : "text-emerald-500"}>{country.latency}ms</strong></span>
-                          <span>Required: <strong>{country.gpusRequired || 0} GPUs</strong></span>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-
-                {/* Market Shares */}
-                <div className="space-y-2 mt-sm border-t border-white/5 pt-sm">
-                  <span className="text-[9px] text-outline uppercase tracking-wider font-bold block">Market Shares</span>
-                  
-                  <div className="space-y-1.5">
-                    {/* Player */}
-                    <div className="space-y-0.5">
-                      <div className="flex justify-between text-xs font-semibold">
-                        <span className="text-on-surface-variant flex items-center gap-1 text-[10px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Player
-                        </span>
-                        <span className="text-primary font-bold text-[11px]">{country.playerShare}%</span>
-                      </div>
-                      <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-primary rounded-full" style={{ width: `${country.playerShare}%` }}></div>
-                      </div>
-                    </div>
-
-                    {/* OpenAI */}
-                    <div className="space-y-0.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-outline flex items-center gap-1 text-[10px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span> OpenAI
-                        </span>
-                        <span className="text-outline font-semibold text-[11px]">{country.openaiShare}%</span>
-                      </div>
-                      <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-orange-500 rounded-full" style={{ width: `${country.openaiShare}%` }}></div>
-                      </div>
-                    </div>
-
-                    {/* Anthropic */}
-                    <div className="space-y-0.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-outline flex items-center gap-1 text-[10px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Anthropic
-                        </span>
-                        <span className="text-outline font-semibold text-[11px]">{country.anthropicShare}%</span>
-                      </div>
-                      <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-purple-500 rounded-full" style={{ width: `${country.anthropicShare}%` }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-md text-outline text-xs">
-                Select a country on the map to begin regional operations.
-              </div>
-            )}
-          </div>
-
-          {/* Bottom Section: Integrated Diagnostics Logs */}
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="px-md py-2 border-b border-white/5 bg-surface-container/30 flex flex-col gap-1.5 flex-none">
+            <div className="px-md py-3 border-b border-white/5 bg-surface-container/30 flex flex-col gap-1.5 flex-none">
               <h3 className="font-label-md text-label-md text-on-surface flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]">
                 <span className="material-symbols-outlined text-[13px] text-primary animate-pulse">terminal</span>
                 Operations Log
@@ -291,6 +142,111 @@ export default function TycoonUI() {
           </div>
         </aside>
 
+        {/* LEFT SLIDING DRAWER: REGIONAL OPERATIONS */}
+        {selectedCountryId && country && (
+          <div className="absolute left-0 top-0 bottom-0 w-[320px] bg-[#0c0f16]/95 border-r border-white/10 z-30 shadow-2xl backdrop-blur-2xl flex flex-col animate-slide-in-left">
+            {/* Drawer Header */}
+            <div className="flex justify-between items-center px-lg py-md border-b border-white/5 bg-surface-container/30">
+              <h3 className="font-bold text-on-surface flex items-center gap-2 text-xs uppercase tracking-wider">
+                <span className="material-symbols-outlined text-primary text-base">public</span>
+                Regional Operations
+              </h3>
+              <button
+                type="button"
+                onClick={() => setSelectedCountryId(null)}
+                className="text-outline hover:text-on-surface p-1 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+
+            {/* Drawer Body */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-lg flex flex-col gap-md">
+              <div className="flex items-center justify-between border-b border-white/5 pb-sm bg-surface-container/10 p-2.5 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-xl">location_on</span>
+                  <h3 className="font-bold text-base text-on-surface leading-tight">{country.name}</h3>
+                </div>
+                <span className="text-[10px] px-2 py-0.5 bg-white/5 border border-white/10 rounded font-bold font-mono text-outline">
+                  {selectedCountryId}
+                </span>
+              </div>
+
+              {/* HQ Selection Block */}
+              {!company?.hqCountryId ? (
+                <div className="bg-[#3b82f6]/10 border border-[#3b82f6]/20 rounded-xl p-md flex flex-col gap-sm">
+                  <p className="text-xs text-outline leading-relaxed">
+                    Establish your corporate headquarters in <strong>{country.name}</strong> to unlock the technology tree, model training registries, B2B commercial contract boards, and start the simulation.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => establishHq(selectedCountryId)}
+                    className="w-full bg-[#3b82f6] text-white py-2.5 px-md rounded-xl font-mono text-[11px] uppercase tracking-wider font-bold hover:bg-[#2563eb] transition-all hover:shadow-[0_0_12px_rgba(59,130,246,0.4)] flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base">domain</span>
+                    <span>Establish HQ Here</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {company.hqCountryId === selectedCountryId && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-xl p-sm flex items-center justify-center gap-2 text-primary">
+                      <span className="material-symbols-outlined text-base">domain</span>
+                      <span className="font-mono text-[10px] uppercase tracking-wider font-bold">🏢 Corporate Headquarters</span>
+                    </div>
+                  )}
+
+                  {/* Market Shares */}
+                  <div className="space-y-2 border-t border-white/5 pt-sm">
+                    <span className="text-[9px] text-outline uppercase tracking-wider font-bold block">Market Shares</span>
+                    
+                    <div className="space-y-2">
+                      {/* Player */}
+                      <div className="space-y-0.5">
+                        <div className="flex justify-between text-xs font-semibold">
+                          <span className="text-on-surface-variant flex items-center gap-1 text-[10px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Player
+                          </span>
+                          <span className="text-primary font-bold text-[11px]">{country.playerShare}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-primary rounded-full" style={{ width: `${country.playerShare}%` }}></div>
+                        </div>
+                      </div>
+
+                      {/* OpenAI */}
+                      <div className="space-y-0.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-outline flex items-center gap-1 text-[10px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span> OpenAI
+                          </span>
+                          <span className="text-outline font-semibold text-[11px]">{country.openaiShare}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-orange-500 rounded-full" style={{ width: `${country.openaiShare}%` }}></div>
+                        </div>
+                      </div>
+
+                      {/* Anthropic */}
+                      <div className="space-y-0.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-outline flex items-center gap-1 text-[10px]">
+                            <span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Anthropic
+                          </span>
+                          <span className="text-outline font-semibold text-[11px]">{country.anthropicShare}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div className="h-full bg-purple-500 rounded-full" style={{ width: `${country.anthropicShare}%` }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* CENTER MAIN SCREEN: INTERACTIVE SVG WORLD MAP */}
         <main className="flex-1 h-full relative overflow-hidden bg-[#07090e] flex items-center justify-center">
           <WorldMap
@@ -326,9 +282,10 @@ export default function TycoonUI() {
             ].map(drawer => (
               <button
                 key={drawer.id}
+                disabled={!company?.hqCountryId}
                 onClick={() => setActiveDrawer(activeDrawer === drawer.id ? null : drawer.id)}
                 title={drawer.label}
-                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border shadow-lg ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
                   activeDrawer === drawer.id
                     ? 'bg-primary text-white border-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] hover:scale-105'
                     : 'bg-surface-container/60 hover:bg-surface-bright/20 border-white/10 text-outline hover:text-on-surface hover:scale-105'
@@ -340,7 +297,7 @@ export default function TycoonUI() {
           </div>
 
           {/* SLIDE-OUT OVERLAY VIEW DRAWERS (Right Side) */}
-          {activeDrawer && (
+          {activeDrawer && company?.hqCountryId && (
             <div className="absolute right-0 top-0 bottom-0 w-[80vw] max-w-[850px] bg-[#0c0f16]/95 border-l border-white/10 z-30 shadow-2xl backdrop-blur-2xl flex flex-col animate-slide-in">
               {/* Drawer Header */}
               <div className="flex justify-between items-center px-lg py-md border-b border-white/5 bg-surface-container/30">

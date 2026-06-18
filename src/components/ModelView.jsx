@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store';
 
 export default function ModelView() {
-  const { llms, research, infrastructure, resources, createModel, startTraining, releaseLLM, setModelPrice, countries } = useGameStore();
+  const { llms, research, infrastructure, resources, createModel, startTraining, releaseLLM, setModelPrice, countries, deployModelToCountry, allocateGpusToCountry } = useGameStore();
   
   const [selectedModelId, setSelectedModelId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -601,7 +601,7 @@ export default function ModelView() {
                 <div className="bg-surface-dim/30 p-lg rounded-xl border border-white/5 space-y-md">
                   <div>
                     <h4 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Regional Deployments</h4>
-                    <p className="text-xs text-outline mt-0.5">Countries currently served by {selectedModel.name}. Scale compute on the World Map.</p>
+                    <p className="text-xs text-outline mt-0.5">Deploy {selectedModel.name} to countries and allocate GPU power.</p>
                   </div>
 
                   {(() => {
@@ -614,32 +614,99 @@ export default function ModelView() {
                         <div className="text-center py-md border border-dashed border-white/10 rounded-lg">
                           <span className="material-symbols-outlined text-outline text-3xl">public_off</span>
                           <p className="text-xs text-outline mt-sm">This model is not currently deployed to any regions.</p>
-                          <p className="text-[10px] text-outline mt-0.5">Go to the World Map and select a country to deploy.</p>
+                          <p className="text-[10px] text-outline mt-0.5">Use the dropdown below to deploy to a country.</p>
                         </div>
                       );
                     }
 
                     return (
-                      <div className="space-y-sm max-h-[200px] overflow-y-auto custom-scrollbar pr-xs">
+                      <div className="space-y-md max-h-[300px] overflow-y-auto custom-scrollbar pr-xs">
                         {deployedCountries.map(([code, country]) => (
-                          <div key={code} className="flex justify-between items-center bg-surface px-4 py-3 rounded-lg border border-white/5">
-                            <div>
-                              <span className="font-semibold text-sm text-on-surface">{country.name}</span>
-                              <div className="flex gap-md text-[10px] text-outline mt-0.5">
-                                <span>Share: <strong className="text-primary">{country.playerShare}%</strong></span>
-                                <span>Users: <strong>{country.playerUsers?.toLocaleString() || 0}</strong></span>
-                                <span>Latency: <strong className={country.latency > 100 ? "text-error animate-pulse" : "text-emerald-500"}>{country.latency}ms</strong></span>
+                          <div key={code} className="flex flex-col gap-2 bg-[#12151c]/60 p-3 rounded-lg border border-white/5">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <span className="font-semibold text-sm text-on-surface">{country.name}</span>
+                                <div className="flex gap-md text-[10px] text-outline mt-0.5">
+                                  <span>Share: <strong className="text-primary">{country.playerShare}%</strong></span>
+                                  <span>Users: <strong>{country.playerUsers?.toLocaleString() || 0}</strong></span>
+                                  <span>Latency: <strong className={country.latency > 100 ? "text-error animate-pulse" : "text-emerald-500"}>{country.latency}ms</strong></span>
+                                </div>
                               </div>
+                              <button
+                                type="button"
+                                onClick={() => deployModelToCountry(code, null)}
+                                className="text-[10px] text-error hover:underline shrink-0 font-semibold"
+                              >
+                                Undeploy
+                              </button>
                             </div>
-                            <div className="text-right">
-                              <span className="text-[10px] text-outline block uppercase">Compute</span>
-                              <span className="font-mono text-xs text-primary font-bold">{country.allocatedGpus || 0} GPUs</span>
-                            </div>
+
+                            {/* GPU Allocation Slider */}
+                            {(() => {
+                              const totalGpus = infrastructure.gpus + infrastructure.cloudGpusRented;
+                              const activeTrainingGpus = llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
+                              const allocatedToOthers = Object.entries(countries || {}).reduce((sum, [cid, c]) => {
+                                if (cid === code) return sum;
+                                return sum + (c.allocatedGpus || 0);
+                              }, 0);
+                              const maxAllocatable = totalGpus - activeTrainingGpus - allocatedToOthers;
+                              const currentAllocated = country.allocatedGpus || 0;
+
+                              return (
+                                <div className="space-y-1 bg-[#0b0e15]/40 p-2 rounded border border-white/5">
+                                  <div className="flex justify-between text-[9px] text-outline uppercase font-semibold">
+                                    <span>Allocate GPUs</span>
+                                    <span>Idle Pool Max: {maxAllocatable} GPUs</span>
+                                  </div>
+                                  <div className="flex items-center gap-sm">
+                                    <input
+                                      type="range"
+                                      min="0"
+                                      max={maxAllocatable}
+                                      value={currentAllocated}
+                                      onChange={(e) => allocateGpusToCountry(code, parseInt(e.target.value))}
+                                      className="flex-1 accent-primary h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                                    />
+                                    <span className="font-mono text-xs font-bold text-primary shrink-0 w-8 text-right">
+                                      {currentAllocated}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         ))}
                       </div>
                     );
                   })()}
+
+                  {/* Select Country to Deploy */}
+                  <div className="flex gap-sm items-center border-t border-white/5 pt-md">
+                    <select
+                      id="deploy-select"
+                      className="bg-surface-dim border border-outline-variant rounded-lg p-2 text-xs text-on-surface focus:border-primary transition-all outline-none flex-1"
+                      defaultValue=""
+                      onChange={(e) => {
+                        const code = e.target.value;
+                        if (code) {
+                          deployModelToCountry(code, selectedModel.id);
+                          e.target.value = ""; // reset select
+                        }
+                      }}
+                    >
+                      <option value="">-- Deploy to New Country --</option>
+                      {Object.entries(countries || {}).map(([code, country]) => {
+                        if (!country.deployedModelId) {
+                          return (
+                            <option key={code} value={code}>
+                              {country.name} ({code})
+                            </option>
+                          );
+                        }
+                        return null;
+                      })}
+                    </select>
+                  </div>
                 </div>
               </div>
             ) : (
