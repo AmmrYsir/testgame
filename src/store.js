@@ -12,16 +12,16 @@ export const formatDateFromTick = (tick) => {
 };
 
 export const INITIAL_COUNTRIES = {
-  US: { name: 'United States', demand: 25000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  CN: { name: 'China', demand: 30000, playerShare: 0, openaiShare: 65, googleShare: 35, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  JP: { name: 'Japan', demand: 12000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  DE: { name: 'Germany', demand: 10000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  GB: { name: 'United Kingdom', demand: 9000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  FR: { name: 'France', demand: 8000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  IN: { name: 'India', demand: 20000, playerShare: 0, openaiShare: 65, googleShare: 35, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  BR: { name: 'Brazil', demand: 7000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  CA: { name: 'Canada', demand: 6000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  AU: { name: 'Australia', demand: 5000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 }
+  US: { name: 'United States', demand: 25000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  CN: { name: 'China', demand: 30000, playerShare: 0, openaiShare: 65, googleShare: 35, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  JP: { name: 'Japan', demand: 12000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  DE: { name: 'Germany', demand: 10000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  GB: { name: 'United Kingdom', demand: 9000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  FR: { name: 'France', demand: 8000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  IN: { name: 'India', demand: 20000, playerShare: 0, openaiShare: 65, googleShare: 35, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  BR: { name: 'Brazil', demand: 7000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  CA: { name: 'Canada', demand: 6000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  AU: { name: 'Australia', demand: 5000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } }
 };
 
 export const useGameStore = create(
@@ -312,6 +312,12 @@ export const useGameStore = create(
         playerShare: 0,
         allocatedGpus: 0,
         deployedModelId: null,
+        openMarkets: {
+          player: false,
+          openai: true,
+          google: true,
+          anthropic: (c.anthropicShare || 0) > 0
+        }
       };
     });
 
@@ -344,6 +350,12 @@ export const useGameStore = create(
       anthropicShare: newAnthropic,
       allocatedGpus: 10,
       deployedModelId: null,
+      openMarkets: {
+        player: true,
+        openai: true,
+        google: true,
+        anthropic: newAnthropic > 0
+      }
     };
 
     const countryName = country.name;
@@ -869,7 +881,13 @@ export const useGameStore = create(
           allocatedGpus: 0,
           deployedModelId: null,
           latency: 10,
-          satisfaction: 100
+          satisfaction: 100,
+          openMarkets: {
+            player: false,
+            openai: true,
+            google: true,
+            anthropic: isAnthropicActive
+          }
         }
       }
     };
@@ -909,6 +927,38 @@ export const useGameStore = create(
           allocatedGpus: finalAmount
         }
       }
+    };
+  }),
+
+  openMarket: (countryId) => set((state) => {
+    const country = state.countries[countryId];
+    if (!country) return {};
+    const cost = 50000;
+    if (state.resources.cash < cost) return {};
+    return {
+      resources: {
+        ...state.resources,
+        cash: state.resources.cash - cost
+      },
+      countries: {
+        ...state.countries,
+        [countryId]: {
+          ...country,
+          openMarkets: {
+            ...country.openMarkets,
+            player: true
+          }
+        }
+      },
+      newsFeed: [
+        { 
+          tick: state.resources.currentTick, 
+          type: 'science', 
+          text: `Market Expansion: Opened operations in ${country.name} for $${cost.toLocaleString()}.`, 
+          iconColor: 'text-emerald-500' 
+        },
+        ...state.newsFeed
+      ]
     };
   }),
 
@@ -1090,20 +1140,28 @@ export const useGameStore = create(
     const modelAggregations = {};
 
     for (const [cid, country] of Object.entries(state.countries)) {
-      let playerShare = country.playerShare || 0;
-      let openaiShare = country.openaiShare || 0;
-      let googleShare = country.googleShare || 0;
-      let anthropicShare = country.anthropicShare || 0;
+      const isOpenPlayer = country.openMarkets?.player;
+      const isOpenOpenai = country.openMarkets?.openai;
+      const isOpenGoogle = country.openMarkets?.google;
+      let isOpenAnthropic = country.openMarkets?.anthropic;
 
       if (anthropicJustActivated) {
-        anthropicShare = 15;
+        isOpenAnthropic = true;
+      }
+
+      let playerShare = isOpenPlayer ? (country.playerShare || 0) : 0;
+      let openaiShare = isOpenOpenai ? (country.openaiShare || 0) : 0;
+      let googleShare = isOpenGoogle ? (country.googleShare || 0) : 0;
+      let anthropicShare = isOpenAnthropic ? (anthropicJustActivated ? 15 : (country.anthropicShare || 0)) : 0;
+
+      if (anthropicJustActivated) {
         const totalRival = openaiShare + googleShare;
         if (totalRival > 0) {
           openaiShare = (openaiShare / totalRival) * (100 - playerShare - anthropicShare);
           googleShare = (googleShare / totalRival) * (100 - playerShare - anthropicShare);
         } else {
-          openaiShare = (100 - playerShare - anthropicShare) * 0.6;
-          googleShare = (100 - playerShare - anthropicShare) * 0.4;
+          openaiShare = isOpenOpenai ? (100 - playerShare - anthropicShare) * 0.6 : 0;
+          googleShare = isOpenGoogle ? (100 - playerShare - anthropicShare) * 0.4 : 0;
         }
       }
       let latency = country.latency || 10;
@@ -1114,7 +1172,7 @@ export const useGameStore = create(
       const modelId = country.deployedModelId;
       const model = modelId ? nextLlms.find(m => m.id === modelId) : null;
 
-      if (model && model.status === 'released' && model.targetSegment) {
+      if (model && model.status === 'released' && model.targetSegment && isOpenPlayer) {
         const cfg = segmentConfigs[model.targetSegment];
         const allocated = country.allocatedGpus || 0;
         
@@ -1158,16 +1216,35 @@ export const useGameStore = create(
 
         playerShare = Math.max(0, Math.min(100, playerShare + shareChange));
         
-        // Normalize rival shares to fill the rest
-        const totalRivalShare = openaiShare + googleShare + anthropicShare;
-        if (totalRivalShare > 0) {
-          openaiShare = (openaiShare / totalRivalShare) * (100 - playerShare);
-          googleShare = (googleShare / totalRivalShare) * (100 - playerShare);
-          anthropicShare = (anthropicShare / totalRivalShare) * (100 - playerShare);
+        // Normalize open rival shares to fill the rest
+        const openRivals = [];
+        if (isOpenOpenai) openRivals.push({ name: 'openai', share: openaiShare });
+        if (isOpenGoogle) openRivals.push({ name: 'google', share: googleShare });
+        if (isOpenAnthropic) openRivals.push({ name: 'anthropic', share: anthropicShare });
+
+        const totalRivalShare = openRivals.reduce((sum, r) => sum + r.share, 0);
+        const remainingShare = 100 - playerShare;
+
+        if (openRivals.length > 0) {
+          if (totalRivalShare > 0) {
+            openaiShare = isOpenOpenai ? (openaiShare / totalRivalShare) * remainingShare : 0;
+            googleShare = isOpenGoogle ? (googleShare / totalRivalShare) * remainingShare : 0;
+            anthropicShare = isOpenAnthropic ? (anthropicShare / totalRivalShare) * remainingShare : 0;
+          } else {
+            let totalWeight = 0;
+            if (isOpenOpenai) totalWeight += 0.4;
+            if (isOpenGoogle) totalWeight += 0.4;
+            if (isOpenAnthropic) totalWeight += 0.2;
+
+            openaiShare = isOpenOpenai ? (0.4 / totalWeight) * remainingShare : 0;
+            googleShare = isOpenGoogle ? (0.4 / totalWeight) * remainingShare : 0;
+            anthropicShare = isOpenAnthropic ? (0.2 / totalWeight) * remainingShare : 0;
+          }
         } else {
-          openaiShare = (100 - playerShare) * 0.4;
-          googleShare = (100 - playerShare) * 0.4;
-          anthropicShare = (100 - playerShare) * 0.2;
+          if (isOpenPlayer) playerShare = 100;
+          openaiShare = 0;
+          googleShare = 0;
+          anthropicShare = 0;
         }
 
         playerUsers = Math.round(country.demand * (playerShare / 100));
@@ -1202,17 +1279,41 @@ export const useGameStore = create(
         modelAggregations[modelId].latencies.push(latency);
         modelAggregations[modelId].satisfactions.push(satisfaction);
       } else {
-        // Decay player share if no model deployed
-        playerShare = Math.max(0, playerShare - 2);
-        const totalRivalShare = openaiShare + googleShare + anthropicShare;
-        if (totalRivalShare > 0) {
-          openaiShare = (openaiShare / totalRivalShare) * (100 - playerShare);
-          googleShare = (googleShare / totalRivalShare) * (100 - playerShare);
-          anthropicShare = (anthropicShare / totalRivalShare) * (100 - playerShare);
+        // Decay player share if no model deployed (or player market not open)
+        if (isOpenPlayer) {
+          playerShare = Math.max(0, playerShare - 2);
         } else {
-          openaiShare = (100 - playerShare) * 0.4;
-          googleShare = (100 - playerShare) * 0.4;
-          anthropicShare = (100 - playerShare) * 0.2;
+          playerShare = 0;
+        }
+        
+        const openRivals = [];
+        if (isOpenOpenai) openRivals.push({ name: 'openai', share: openaiShare });
+        if (isOpenGoogle) openRivals.push({ name: 'google', share: googleShare });
+        if (isOpenAnthropic) openRivals.push({ name: 'anthropic', share: anthropicShare });
+
+        const totalRivalShare = openRivals.reduce((sum, r) => sum + r.share, 0);
+        const remainingShare = 100 - playerShare;
+
+        if (openRivals.length > 0) {
+          if (totalRivalShare > 0) {
+            openaiShare = isOpenOpenai ? (openaiShare / totalRivalShare) * remainingShare : 0;
+            googleShare = isOpenGoogle ? (googleShare / totalRivalShare) * remainingShare : 0;
+            anthropicShare = isOpenAnthropic ? (anthropicShare / totalRivalShare) * remainingShare : 0;
+          } else {
+            let totalWeight = 0;
+            if (isOpenOpenai) totalWeight += 0.4;
+            if (isOpenGoogle) totalWeight += 0.4;
+            if (isOpenAnthropic) totalWeight += 0.2;
+
+            openaiShare = isOpenOpenai ? (0.4 / totalWeight) * remainingShare : 0;
+            googleShare = isOpenGoogle ? (0.4 / totalWeight) * remainingShare : 0;
+            anthropicShare = isOpenAnthropic ? (0.2 / totalWeight) * remainingShare : 0;
+          }
+        } else {
+          if (isOpenPlayer) playerShare = 100;
+          openaiShare = 0;
+          googleShare = 0;
+          anthropicShare = 0;
         }
         playerUsers = 0;
         gpusRequired = 0;
@@ -1229,7 +1330,13 @@ export const useGameStore = create(
         playerUsers,
         gpusRequired,
         latency,
-        satisfaction
+        satisfaction,
+        openMarkets: {
+          player: !!isOpenPlayer,
+          openai: !!isOpenOpenai,
+          google: !!isOpenGoogle,
+          anthropic: !!isOpenAnthropic
+        }
       };
     }
 

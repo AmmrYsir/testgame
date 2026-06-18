@@ -21,7 +21,9 @@ export default function TycoonUI() {
     allocateGpusToCountry,
     company,
     rivals,
-    establishHq
+    establishHq,
+    openMarket,
+    resources
   } = useGameStore();
 
   const [selectedCountryId, setSelectedCountryId] = useState(null);
@@ -136,31 +138,53 @@ export default function TycoonUI() {
                   )}
 
                   {/* Market Shares */}
-                  <div className="space-y-2 border-t border-white/5 pt-sm">
+                  <div className="space-y-4 border-t border-white/5 pt-sm">
                     <span className="text-[9px] text-outline uppercase tracking-wider font-bold block">Market Shares</span>
                     
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                       {/* Player */}
-                      <div className="space-y-0.5">
-                        <div className="flex justify-between text-xs font-semibold">
-                          <span className="text-on-surface-variant flex items-center gap-1 text-[10px]">
-                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Player
-                          </span>
-                          <span className="text-primary font-bold text-[11px]">{country.playerShare}%</span>
+                      {country.openMarkets?.player ? (
+                        <div className="space-y-1 animate-fade-in">
+                          <div className="flex justify-between text-xs font-semibold">
+                            <span className="text-on-surface-variant flex items-center gap-1 text-[10px]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Player
+                            </span>
+                            <span className="text-primary font-bold text-[11px]">{country.playerShare}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${country.playerShare}%` }}></div>
+                          </div>
                         </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                          <div className="h-full bg-primary rounded-full" style={{ width: `${country.playerShare}%` }}></div>
+                      ) : (
+                        <div className="bg-[#3b82f6]/5 border border-[#3b82f6]/10 rounded-xl p-md flex flex-col gap-sm animate-fade-in">
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs text-outline font-semibold">Player Market: Closed</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-[#3b82f6]/10 border border-[#3b82f6]/20 rounded text-[#3b82f6] font-semibold">$50,000</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => openMarket(selectedCountryId)}
+                            disabled={resources.cash < 50000}
+                            className="w-full bg-[#3b82f6] text-white py-2 px-md rounded-xl font-mono text-[10px] uppercase tracking-wider font-bold hover:bg-[#2563eb] transition-all hover:shadow-[0_0_12px_rgba(59,130,246,0.4)] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                            <span>Open Market</span>
+                          </button>
                         </div>
-                      </div>
+                      )}
 
                       {/* Rivals */}
                       {rivals.map(rival => {
-                        const shareKey = `${rival.name.toLowerCase()}Share`;
+                        const rivalKey = rival.name.toLowerCase();
+                        const isRivalOpen = country.openMarkets?.[rivalKey];
+                        if (!isRivalOpen) return null;
+
+                        const shareKey = `${rivalKey}Share`;
                         const share = country[shareKey] || 0;
                         if (rival.name === 'Anthropic' && share <= 0) return null;
                         
                         return (
-                          <div key={rival.name} className="space-y-0.5 animate-fade-in">
+                          <div key={rival.name} className="space-y-1 animate-fade-in">
                             <div className="flex justify-between text-xs">
                               <span className="text-outline flex items-center gap-1 text-[10px]">
                                 <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: rival.color }}></span> {rival.name}
@@ -186,6 +210,8 @@ export default function TycoonUI() {
           <WorldMap
             countries={countries}
             selectedCountryId={selectedCountryId}
+            company={company}
+            rivals={rivals}
             onClick={handleMapClick}
             onMouseMove={handleMapMouseMove}
             onMouseLeave={handleMapMouseLeave}
@@ -199,17 +225,28 @@ export default function TycoonUI() {
             >
               <span className="font-bold text-on-surface">{hoveredCountry.name}</span>
               <div className="flex flex-col gap-0.5 font-mono text-[9px] mt-0.5">
-                <span className="text-primary font-bold">Player Share: {hoveredCountry.playerShare}%</span>
-                {rivals.map(rival => {
-                  const shareKey = `${rival.name.toLowerCase()}Share`;
-                  const share = hoveredCountry[shareKey] || 0;
-                  if (rival.name === 'Anthropic' && share <= 0) return null;
-                  return (
-                    <span key={rival.name} style={{ color: rival.color }}>
-                      {rival.name} Share: {share}%
-                    </span>
-                  );
-                })}
+                {(!hoveredCountry.openMarkets || !Object.values(hoveredCountry.openMarkets).some(Boolean)) ? (
+                  <span className="text-outline italic">No active markets</span>
+                ) : (
+                  <>
+                    {hoveredCountry.openMarkets?.player && (
+                      <span className="text-primary font-bold">Player Share: {hoveredCountry.playerShare}%</span>
+                    )}
+                    {rivals.map(rival => {
+                      const rivalKey = rival.name.toLowerCase();
+                      if (!hoveredCountry.openMarkets?.[rivalKey]) return null;
+                      
+                      const shareKey = `${rivalKey}Share`;
+                      const share = hoveredCountry[shareKey] || 0;
+                      if (rival.name === 'Anthropic' && share <= 0) return null;
+                      return (
+                        <span key={rival.name} style={{ color: rival.color }}>
+                          {rival.name} Share: {share}%
+                        </span>
+                      );
+                    })}
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -293,7 +330,7 @@ export default function TycoonUI() {
   );
 }
 
-const WorldMap = memo(function WorldMap({ countries, selectedCountryId, onClick, onMouseMove, onMouseLeave }) {
+const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company, rivals, onClick, onMouseMove, onMouseLeave }) {
   // Pre-process raw SVG to make it fluid from the very first render (preventing size jump)
   const processedWorldSvg = worldSvg
     .replace('width="1009.6727"', 'viewBox="0 0 1010 666" width="100%"')
@@ -306,12 +343,24 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, onClick,
     const svg = container.querySelector('svg');
     if (!svg) return;
 
+    const hexToRgb = (hex) => {
+      const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+      const fullHex = hex.replace(shorthandRegex, (m, r, g, b) => r + r + g + g + b + b);
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(fullHex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : null;
+    };
+
+    const baseBg = { r: 30, g: 35, b: 48 }; // #1e2330 base slate grey
+
     const paths = svg.querySelectorAll('path');
     paths.forEach(path => {
       const id = path.getAttribute('id');
       if (!id) return;
       const countryState = countries[id];
-      const playerShare = countryState ? countryState.playerShare : 0;
       
       path.style.cursor = 'pointer';
       
@@ -319,21 +368,53 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, onClick,
       let stroke = 'rgba(255, 255, 255, 0.15)'; // High-visibility fine border lines
       let strokeWidth = '0.6';
       
-      if (playerShare > 0) {
-        // Interpolate HSL from slate grey HSL(220, 20%, 15%) to active HSL(221, 83%, 45%)
-        const ratio = playerShare / 100;
-        const h = 221;
-        const s = Math.round(20 + (83 - 20) * ratio);
-        const l = Math.round(15 + (45 - 15) * ratio);
-        fill = `hsl(${h}, ${s}%, ${l}%)`;
-        stroke = 'rgba(59, 130, 246, 0.4)';
+      // Find dominant company with open market in this country
+      let dominantCompany = null;
+      let dominantShare = 0;
+      let dominantColor = '#3b82f6';
+      
+      if (countryState) {
+        // Player
+        if (countryState.openMarkets?.player && countryState.playerShare > dominantShare) {
+          dominantShare = countryState.playerShare;
+          dominantCompany = 'player';
+          dominantColor = company?.color || '#3b82f6';
+        }
+        // Rivals
+        if (rivals) {
+          rivals.forEach(rival => {
+            const rivalKey = rival.name.toLowerCase();
+            const isRivalOpen = countryState.openMarkets?.[rivalKey];
+            if (isRivalOpen) {
+              const shareKey = `${rivalKey}Share`;
+              const share = countryState[shareKey] || 0;
+              if (share > dominantShare) {
+                dominantShare = share;
+                dominantCompany = rivalKey;
+                dominantColor = rival.color;
+              }
+            }
+          });
+        }
+      }
+      
+      let companyRgb = { r: 59, g: 130, b: 246 };
+      if (dominantShare > 0) {
+        companyRgb = hexToRgb(dominantColor) || { r: 59, g: 130, b: 246 };
+        const ratio = dominantShare / 100;
+        // Blend baseBg with companyRgb based on market share ratio
+        const r = Math.round(baseBg.r + (companyRgb.r - baseBg.r) * ratio);
+        const g = Math.round(baseBg.g + (companyRgb.g - baseBg.g) * ratio);
+        const b = Math.round(baseBg.b + (companyRgb.b - baseBg.b) * ratio);
+        fill = `rgb(${r}, ${g}, ${b})`;
+        stroke = `rgba(${companyRgb.r}, ${companyRgb.g}, ${companyRgb.b}, 0.4)`;
         strokeWidth = '1.0';
       }
       
       if (id === selectedCountryId) {
-        stroke = '#3b82f6';
+        stroke = dominantShare > 0 ? dominantColor : '#3b82f6';
         strokeWidth = '2.2';
-        path.style.filter = 'drop-shadow(0 0 6px rgba(59, 130, 246, 0.6)) brightness(1.25)';
+        path.style.filter = `drop-shadow(0 0 6px ${dominantShare > 0 ? stroke : 'rgba(59, 130, 246, 0.6)'}) brightness(1.25)`;
       } else {
         path.style.filter = '';
       }
@@ -352,12 +433,12 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, onClick,
       };
       path.onmouseleave = () => {
         if (id !== selectedCountryId) {
-          path.setAttribute('stroke', playerShare > 0 ? 'rgba(59, 130, 246, 0.4)' : 'rgba(255, 255, 255, 0.15)');
+          path.setAttribute('stroke', dominantShare > 0 ? `rgba(${companyRgb.r}, ${companyRgb.g}, ${companyRgb.b}, 0.4)` : 'rgba(255, 255, 255, 0.15)');
           path.style.filter = '';
         }
       };
     });
-  }, [countries, selectedCountryId]);
+  }, [countries, selectedCountryId, company, rivals]);
 
   return (
     <div

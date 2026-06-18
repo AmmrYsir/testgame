@@ -648,7 +648,7 @@ export default function ModelView() {
                     >
                       <option value="">-- Deploy to New Country --</option>
                       {Object.entries(countries || {}).map(([code, country]) => {
-                        if (!country.deployedModelId) {
+                        if (!country.deployedModelId && country.openMarkets?.player) {
                           return (
                             <option key={code} value={code}>
                               {country.name} ({code})
