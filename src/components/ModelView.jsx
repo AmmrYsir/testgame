@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store';
 
 export default function ModelView() {
-  const { llms, research, infrastructure, resources, createModel, startTraining, releaseLLM, allocateProductionGpus, setModelPrice } = useGameStore();
+  const { llms, research, infrastructure, resources, createModel, startTraining, releaseLLM, setModelPrice, countries } = useGameStore();
   
   const [selectedModelId, setSelectedModelId] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -597,74 +597,49 @@ export default function ModelView() {
                   </div>
                 </div>
 
-                {/* Compute Serving & Scaling Allocation Card */}
+                {/* Regional Deployments List */}
                 <div className="bg-surface-dim/30 p-lg rounded-xl border border-white/5 space-y-md">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-sm">
-                    <div>
-                      <h4 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Serve Compute Scaling</h4>
-                      <p className="text-xs text-outline mt-0.5">Scale production nodes serving real-time customer requests.</p>
-                    </div>
-                    <div className="flex items-center gap-md bg-surface-dim px-4 py-2 rounded-lg border border-white/5 shrink-0">
-                      <div>
-                        <span className="text-[10px] text-outline block uppercase">GPU Demand</span>
-                        <span className="font-label-md text-label-md text-on-surface font-semibold">
-                          Required: <span className="text-primary font-bold">{selectedModel.marketMetrics?.gpusRequired || 0}</span> GPUs
-                        </span>
-                      </div>
-                      <div className="border-l border-white/10 pl-md">
-                        <span className="text-[10px] text-outline block uppercase">GPU Served</span>
-                        <span className="font-label-md text-label-md text-on-surface font-semibold">
-                          Allocated: <span className={
-                            (selectedModel.productionGpus || 0) >= (selectedModel.marketMetrics?.gpusRequired || 0)
-                              ? 'text-emerald-500 font-bold'
-                              : 'text-error font-bold animate-pulse'
-                          }>{selectedModel.productionGpus || 0}</span> GPUs
-                        </span>
-                      </div>
-                    </div>
+                  <div>
+                    <h4 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider">Regional Deployments</h4>
+                    <p className="text-xs text-outline mt-0.5">Countries currently served by {selectedModel.name}. Scale compute on the World Map.</p>
                   </div>
 
-                  <div className="space-y-sm">
-                    <div className="flex justify-between text-xs text-outline">
-                      <span>Scale Serve Nodes</span>
-                      <span>Allocatable range: 0 - {maxAllocatable} GPUs (Available Idle: {idleGpus})</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max={maxAllocatable}
-                      value={selectedModel.productionGpus || 0}
-                      onChange={(e) => allocateProductionGpus(selectedModel.id, parseInt(e.target.value))}
-                      className="w-full accent-primary"
-                    />
-                    
-                    <div className="flex flex-wrap gap-sm justify-between pt-xs">
-                      <button 
-                        onClick={() => allocateProductionGpus(selectedModel.id, 0)}
-                        disabled={(selectedModel.productionGpus || 0) === 0}
-                        className="text-xs px-3 py-1.5 bg-surface-container-highest border border-outline-variant hover:border-error hover:text-error rounded text-on-surface transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        De-allocate All
-                      </button>
+                  {(() => {
+                    const deployedCountries = Object.entries(countries || {}).filter(
+                      ([_, country]) => country.deployedModelId === selectedModel.id
+                    );
 
-                      <div className="flex gap-sm">
-                        <button 
-                          onClick={() => allocateProductionGpus(selectedModel.id, selectedModel.marketMetrics?.gpusRequired || 0)}
-                          disabled={(selectedModel.productionGpus || 0) === (selectedModel.marketMetrics?.gpusRequired || 0) || maxAllocatable < (selectedModel.marketMetrics?.gpusRequired || 0)}
-                          className="text-xs px-3 py-1.5 bg-primary/20 border border-primary/30 rounded text-primary hover:bg-primary/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          Match Demand ({selectedModel.marketMetrics?.gpusRequired || 0} GPUs)
-                        </button>
-                        <button 
-                          onClick={() => allocateProductionGpus(selectedModel.id, maxAllocatable)}
-                          disabled={(selectedModel.productionGpus || 0) === maxAllocatable}
-                          className="text-xs px-3 py-1.5 bg-secondary/20 border border-secondary/30 rounded text-secondary hover:bg-secondary/30 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          Allocate Max ({maxAllocatable} GPUs)
-                        </button>
+                    if (deployedCountries.length === 0) {
+                      return (
+                        <div className="text-center py-md border border-dashed border-white/10 rounded-lg">
+                          <span className="material-symbols-outlined text-outline text-3xl">public_off</span>
+                          <p className="text-xs text-outline mt-sm">This model is not currently deployed to any regions.</p>
+                          <p className="text-[10px] text-outline mt-0.5">Go to the World Map and select a country to deploy.</p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-sm max-h-[200px] overflow-y-auto custom-scrollbar pr-xs">
+                        {deployedCountries.map(([code, country]) => (
+                          <div key={code} className="flex justify-between items-center bg-surface px-4 py-3 rounded-lg border border-white/5">
+                            <div>
+                              <span className="font-semibold text-sm text-on-surface">{country.name}</span>
+                              <div className="flex gap-md text-[10px] text-outline mt-0.5">
+                                <span>Share: <strong className="text-primary">{country.playerShare}%</strong></span>
+                                <span>Users: <strong>{country.playerUsers?.toLocaleString() || 0}</strong></span>
+                                <span>Latency: <strong className={country.latency > 100 ? "text-error animate-pulse" : "text-emerald-500"}>{country.latency}ms</strong></span>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[10px] text-outline block uppercase">Compute</span>
+                              <span className="font-mono text-xs text-primary font-bold">{country.allocatedGpus || 0} GPUs</span>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
                 </div>
               </div>
             ) : (

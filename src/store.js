@@ -11,6 +11,19 @@ export const formatDateFromTick = (tick) => {
   });
 };
 
+export const INITIAL_COUNTRIES = {
+  US: { name: 'United States', demand: 25000, playerShare: 10, openaiShare: 60, anthropicShare: 30, allocatedGpus: 10, deployedModelId: null, latency: 10, satisfaction: 100 },
+  CN: { name: 'China', demand: 30000, playerShare: 0, openaiShare: 70, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  JP: { name: 'Japan', demand: 12000, playerShare: 5, openaiShare: 65, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
+  DE: { name: 'Germany', demand: 10000, playerShare: 8, openaiShare: 62, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
+  GB: { name: 'United Kingdom', demand: 9000, playerShare: 7, openaiShare: 63, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
+  FR: { name: 'France', demand: 8000, playerShare: 6, openaiShare: 64, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
+  IN: { name: 'India', demand: 20000, playerShare: 2, openaiShare: 68, anthropicShare: 30, allocatedGpus: 1, deployedModelId: null, latency: 10, satisfaction: 100 },
+  BR: { name: 'Brazil', demand: 7000, playerShare: 4, openaiShare: 66, anthropicShare: 30, allocatedGpus: 1, deployedModelId: null, latency: 10, satisfaction: 100 },
+  CA: { name: 'Canada', demand: 6000, playerShare: 12, openaiShare: 58, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
+  AU: { name: 'Australia', demand: 5000, playerShare: 11, openaiShare: 59, anthropicShare: 30, allocatedGpus: 1, deployedModelId: null, latency: 10, satisfaction: 100 }
+};
+
 export const useGameStore = create(
   persist(
     (set, get) => ({
@@ -46,6 +59,9 @@ export const useGameStore = create(
 
   // Models Registry
   llms: [], // { id, name, version, architecture, status, stats: { knowledge, coding, math, creativity, hallucination }, training: null | { progress, totalTicks, allocatedGpus, startStats, targetStats, cost }, releaseType, contractId }
+
+  // Global Map Countries State
+  countries: INITIAL_COUNTRIES,
 
   // Research (Progressive)
   research: {
@@ -111,6 +127,7 @@ export const useGameStore = create(
       serverHeat: 20,
     },
     llms: [],
+    countries: INITIAL_COUNTRIES,
     research: {
       unlockedTech: ['transformer'],
       activeResearch: null,
@@ -509,6 +526,66 @@ export const useGameStore = create(
     };
   }),
 
+  initCountry: (id, name) => set((state) => {
+    if (state.countries[id]) return {};
+    const demand = Math.floor(Math.random() * 8000) + 2000;
+    const openaiShare = Math.floor(Math.random() * 20) + 50; // 50-70
+    const anthropicShare = 100 - openaiShare;
+    return {
+      countries: {
+        ...state.countries,
+        [id]: {
+          name: name || id,
+          demand,
+          playerShare: 0,
+          openaiShare,
+          anthropicShare,
+          allocatedGpus: 0,
+          deployedModelId: null,
+          latency: 10,
+          satisfaction: 100
+        }
+      }
+    };
+  }),
+
+  deployModelToCountry: (countryId, modelId) => set((state) => {
+    const country = state.countries[countryId];
+    if (!country) return {};
+    return {
+      countries: {
+        ...state.countries,
+        [countryId]: {
+          ...country,
+          deployedModelId: modelId
+        }
+      }
+    };
+  }),
+
+  allocateGpusToCountry: (countryId, amount) => set((state) => {
+    const country = state.countries[countryId];
+    if (!country) return {};
+    const totalGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
+    const trainingGpus = state.llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
+    const allocatedToOthers = Object.entries(state.countries).reduce((sum, [cid, c]) => {
+      if (cid === countryId) return sum;
+      return sum + (c.allocatedGpus || 0);
+    }, 0);
+    const maxAvailable = totalGpus - trainingGpus - allocatedToOthers;
+    const finalAmount = Math.max(0, Math.min(amount, maxAvailable));
+
+    return {
+      countries: {
+        ...state.countries,
+        [countryId]: {
+          ...country,
+          allocatedGpus: finalAmount
+        }
+      }
+    };
+  }),
+
   // Game Loop Tick
   tick: () => set((state) => {
     if (state.simulationSpeed === 0) return state; // Paused
@@ -631,15 +708,27 @@ export const useGameStore = create(
     };
 
     let totalProductionGpus = 0;
+    const updatedCountries = {};
+    const modelAggregations = {};
 
-    nextLlms = nextLlms.map(m => {
-      if (m.status === 'released' && m.targetSegment) {
-        totalProductionGpus += m.productionGpus || 0;
-        const cfg = segmentConfigs[m.targetSegment];
+    for (const [cid, country] of Object.entries(state.countries)) {
+      let playerShare = country.playerShare || 0;
+      let openaiShare = country.openaiShare || 0;
+      let anthropicShare = country.anthropicShare || 0;
+      let latency = country.latency || 10;
+      let satisfaction = country.satisfaction || 100;
+      let playerUsers = 0;
+      let gpusRequired = 0;
+
+      const modelId = country.deployedModelId;
+      const model = modelId ? nextLlms.find(m => m.id === modelId) : null;
+
+      if (model && model.status === 'released' && model.targetSegment) {
+        const cfg = segmentConfigs[model.targetSegment];
         
         // Quality score: mean of key stats, penalized by hallucination
-        const rating = (m.stats[cfg.weightStats[0]] + m.stats[cfg.weightStats[1]]) / 2;
-        const penalty = m.stats.hallucination * 1.5;
+        const rating = (model.stats[cfg.weightStats[0]] + model.stats[cfg.weightStats[1]]) / 2;
+        const penalty = model.stats.hallucination * 1.5;
         const qualityScore = Math.max(5, rating - penalty);
 
         // Competitor baseline quality score (best rival in that segment)
@@ -652,7 +741,7 @@ export const useGameStore = create(
         });
 
         // Price comparison
-        const finalPrice = m.priceTag || cfg.basePrice;
+        const finalPrice = model.priceTag || cfg.basePrice;
         const valueScore = qualityScore / Math.max(0.1, finalPrice);
         const rivalValueScore = maxRivalScore / cfg.basePrice;
         const competitiveness = valueScore / Math.max(0.01, rivalValueScore);
@@ -660,32 +749,37 @@ export const useGameStore = create(
         // Hype scaling
         const hypeFactor = 0.5 + (state.resources.hype / 50);
 
-        // Growth or decay rate
-        let growth = 0;
+        // Growth or decay rate of market share in percentage points
+        let shareChange = 0;
         if (competitiveness > 1.25) {
-          growth = Math.round(cfg.userGrowthFactor * competitiveness * hypeFactor * 12);
+          shareChange = (competitiveness - 1) * hypeFactor * 1.5;
         } else if (competitiveness < 0.75) {
-          growth = -Math.round(cfg.userGrowthFactor * (1 / Math.max(0.01, competitiveness)) * 6);
+          shareChange = (competitiveness - 1) * 1.5;
         } else {
-          growth = Math.round(cfg.userGrowthFactor * 2 * (state.resources.hype / 100));
+          shareChange = (competitiveness - 1) * 0.5;
         }
 
         // Apply satisfaction penalty to growth
-        const currentSat = m.marketMetrics?.satisfaction || 100;
-        if (currentSat < 75) {
-          growth -= Math.round((m.marketMetrics?.users || 100) * 0.05 + 2);
+        if (satisfaction < 75) {
+          shareChange -= (100 - satisfaction) * 0.05;
         }
 
-        // Constrain users/clients count to segment limit
-        const nextUsers = Math.max(1, Math.min(cfg.maxMarket, (m.marketMetrics?.users || 0) + growth));
-
-        // Calculate Production GPUs required
-        const gpusRequired = Math.ceil(nextUsers * cfg.computePerUser);
+        playerShare = Math.max(0, Math.min(100, playerShare + shareChange));
         
-        // Latency and throttling
-        const allocated = m.productionGpus || 0;
-        let latency = 10;
-        let satisfaction = currentSat;
+        // Normalize rival shares to fill the rest
+        const totalRivalShare = openaiShare + anthropicShare;
+        if (totalRivalShare > 0) {
+          openaiShare = (openaiShare / totalRivalShare) * (100 - playerShare);
+          anthropicShare = (anthropicShare / totalRivalShare) * (100 - playerShare);
+        } else {
+          openaiShare = (100 - playerShare) * 0.67;
+          anthropicShare = (100 - playerShare) * 0.33;
+        }
+
+        playerUsers = Math.round(country.demand * (playerShare / 100));
+        gpusRequired = Math.ceil(playerUsers * cfg.computePerUser);
+        const allocated = country.allocatedGpus || 0;
+        totalProductionGpus += allocated;
 
         if (allocated === 0) {
           latency = 999;
@@ -698,27 +792,70 @@ export const useGameStore = create(
           satisfaction = Math.min(100, satisfaction + 2);
         }
 
-        // Calculate tick revenue based on users and pricing model
-        let mRev = 0;
-        if (m.targetSegment === 'dev') {
-          // Token pricing: users represent queries/tick (in millions)
-          mRev = nextUsers * finalPrice;
-        } else {
-          // Subscription or monthly leases: users represent monthly recurring contracts/subscribers
-          mRev = nextUsers * finalPrice;
+        // Calculate revenue
+        let countryRev = playerUsers * finalPrice;
+        countryRev = countryRev * (satisfaction / 100);
+        cashChange += Math.round(countryRev);
+
+        // Track metrics for model aggregation
+        if (!modelAggregations[modelId]) {
+          modelAggregations[modelId] = { users: 0, gpusRequired: 0, latencies: [], satisfactions: [] };
         }
+        modelAggregations[modelId].users += playerUsers;
+        modelAggregations[modelId].gpusRequired += gpusRequired;
+        modelAggregations[modelId].latencies.push(latency);
+        modelAggregations[modelId].satisfactions.push(satisfaction);
+      } else {
+        // Decay player share if no model deployed
+        playerShare = Math.max(0, playerShare - 2);
+        const totalRivalShare = openaiShare + anthropicShare;
+        if (totalRivalShare > 0) {
+          openaiShare = (openaiShare / totalRivalShare) * (100 - playerShare);
+          anthropicShare = (anthropicShare / totalRivalShare) * (100 - playerShare);
+        } else {
+          openaiShare = (100 - playerShare) * 0.67;
+          anthropicShare = (100 - playerShare) * 0.33;
+        }
+        playerUsers = 0;
+        gpusRequired = 0;
+        latency = 10;
+        satisfaction = Math.min(100, satisfaction + 2);
+      }
+
+      updatedCountries[cid] = {
+        ...country,
+        playerShare: parseFloat(playerShare.toFixed(2)),
+        openaiShare: parseFloat(openaiShare.toFixed(2)),
+        anthropicShare: parseFloat(anthropicShare.toFixed(2)),
+        playerUsers,
+        gpusRequired,
+        latency,
+        satisfaction
+      };
+    }
+
+    nextLlms = nextLlms.map(m => {
+      if (m.status === 'released' && m.targetSegment) {
+        const agg = modelAggregations[m.id] || { users: 0, gpusRequired: 0, latencies: [], satisfactions: [] };
+        const avgLatency = agg.latencies.length > 0 ? Math.round(agg.latencies.reduce((a, b) => a + b, 0) / agg.latencies.length) : 10;
+        const avgSatisfaction = agg.satisfactions.length > 0 ? Math.round(agg.satisfactions.reduce((a, b) => a + b, 0) / agg.satisfactions.length) : 100;
         
-        // Latency penalty to billing yields
-        mRev = mRev * (satisfaction / 100);
-        cashChange += Math.round(mRev);
+        // Count total GPUs allocated to this model across all countries
+        const allocatedGpus = Object.values(updatedCountries).reduce((sum, c) => {
+          if (c.deployedModelId === m.id) {
+            return sum + (c.allocatedGpus || 0);
+          }
+          return sum;
+        }, 0);
 
         return {
           ...m,
+          productionGpus: allocatedGpus,
           marketMetrics: {
-            users: nextUsers,
-            gpusRequired,
-            latency,
-            satisfaction
+            users: agg.users,
+            gpusRequired: agg.gpusRequired,
+            latency: avgLatency,
+            satisfaction: avgSatisfaction
           }
         };
       }
@@ -951,6 +1088,7 @@ export const useGameStore = create(
         serverHeat: currentHeat
       },
       llms: nextLlms,
+      countries: updatedCountries,
       research: {
         ...state.research,
         activeResearch: nextActiveResearch,

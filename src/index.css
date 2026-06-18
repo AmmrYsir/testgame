@@ -35,28 +35,41 @@
 
 /* Custom Scrollbar Styles for premium aesthetic */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
+  background: rgba(16, 19, 26, 0.3);
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: background-color 0.2s ease;
+  background: rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.05);
+  transition: all 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(173, 198, 255, 0.45); /* Primary glow hover */
+  background: rgba(59, 130, 246, 0.5);
+  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 /* Firefox support */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) rgba(255, 255, 255, 0.02);
+  scrollbar-color: rgba(59, 130, 246, 0.2) rgba(16, 19, 26, 0.3);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.animate-slide-in {
+  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
