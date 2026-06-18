@@ -53,13 +53,7 @@ export const useGameStore = create(
 
   // Active deals & training bonuses
   activeApiLeases: [], // Array of { company, type, ticksLeft }
-  activeSharedRuns: [], // Array of { company }
-  sharedTrainingRunBonuses: {
-    player: 0,
-    google: 0,
-    openai: 0,
-    anthropic: 0
-  },
+  activeComputeLeases: [], // Array of { company, type, ticksLeft }
 
   // Infrastructure
   infrastructure: {
@@ -136,13 +130,7 @@ export const useGameStore = create(
       currentTick: 0,
     },
     activeApiLeases: [],
-    activeSharedRuns: [],
-    sharedTrainingRunBonuses: {
-      player: 0,
-      google: 0,
-      openai: 0,
-      anthropic: 0
-    },
+    activeComputeLeases: [],
     infrastructure: {
       gpus: 64,
       cloudGpusRented: 0,
@@ -286,13 +274,13 @@ export const useGameStore = create(
         cash: 1,
         data: 1500,
         apiLease: 150000,
-        sharedRun: 250000
+        computeLease: 200000
       };
 
       const modifiers = {
-        Google: { cash: 1.0, data: 0.8, apiLease: 1.2, sharedRun: 1.3, greed: 0.10 },
-        OpenAI: { cash: 0.8, data: 1.5, apiLease: 1.1, sharedRun: 1.2, greed: 0.15 },
-        Anthropic: { cash: 1.0, data: 1.0, apiLease: 1.0, sharedRun: 1.5, greed: 0.05 }
+        Google: { cash: 1.0, data: 0.8, apiLease: 1.2, computeLease: 1.3, greed: 0.10 },
+        OpenAI: { cash: 0.8, data: 1.5, apiLease: 1.1, computeLease: 1.2, greed: 0.15 },
+        Anthropic: { cash: 1.0, data: 1.0, apiLease: 1.0, computeLease: 1.5, greed: 0.05 }
       };
 
       const rival = state.rivals.find(r => r.name === rivalName);
@@ -301,19 +289,19 @@ export const useGameStore = create(
         return {};
       }
 
-      const mods = modifiers[rivalName] || { cash: 1.0, data: 1.0, apiLease: 1.0, sharedRun: 1.0, greed: 0.1 };
+      const mods = modifiers[rivalName] || { cash: 1.0, data: 1.0, apiLease: 1.0, computeLease: 1.0, greed: 0.1 };
 
       let offeredValue = 0;
       offeredValue += playerOffer.cash * mods.cash;
       offeredValue += playerOffer.data * baseValues.data * mods.data;
-      if (playerOffer.apiLease) offeredValue += baseValues.apiLease * mods.apiLease;
-      if (playerOffer.sharedRun) offeredValue += baseValues.sharedRun * mods.sharedRun;
+      if (playerOffer.apiLease > 0) offeredValue += baseValues.apiLease * playerOffer.apiLease * mods.apiLease;
+      if (playerOffer.computeLease > 0) offeredValue += baseValues.computeLease * playerOffer.computeLease * mods.computeLease;
 
       let requestedValue = 0;
       requestedValue += playerRequest.cash * mods.cash;
       requestedValue += playerRequest.data * baseValues.data * mods.data;
-      if (playerRequest.apiLease) requestedValue += baseValues.apiLease * mods.apiLease;
-      if (playerRequest.sharedRun) requestedValue += baseValues.sharedRun * mods.sharedRun;
+      if (playerRequest.apiLease > 0) requestedValue += baseValues.apiLease * playerRequest.apiLease * mods.apiLease;
+      if (playerRequest.computeLease > 0) requestedValue += baseValues.computeLease * playerRequest.computeLease * mods.computeLease;
 
       if (state.resources.cash < playerOffer.cash) {
         returnVal = { dealStatus: 'error', dealMessage: 'Insufficient cash to cover your offer.' };
@@ -323,13 +311,13 @@ export const useGameStore = create(
         returnVal = { dealStatus: 'error', dealMessage: 'Insufficient proprietary data to cover your offer.' };
         return {};
       }
-      if (playerOffer.sharedRun && state.resources.compute < 100) {
-        returnVal = { dealStatus: 'error', dealMessage: 'Shared training runs require at least 100 PFLOPS of compute.' };
+      if (playerOffer.computeLease > 0 && state.resources.compute < 200) {
+        returnVal = { dealStatus: 'error', dealMessage: 'Leasing compute power requires at least 200 PFLOPS of compute capacity.' };
         return {};
       }
       const hasReleasedModel = state.llms.some(m => m.status === 'released');
-      if (playerOffer.apiLease && !hasReleasedModel) {
-        returnVal = { dealStatus: 'error', dealMessage: 'API funneling requires you to have at least one released model.' };
+      if (playerOffer.apiLease > 0 && !hasReleasedModel) {
+        returnVal = { dealStatus: 'error', dealMessage: 'Leasing API access requires you to have at least one released model.' };
         return {};
       }
 
@@ -339,6 +327,10 @@ export const useGameStore = create(
       }
       if ((rival.data || 0) < playerRequest.data) {
         returnVal = { dealStatus: 'error', dealMessage: `${rivalName} does not have enough proprietary data.` };
+        return {};
+      }
+      if (playerRequest.computeLease > 0 && (rival.compute || 0) < 200) {
+        returnVal = { dealStatus: 'error', dealMessage: `${rivalName} does not have enough compute capacity to lease.` };
         return {};
       }
 
@@ -360,28 +352,27 @@ export const useGameStore = create(
         });
 
         let nextApiLeases = [...(state.activeApiLeases || [])];
-        if (playerRequest.apiLease) {
-          nextApiLeases.push({ company: rivalName, type: 'incoming', ticksLeft: 60 });
+        if (playerRequest.apiLease > 0) {
+          nextApiLeases.push({ company: rivalName, type: 'incoming', ticksLeft: playerRequest.apiLease * 365 });
         }
-        if (playerOffer.apiLease) {
-          nextApiLeases.push({ company: rivalName, type: 'outgoing', ticksLeft: 60 });
+        if (playerOffer.apiLease > 0) {
+          nextApiLeases.push({ company: rivalName, type: 'outgoing', ticksLeft: playerOffer.apiLease * 365 });
         }
 
-        let nextSharedTrainingRunBonuses = { ...(state.sharedTrainingRunBonuses || { player: 0, google: 0, openai: 0, anthropic: 0 }) };
-        let nextActiveSharedRuns = [...(state.activeSharedRuns || [])];
-        if (playerOffer.sharedRun || playerRequest.sharedRun) {
-          nextSharedTrainingRunBonuses.player += 5;
-          if (rivalName === 'Google') nextSharedTrainingRunBonuses.google += 5;
-          if (rivalName === 'OpenAI') nextSharedTrainingRunBonuses.openai += 5;
-          if (rivalName === 'Anthropic') nextSharedTrainingRunBonuses.anthropic += 5;
-
-          if (!nextActiveSharedRuns.some(r => r.company === rivalName)) {
-            nextActiveSharedRuns.push({ company: rivalName });
-          }
+        let nextComputeLeases = [...(state.activeComputeLeases || [])];
+        if (playerRequest.computeLease > 0) {
+          nextComputeLeases.push({ company: rivalName, type: 'incoming', ticksLeft: playerRequest.computeLease * 365 });
         }
+        if (playerOffer.computeLease > 0) {
+          nextComputeLeases.push({ company: rivalName, type: 'outgoing', ticksLeft: playerOffer.computeLease * 365 });
+        }
+
+        const baseCompute = (state.infrastructure.gpus * 5) + (state.infrastructure.cloudGpusRented * 2.5);
+        const computeAdjustment = (nextComputeLeases.filter(l => l.type === 'incoming').length - nextComputeLeases.filter(l => l.type === 'outgoing').length) * 200;
+        const nextCompute = Math.max(0, baseCompute + computeAdjustment);
 
         const currentTick = state.resources.currentTick;
-        const dealText = `Deal Completed with ${rivalName}! Offered: ${playerOffer.cash > 0 ? `$${playerOffer.cash.toLocaleString()} cash ` : ''}${playerOffer.data > 0 ? `${playerOffer.data} TB data ` : ''}. Requested: ${playerRequest.cash > 0 ? `$${playerRequest.cash.toLocaleString()} cash ` : ''}${playerRequest.data > 0 ? `${playerRequest.data} TB data ` : ''}.`;
+        const dealText = `Deal Completed with ${rivalName}! Offered: ${playerOffer.cash > 0 ? `$${playerOffer.cash.toLocaleString()} cash ` : ''}${playerOffer.data > 0 ? `${playerOffer.data} TB data ` : ''}${playerOffer.apiLease > 0 ? `API Lease (${playerOffer.apiLease} yr) ` : ''}${playerOffer.computeLease > 0 ? `Compute Lease (${playerOffer.computeLease} yr) ` : ''}. Requested: ${playerRequest.cash > 0 ? `$${playerRequest.cash.toLocaleString()} cash ` : ''}${playerRequest.data > 0 ? `${playerRequest.data} TB data ` : ''}${playerRequest.apiLease > 0 ? `API Lease (${playerRequest.apiLease} yr) ` : ''}${playerRequest.computeLease > 0 ? `Compute Lease (${playerRequest.computeLease} yr) ` : ''}.`;
 
         returnVal = { dealStatus: 'accepted', dealMessage: `Deal accepted! ${rivalName} agreed to your proposal.` };
 
@@ -389,12 +380,12 @@ export const useGameStore = create(
           resources: {
             ...state.resources,
             cash: nextCash,
-            data: nextData
+            data: nextData,
+            compute: nextCompute
           },
           rivals: nextRivals,
           activeApiLeases: nextApiLeases,
-          activeSharedRuns: nextActiveSharedRuns,
-          sharedTrainingRunBonuses: nextSharedTrainingRunBonuses,
+          activeComputeLeases: nextComputeLeases,
           newsFeed: [{ tick: currentTick, type: 'handshake', text: dealText, iconColor: 'text-[#10b981]' }, ...state.newsFeed]
         };
       } else {
@@ -445,7 +436,9 @@ export const useGameStore = create(
   buyGPUs: (amount, cost) => set((state) => {
     if (state.resources.cash >= cost) {
       const newGpus = state.infrastructure.gpus + amount;
-      const newCompute = (newGpus * 5) + (state.infrastructure.cloudGpusRented * 2.5);
+      const baseCompute = (newGpus * 5) + (state.infrastructure.cloudGpusRented * 2.5);
+      const leaseAdjustment = ((state.activeComputeLeases || []).filter(l => l.type === 'incoming').length - (state.activeComputeLeases || []).filter(l => l.type === 'outgoing').length) * 200;
+      const newCompute = Math.max(0, baseCompute + leaseAdjustment);
       return {
         resources: { ...state.resources, cash: state.resources.cash - cost, compute: newCompute },
         infrastructure: { ...state.infrastructure, gpus: newGpus },
@@ -458,7 +451,9 @@ export const useGameStore = create(
   toggleCloudGpus: (rentAmount) => set((state) => {
     const isRenting = state.infrastructure.cloudGpusRented > 0;
     const nextRented = isRenting ? 0 : rentAmount;
-    const newCompute = (state.infrastructure.gpus * 5) + (nextRented * 2.5);
+    const baseCompute = (state.infrastructure.gpus * 5) + (nextRented * 2.5);
+    const leaseAdjustment = ((state.activeComputeLeases || []).filter(l => l.type === 'incoming').length - (state.activeComputeLeases || []).filter(l => l.type === 'outgoing').length) * 200;
+    const newCompute = Math.max(0, baseCompute + leaseAdjustment);
     
     return {
       infrastructure: { ...state.infrastructure, cloudGpusRented: nextRented },
@@ -912,11 +907,16 @@ export const useGameStore = create(
 
     const hasIncomingLease = nextApiLeases.some(lease => lease.type === 'incoming' || !lease.type);
     const speedMultiplier = hasIncomingLease ? 1.2 : 1.0;
-    
-    let playerBonusApplied = false;
-    let nextSharedTrainingRunBonuses = { ...(state.sharedTrainingRunBonuses || { player: 0, google: 0, openai: 0, anthropic: 0 }) };
-    let nextActiveSharedRuns = [...(state.activeSharedRuns || [])];
 
+    // 2.6 Compute Leases countdown and compute recalculation
+    const nextComputeLeases = (state.activeComputeLeases || [])
+      .map(lease => ({ ...lease, ticksLeft: lease.ticksLeft - 1 }))
+      .filter(lease => lease.ticksLeft > 0);
+
+    const baseCompute = (state.infrastructure.gpus * 5) + (state.infrastructure.cloudGpusRented * 2.5);
+    const computeAdjustment = (nextComputeLeases.filter(l => l.type === 'incoming').length - nextComputeLeases.filter(l => l.type === 'outgoing').length) * 200;
+    const nextCompute = Math.max(0, baseCompute + computeAdjustment);
+    
     // 3. Train models progress
     let activeTrainingCount = 0;
     let totalTrainingGpus = 0;
@@ -941,21 +941,13 @@ export const useGameStore = create(
           // Training completed!
           const nextVer = m.version === 1.0 && m.status === 'draft' ? 1.0 : m.version + 1.0;
           
-          const bonus = nextSharedTrainingRunBonuses.player || 0;
           const finalStats = { ...m.training.targetStats };
-          if (bonus > 0) {
-            playerBonusApplied = true;
-            finalStats.knowledge = Math.min(100, finalStats.knowledge + bonus);
-            finalStats.coding = Math.min(100, finalStats.coding + bonus);
-            finalStats.math = Math.min(100, finalStats.math + bonus);
-            finalStats.creativity = Math.min(100, finalStats.creativity + bonus);
-          }
 
           nextEmails = [{
             id: 't_done_' + Date.now().toString(),
             sender: 'Facility Operations',
             subject: `Training Finished: ${m.name} v${nextVer.toFixed(1)}`,
-            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.${bonus > 0 ? ` A shared training run bonus of +${bonus} to all capabilities was successfully applied!` : ''}\n\nBenchmark Stats:\n- Knowledge: ${finalStats.knowledge}%\n- Coding: ${finalStats.coding}%\n- Math: ${finalStats.math}%\n- Creativity: ${finalStats.creativity}%\n- Hallucinations: ${finalStats.hallucination}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
+            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.\n\nBenchmark Stats:\n- Knowledge: ${finalStats.knowledge}%\n- Coding: ${finalStats.coding}%\n- Math: ${finalStats.math}%\n- Creativity: ${finalStats.creativity}%\n- Hallucinations: ${finalStats.hallucination}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
             tick: currentTick,
             read: false,
             reward: null,
@@ -965,7 +957,7 @@ export const useGameStore = create(
           nextNewsFeed = [{ 
             tick: currentTick, 
             type: 'check_circle', 
-            text: `Training Complete: '${m.name}' successfully aligned to version v${nextVer.toFixed(1)}!${bonus > 0 ? ` (+${bonus} shared training bonus applied)` : ''}`, 
+            text: `Training Complete: '${m.name}' successfully aligned to version v${nextVer.toFixed(1)}!`, 
             iconColor: 'text-secondary' 
           }, ...nextNewsFeed];
           
@@ -989,11 +981,6 @@ export const useGameStore = create(
       }
       return m;
     });
-
-    if (playerBonusApplied) {
-      nextSharedTrainingRunBonuses.player = 0;
-      nextActiveSharedRuns = [];
-    }
 
     // 4. Released models economics, user adoption, required compute, and billing revenue
     const segmentConfigs = {
@@ -1433,13 +1420,13 @@ export const useGameStore = create(
         ...state.resources,
         cash: state.resources.cash + cashChange,
         data: (state.resources.data || 0) + 2,
+        compute: nextCompute,
         hype: nextHype,
         currentTick
       },
       rivals: nextRivals,
       activeApiLeases: nextApiLeases,
-      activeSharedRuns: nextActiveSharedRuns,
-      sharedTrainingRunBonuses: nextSharedTrainingRunBonuses,
+      activeComputeLeases: nextComputeLeases,
       infrastructure: {
         ...state.infrastructure,
         serverHeat: currentHeat

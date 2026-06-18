@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store';
 
 export default function CompanyModal({ isOpen, onClose }) {
-  const { company, rivals, countries, llms, resources, executeDeal, activeApiLeases, activeSharedRuns } = useGameStore();
+  const { company, rivals, countries, llms, resources, executeDeal, activeApiLeases, activeComputeLeases } = useGameStore();
   const [selectedTab, setSelectedTab] = useState('player'); // 'player', 'google', 'openai', 'anthropic'
 
   // Deal Modal State
@@ -12,13 +12,17 @@ export default function CompanyModal({ isOpen, onClose }) {
   // Deal Offer & Request States
   const [offerCash, setOfferCash] = useState(0);
   const [offerData, setOfferData] = useState(0);
-  const [offerSharedRun, setOfferSharedRun] = useState(false);
   const [offerApiLease, setOfferApiLease] = useState(false);
+  const [offerApiYears, setOfferApiYears] = useState(1);
+  const [offerComputeLease, setOfferComputeLease] = useState(false);
+  const [offerComputeYears, setOfferComputeYears] = useState(1);
 
   const [requestCash, setRequestCash] = useState(0);
   const [requestData, setRequestData] = useState(0);
-  const [requestSharedRun, setRequestSharedRun] = useState(false);
   const [requestApiLease, setRequestApiLease] = useState(false);
+  const [requestApiYears, setRequestApiYears] = useState(1);
+  const [requestComputeLease, setRequestComputeLease] = useState(false);
+  const [requestComputeYears, setRequestComputeYears] = useState(1);
 
   const [dealFeedback, setDealFeedback] = useState(null); // { dealStatus: 'accepted'|'declined'|'error', dealMessage: '' }
 
@@ -61,12 +65,16 @@ export default function CompanyModal({ isOpen, onClose }) {
     setDealRival(rival);
     setOfferCash(0);
     setOfferData(0);
-    setOfferSharedRun(false);
     setOfferApiLease(false);
+    setOfferApiYears(1);
+    setOfferComputeLease(false);
+    setOfferComputeYears(1);
     setRequestCash(0);
     setRequestData(0);
-    setRequestSharedRun(false);
     setRequestApiLease(false);
+    setRequestApiYears(1);
+    setRequestComputeLease(false);
+    setRequestComputeYears(1);
     setDealFeedback(null);
     setIsDealModalOpen(true);
   };
@@ -77,14 +85,14 @@ export default function CompanyModal({ isOpen, onClose }) {
     const playerOffer = {
       cash: offerCash,
       data: offerData,
-      sharedRun: offerSharedRun,
-      apiLease: offerApiLease
+      apiLease: offerApiLease ? offerApiYears : 0,
+      computeLease: offerComputeLease ? offerComputeYears : 0
     };
     const playerRequest = {
       cash: requestCash,
       data: requestData,
-      sharedRun: requestSharedRun,
-      apiLease: requestApiLease
+      apiLease: requestApiLease ? requestApiYears : 0,
+      computeLease: requestComputeLease ? requestComputeYears : 0
     };
 
     const res = executeDeal(dealRival.name, playerOffer, playerRequest);
@@ -98,28 +106,28 @@ export default function CompanyModal({ isOpen, onClose }) {
       cash: 1,
       data: 1500,
       apiLease: 150000,
-      sharedRun: 250000
+      computeLease: 200000
     };
 
     const modifiers = {
-      Google: { cash: 1.0, data: 0.8, apiLease: 1.2, sharedRun: 1.3, greed: 0.10 },
-      OpenAI: { cash: 0.8, data: 1.5, apiLease: 1.1, sharedRun: 1.2, greed: 0.15 },
-      Anthropic: { cash: 1.0, data: 1.0, apiLease: 1.0, sharedRun: 1.5, greed: 0.05 }
+      Google: { cash: 1.0, data: 0.8, apiLease: 1.2, computeLease: 1.3, greed: 0.10 },
+      OpenAI: { cash: 0.8, data: 1.5, apiLease: 1.1, computeLease: 1.2, greed: 0.15 },
+      Anthropic: { cash: 1.0, data: 1.0, apiLease: 1.0, computeLease: 1.5, greed: 0.05 }
     };
 
-    const mods = modifiers[dealRival.name] || { cash: 1.0, data: 1.0, apiLease: 1.0, sharedRun: 1.0, greed: 0.1 };
+    const mods = modifiers[dealRival.name] || { cash: 1.0, data: 1.0, apiLease: 1.0, computeLease: 1.0, greed: 0.1 };
 
     let offeredVal = 0;
     offeredVal += offerCash * mods.cash;
     offeredVal += offerData * baseValues.data * mods.data;
-    if (offerApiLease) offeredVal += baseValues.apiLease * mods.apiLease;
-    if (offerSharedRun) offeredVal += baseValues.sharedRun * mods.sharedRun;
+    if (offerApiLease) offeredVal += baseValues.apiLease * offerApiYears * mods.apiLease;
+    if (offerComputeLease) offeredVal += baseValues.computeLease * offerComputeYears * mods.computeLease;
 
     let requestedVal = 0;
     requestedVal += requestCash * mods.cash;
     requestedVal += requestData * baseValues.data * mods.data;
-    if (requestApiLease) requestedVal += baseValues.apiLease * mods.apiLease;
-    if (requestSharedRun) requestedVal += baseValues.sharedRun * mods.sharedRun;
+    if (requestApiLease) requestedVal += baseValues.apiLease * requestApiYears * mods.apiLease;
+    if (requestComputeLease) requestedVal += baseValues.computeLease * requestComputeYears * mods.computeLease;
 
     const requiredVal = requestedVal * (1 + mods.greed);
     const difference = offeredVal - requiredVal;
@@ -335,18 +343,18 @@ export default function CompanyModal({ isOpen, onClose }) {
                           {/* Active Agreements section */}
                           {(() => {
                             const rivalApiLeases = (activeApiLeases || []).filter(l => l.company === name);
-                            const rivalSharedRuns = (activeSharedRuns || []).filter(r => r.company === name);
-                            const hasActiveAgreements = rivalApiLeases.length > 0 || rivalSharedRuns.length > 0;
+                            const rivalComputeLeases = (activeComputeLeases || []).filter(l => l.company === name);
+                            const hasActiveAgreements = rivalApiLeases.length > 0 || rivalComputeLeases.length > 0;
                             if (!hasActiveAgreements) return null;
                             return (
                               <div className="mt-md space-y-sm bg-[#12151c]/40 p-md rounded-xl border border-white/5">
                                 <h4 className="font-bold text-[10px] text-on-surface uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1.5">
                                   <span className="material-symbols-outlined text-sm text-[#10b981]">verified_user</span>
-                                  Active Agreements ({rivalApiLeases.length + rivalSharedRuns.length})
+                                  Active Agreements ({rivalApiLeases.length + rivalComputeLeases.length})
                                 </h4>
                                 <div className="space-y-2">
                                   {rivalApiLeases.map((lease, idx) => (
-                                    <div key={`lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
+                                    <div key={`api-lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
                                       <div className="flex items-center gap-2">
                                         <span className="material-symbols-outlined text-[#10b981] text-md">
                                           {lease.type === 'outgoing' ? 'upload' : 'download'}
@@ -361,21 +369,27 @@ export default function CompanyModal({ isOpen, onClose }) {
                                         </div>
                                       </div>
                                       <span className="font-mono text-outline bg-white/5 px-2 py-0.5 rounded text-[10px]">
-                                        {lease.ticksLeft} days left
+                                        {lease.ticksLeft} days left ({(lease.ticksLeft / 365).toFixed(1)} yr)
                                       </span>
                                     </div>
                                   ))}
-                                  {rivalSharedRuns.map((run, idx) => (
-                                    <div key={`run-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
+                                  {rivalComputeLeases.map((lease, idx) => (
+                                    <div key={`compute-lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
                                       <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-primary text-md">sync</span>
+                                        <span className="material-symbols-outlined text-primary text-md">
+                                          {lease.type === 'outgoing' ? 'dns' : 'memory'}
+                                        </span>
                                         <div>
-                                          <span className="font-semibold text-on-surface block">Shared Training Run</span>
-                                          <span className="text-[9px] text-outline">Co-training compute pool</span>
+                                          <span className="font-semibold text-on-surface block">
+                                            {lease.type === 'outgoing' ? 'Compute Leased to Them' : 'Lease Compute Power'}
+                                          </span>
+                                          <span className="text-[9px] text-outline">
+                                            {lease.type === 'outgoing' ? 'Outbound -200 PFLOPS' : 'Inbound +200 PFLOPS'}
+                                          </span>
                                         </div>
                                       </div>
-                                      <span className="font-mono text-primary font-bold bg-primary/10 px-2 py-0.5 rounded text-[10px] uppercase animate-pulse">
-                                        Pending next training
+                                      <span className="font-mono text-outline bg-white/5 px-2 py-0.5 rounded text-[10px]">
+                                        {lease.ticksLeft} days left ({(lease.ticksLeft / 365).toFixed(1)} yr)
                                       </span>
                                     </div>
                                   ))}
@@ -473,38 +487,82 @@ export default function CompanyModal({ isOpen, onClose }) {
                 </div>
 
                 {/* Checkboxes */}
-                <div className="space-y-2 pt-2 border-t border-white/5">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={offerSharedRun}
-                      disabled={resources.compute < 100}
-                      onChange={(e) => {
-                        setOfferSharedRun(e.target.checked);
-                        setDealFeedback(null);
-                      }}
-                      className="accent-primary rounded bg-black/40 border-white/10"
-                    />
-                    <span className={resources.compute < 100 ? "text-outline/40 cursor-not-allowed" : "text-on-surface"}>
-                      Shared Training Run {resources.compute < 100 && <span className="text-[9px] text-error block">(Needs 100 PFLOPS compute)</span>}
-                    </span>
-                  </label>
+                <div className="space-y-3 pt-2 border-t border-white/5">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input
+                        type="checkbox"
+                        checked={offerApiLease}
+                        disabled={playerModels.length === 0}
+                        onChange={(e) => {
+                          setOfferApiLease(e.target.checked);
+                          setDealFeedback(null);
+                        }}
+                        className="accent-primary rounded bg-black/40 border-white/10"
+                      />
+                      <span className={playerModels.length === 0 ? "text-outline/40 cursor-not-allowed" : "text-on-surface"}>
+                        Lease Model API Access {playerModels.length === 0 && <span className="text-[9px] text-error block">(Needs released model)</span>}
+                      </span>
+                    </label>
+                    {offerApiLease && (
+                      <div className="pl-5 pt-1 space-y-1">
+                        <div className="flex justify-between text-[10px] text-outline font-mono">
+                          <span>API Lease Duration</span>
+                          <span className="text-on-surface font-bold">{offerApiYears} Year{offerApiYears > 1 ? 's' : ''}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={offerApiYears}
+                          onChange={(e) => {
+                            setOfferApiYears(Number(e.target.value));
+                            setDealFeedback(null);
+                          }}
+                          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                      </div>
+                    )}
+                  </div>
 
-                  <label className="flex items-center gap-2 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={offerApiLease}
-                      disabled={playerModels.length === 0}
-                      onChange={(e) => {
-                        setOfferApiLease(e.target.checked);
-                        setDealFeedback(null);
-                      }}
-                      className="accent-primary rounded bg-black/40 border-white/10"
-                    />
-                    <span className={playerModels.length === 0 ? "text-outline/40 cursor-not-allowed" : "text-on-surface"}>
-                      Funnel API Access {playerModels.length === 0 && <span className="text-[9px] text-error block">(Needs released model)</span>}
-                    </span>
-                  </label>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input
+                        type="checkbox"
+                        checked={offerComputeLease}
+                        disabled={resources.compute < 200}
+                        onChange={(e) => {
+                          setOfferComputeLease(e.target.checked);
+                          setDealFeedback(null);
+                        }}
+                        className="accent-primary rounded bg-black/40 border-white/10"
+                      />
+                      <span className={resources.compute < 200 ? "text-outline/40 cursor-not-allowed" : "text-on-surface"}>
+                        Lease Compute Power (200 PFLOPS) {resources.compute < 200 && <span className="text-[9px] text-error block">(Needs 200 PFLOPS compute capacity)</span>}
+                      </span>
+                    </label>
+                    {offerComputeLease && (
+                      <div className="pl-5 pt-1 space-y-1">
+                        <div className="flex justify-between text-[10px] text-outline font-mono">
+                          <span>Compute Lease Duration</span>
+                          <span className="text-on-surface font-bold">{offerComputeYears} Year{offerComputeYears > 1 ? 's' : ''}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={offerComputeYears}
+                          onChange={(e) => {
+                            setOfferComputeYears(Number(e.target.value));
+                            setDealFeedback(null);
+                          }}
+                          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-primary"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -564,32 +622,79 @@ export default function CompanyModal({ isOpen, onClose }) {
                 </div>
 
                 {/* Checkboxes */}
-                <div className="space-y-2 pt-2 border-t border-white/5">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={requestSharedRun}
-                      onChange={(e) => {
-                        setRequestSharedRun(e.target.checked);
-                        setDealFeedback(null);
-                      }}
-                      className="accent-[#10b981] rounded bg-black/40 border-white/10"
-                    />
-                    <span className="text-on-surface">Shared Training Run</span>
-                  </label>
+                <div className="space-y-3 pt-2 border-t border-white/5">
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input
+                        type="checkbox"
+                        checked={requestApiLease}
+                        onChange={(e) => {
+                          setRequestApiLease(e.target.checked);
+                          setDealFeedback(null);
+                        }}
+                        className="accent-[#10b981] rounded bg-black/40 border-white/10"
+                      />
+                      <span className="text-on-surface">Lease Model API Access</span>
+                    </label>
+                    {requestApiLease && (
+                      <div className="pl-5 pt-1 space-y-1">
+                        <div className="flex justify-between text-[10px] text-outline font-mono">
+                          <span>API Lease Duration</span>
+                          <span className="text-on-surface font-bold">{requestApiYears} Year{requestApiYears > 1 ? 's' : ''}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={requestApiYears}
+                          onChange={(e) => {
+                            setRequestApiYears(Number(e.target.value));
+                            setDealFeedback(null);
+                          }}
+                          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#10b981]"
+                        />
+                      </div>
+                    )}
+                  </div>
 
-                  <label className="flex items-center gap-2 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={requestApiLease}
-                      onChange={(e) => {
-                        setRequestApiLease(e.target.checked);
-                        setDealFeedback(null);
-                      }}
-                      className="accent-[#10b981] rounded bg-black/40 border-white/10"
-                    />
-                    <span className="text-on-surface">Lease Model API Access</span>
-                  </label>
+                  <div className="space-y-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs">
+                      <input
+                        type="checkbox"
+                        checked={requestComputeLease}
+                        disabled={(dealRival.compute || 0) < 200}
+                        onChange={(e) => {
+                          setRequestComputeLease(e.target.checked);
+                          setDealFeedback(null);
+                        }}
+                        className="accent-[#10b981] rounded bg-black/40 border-white/10"
+                      />
+                      <span className={(dealRival.compute || 0) < 200 ? "text-outline/40 cursor-not-allowed" : "text-on-surface"}>
+                        Lease Compute Power (200 PFLOPS) {(dealRival.compute || 0) < 200 && <span className="text-[9px] text-error block">(Rival needs 200 PFLOPS compute)</span>}
+                      </span>
+                    </label>
+                    {requestComputeLease && (
+                      <div className="pl-5 pt-1 space-y-1">
+                        <div className="flex justify-between text-[10px] text-outline font-mono">
+                          <span>Compute Lease Duration</span>
+                          <span className="text-on-surface font-bold">{requestComputeYears} Year{requestComputeYears > 1 ? 's' : ''}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={requestComputeYears}
+                          onChange={(e) => {
+                            setRequestComputeYears(Number(e.target.value));
+                            setDealFeedback(null);
+                          }}
+                          className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#10b981]"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
