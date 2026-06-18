@@ -11,9 +11,9 @@ export default function MarketView() {
       priceUnit: '/mo sub',
       basePrice: 15,
       maxMarket: 50000,
-      stats: ['creativity', 'knowledge'],
-      labels: ['Creativity', 'Knowledge'],
-      desc: 'Consumer apps demand natural dialog, storytelling, and broad knowledge. High user volume, low price sensitivity.'
+      stats: ['multilingual', 'knowledge'],
+      labels: ['Multilingual', 'Knowledge'],
+      desc: 'Consumer apps demand multilingual dialog and broad knowledge. High user volume, low price sensitivity.'
     },
     {
       id: 'dev',
@@ -22,9 +22,9 @@ export default function MarketView() {
       priceUnit: '/M tokens',
       basePrice: 5,
       maxMarket: 5000,
-      stats: ['coding', 'math'],
-      labels: ['Coding', 'Math'],
-      desc: 'Software developers require precise code synthesis, debugging, and mathematical reasoning. Sensitive to latency.'
+      stats: ['coding', 'reasoning'],
+      labels: ['Coding', 'Reasoning'],
+      desc: 'Software developers require precise code synthesis, debugging, and logical reasoning. Sensitive to latency.'
     },
     {
       id: 'business',
@@ -33,9 +33,9 @@ export default function MarketView() {
       priceUnit: '/seat/mo',
       basePrice: 25,
       maxMarket: 1000,
-      stats: ['coding', 'knowledge'],
-      labels: ['Coding', 'Knowledge'],
-      desc: 'Corporate workflows need data analysis, report generation, and coding automation. Steady growth, moderate scaling.'
+      stats: ['agentic', 'coding'],
+      labels: ['Agentic', 'Coding'],
+      desc: 'Corporate workflows need agentic task automation and coding capabilities. Steady growth, moderate scaling.'
     },
     {
       id: 'enterprise',
@@ -44,8 +44,8 @@ export default function MarketView() {
       priceUnit: '/mo lease',
       basePrice: 5000,
       maxMarket: 50,
-      stats: ['math', 'knowledge'],
-      labels: ['Math', 'Knowledge'],
+      stats: ['math', 'reasoning'],
+      labels: ['Math', 'Reasoning'],
       desc: 'Heavy enterprise clouds leased to defense, finance, and logistics. Highly demanding benchmarks, very low tolerance for latency.'
     }
   ];
@@ -156,8 +156,7 @@ export default function MarketView() {
                   <div className="space-y-1">
                     {rivals.filter(r => r.active !== false).map((rival, idx) => {
                       const rivalRating = (rival.stats[segment.stats[0]] + rival.stats[segment.stats[1]]) / 2;
-                      const rivalPenalty = rival.stats.hallucination * 1.5;
-                      const rivalScore = Math.max(5, rivalRating - rivalPenalty).toFixed(0);
+                      const rivalScore = Math.max(5, rivalRating).toFixed(0);
                       return (
                         <div key={idx} className="flex justify-between text-[11px] bg-surface-dim/20 p-2 rounded border border-white/5 text-outline">
                           <span>{rival.name} ({rival.bestModel})</span>
@@ -204,10 +203,9 @@ export default function MarketView() {
                   {/* Stats row */}
                   {isActive ? (
                     <div className="grid grid-cols-2 gap-2 text-[10px] text-outline-variant font-semibold pt-1">
-                      <div>KNOW: {rival.stats.knowledge}%</div>
-                      <div>CREA: {rival.stats.creativity}%</div>
-                      <div>CODE: {rival.stats.coding}%</div>
-                      <div className="text-error/85">HAL: {rival.stats.hallucination}%</div>
+                      {Object.entries(rival.stats).map(([stat, val]) => (
+                        <div key={stat}>{stat.slice(0,4).toUpperCase()}: {val}%</div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-[10px] text-outline italic pt-1">

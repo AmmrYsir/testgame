@@ -55,10 +55,10 @@ export default function ModelView() {
 
   // Dataset descriptions and gains
   const datasets = {
-    web_dump: { name: 'Common Crawl Scraping', cost: 15000, desc: 'Scrape raw public web data. Low cost, but increases hallucination rate.', gainText: '+5% Knowledge, +5% Creativity, +5% Hallucination' },
-    textbooks: { name: 'Premium Textbook Corpus', cost: 80000, desc: 'Licenced educational text. Good balance, reduces hallucination.', gainText: '+12% Knowledge, +8% Coding/Math, -6% Hallucination' },
-    synthetic: { name: 'Synthetic Reasoning Data', cost: 200000, desc: 'AI-generated math/logic proofs. Heavy math and coding boost.', gainText: '+20% Coding & Math, +10% Knowledge, -5% Hallucination' },
-    rlhf_align: { name: 'RLHF Expert Alignment', cost: 350000, desc: 'Human feedback refinement. Massive overall quality and safety lift.', gainText: '+15% Knowledge & Coding, -12% Hallucination' }
+    web_dump: { name: 'Common Crawl Scraping', cost: 15000, desc: 'Scrape raw public web data. Broad coverage but lower quality.', gainText: '+5% Knowledge, +5% Multilingual, +3% Multimodal' },
+    textbooks: { name: 'Premium Textbook Corpus', cost: 80000, desc: 'Licensed educational text. Strong knowledge and reasoning foundations.', gainText: '+12% Knowledge, +8% Reasoning, +6% Math' },
+    synthetic: { name: 'Synthetic Reasoning Data', cost: 200000, desc: 'AI-generated logic proofs and code. Heavy coding and math boost.', gainText: '+20% Coding & Math, +10% Reasoning' },
+    rlhf_align: { name: 'RLHF Expert Alignment', cost: 350000, desc: 'Human feedback refinement. Boosts agentic capability and broad skills.', gainText: '+15% Agentic, +10% Coding, +8% Reasoning' }
   };
 
   // Helper to calculate total training cost
@@ -169,22 +169,12 @@ export default function ModelView() {
                   {/* Miniature Stat Bars */}
                   {!isTraining && (
                     <div className="grid grid-cols-4 gap-2 mt-2 pt-2 border-t border-white/5">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-outline uppercase font-semibold">KNOW</span>
-                        <span className="font-label-sm text-label-sm text-on-surface">{model.stats.knowledge}%</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-outline uppercase font-semibold">CODE</span>
-                        <span className="font-label-sm text-label-sm text-on-surface">{model.stats.coding}%</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-outline uppercase font-semibold">MATH</span>
-                        <span className="font-label-sm text-label-sm text-on-surface">{model.stats.math}%</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-error/80 uppercase font-semibold">HAL</span>
-                        <span className="font-label-sm text-label-sm text-error">{model.stats.hallucination}%</span>
-                      </div>
+                      {Object.entries(model.stats).map(([stat, val]) => (
+                        <div key={stat} className="flex flex-col">
+                          <span className="text-[10px] text-outline uppercase font-semibold">{stat.slice(0,4).toUpperCase()}</span>
+                          <span className="font-label-sm text-label-sm text-on-surface">{val}%</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -367,66 +357,28 @@ export default function ModelView() {
               <div className="space-y-sm">
                 <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Benchmarks</span>
                 
-                {/* Knowledge */}
-                <div>
-                  <div className="flex justify-between font-label-sm text-label-sm text-on-surface mb-1">
-                    <span>General Knowledge (MMLU)</span>
-                    <span className="font-bold">{selectedModel.stats.knowledge}%</span>
+                {[  
+                  { key: 'agentic', label: 'Agentic Capability' },
+                  { key: 'coding', label: 'Coding Proficiency (HumanEval)' },
+                  { key: 'reasoning', label: 'Reasoning (ARC-AGI)' },
+                  { key: 'knowledge', label: 'General Knowledge (MMLU)' },
+                  { key: 'math', label: 'Math (GSM8K)' },
+                  { key: 'multilingual', label: 'Multilingual' },
+                  { key: 'multimodal', label: 'Multimodal Understanding' }
+                ].map(({ key, label }) => (
+                  <div key={key}>
+                    <div className="flex justify-between font-label-sm text-label-sm text-on-surface mb-1">
+                      <span>{label}</span>
+                      <span className="font-bold">{selectedModel.stats[key]}%</span>
+                    </div>
+                    <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+                      <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${selectedModel.stats[key]}%` }}></div>
+                    </div>
                   </div>
-                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                    <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${selectedModel.stats.knowledge}%` }}></div>
-                  </div>
-                </div>
-
-                {/* Coding */}
-                <div>
-                  <div className="flex justify-between font-label-sm text-label-sm text-on-surface mb-1">
-                    <span>Coding Proficiency (HumanEval)</span>
-                    <span className="font-bold">{selectedModel.stats.coding}%</span>
-                  </div>
-                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                    <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${selectedModel.stats.coding}%` }}></div>
-                  </div>
-                </div>
-
-                {/* Math */}
-                <div>
-                  <div className="flex justify-between font-label-sm text-label-sm text-on-surface mb-1">
-                    <span>Math & Reasoning (GSM8K)</span>
-                    <span className="font-bold">{selectedModel.stats.math}%</span>
-                  </div>
-                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                    <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${selectedModel.stats.math}%` }}></div>
-                  </div>
-                </div>
-
-                {/* Creativity */}
-                <div>
-                  <div className="flex justify-between font-label-sm text-label-sm text-on-surface mb-1">
-                    <span>Creativity & Roleplay</span>
-                    <span className="font-bold">{selectedModel.stats.creativity}%</span>
-                  </div>
-                  <div className="w-full bg-surface-container h-2 rounded-full overflow-hidden">
-                    <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${selectedModel.stats.creativity}%` }}></div>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Safety metrics */}
-              <div className="bg-surface-dim/40 rounded-xl border border-white/5 p-4 flex flex-col justify-center items-center text-center gap-sm">
-                <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider">Safety & Alignment</span>
-                <div className="w-24 h-24 rounded-full border-4 border-error/25 flex flex-col justify-center items-center relative mt-2">
-                  {/* Circle background indicator */}
-                  <div className="absolute inset-0 rounded-full border-4 border-error" style={{ clipPath: `polygon(50% 50%, -50% -50%, ${selectedModel.stats.hallucination}% -50%)`, transform: 'rotate(-90deg)' }}></div>
-                  <span className="font-headline-lg text-headline-lg text-error text-2xl font-bold">{selectedModel.stats.hallucination}%</span>
-                  <span className="text-[9px] text-outline uppercase mt-0.5">Hallucinations</span>
-                </div>
-                <p className="font-body-md text-body-md text-outline text-xs mt-2 max-w-[200px]">
-                  {selectedModel.stats.hallucination > 20
-                    ? 'Caution: Model exhibits high hallucination rates. Safety training advised.'
-                    : 'Stable: Model outputs are within safe limits.'}
-                </p>
-              </div>
+
             </div>
 
             {/* Context Action Section */}
@@ -869,10 +821,10 @@ export default function ModelView() {
                           className="w-full accent-primary"
                         />
                         <p className="text-[10px] text-outline mt-1">
-                          {releaseSegment === 'consumer' && 'Consumer target base price is $15/mo. Lower price gains users faster but drops margins.'}
-                          {releaseSegment === 'dev' && 'Developer target API base price is $5/M tokens. Demands Coding/Math benchmarks.'}
-                          {releaseSegment === 'business' && 'Business SaaS target base price is $25/seat/mo. Demands Knowledge/Coding benchmarks.'}
-                          {releaseSegment === 'enterprise' && 'Enterprise dedicated cluster base lease contract is $5,000/mo. Demands Math/Knowledge.'}
+                          {releaseSegment === 'consumer' && 'Consumer target base price is $15/mo. Multilingual & Knowledge benchmarks.'}
+                          {releaseSegment === 'dev' && 'Developer target API base price is $5/M tokens. Coding & Reasoning benchmarks.'}
+                          {releaseSegment === 'business' && 'Business SaaS target base price is $25/seat/mo. Agentic & Coding benchmarks.'}
+                          {releaseSegment === 'enterprise' && 'Enterprise dedicated cluster base lease contract is $5,000/mo. Math & Reasoning benchmarks.'}
                         </p>
                       </div>
                     </div>

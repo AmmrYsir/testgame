@@ -44,7 +44,7 @@ export default function ResearchView() {
       id: 'synthetic', 
       category: 'Technique',
       name: 'Synthetic Data Generation', 
-      desc: 'Filter synthetic reasoning datasets. Reduces model hallucination rate by 5%.', 
+      desc: 'Filter synthetic reasoning datasets. Boosts model reasoning accuracy by 5%.', 
       cost: 600000, 
       ticks: 90,
       unlocked: research.unlockedTech.includes('synthetic') 

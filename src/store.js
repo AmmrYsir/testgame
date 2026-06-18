@@ -64,7 +64,7 @@ export const useGameStore = create(
   },
 
   // Models Registry
-  llms: [], // { id, name, version, architecture, status, stats: { knowledge, coding, math, creativity, hallucination }, training: null | { progress, totalTicks, allocatedGpus, startStats, targetStats, cost }, releaseType, contractId }
+  llms: [], // { id, name, version, architecture, status, stats: { agentic, coding, reasoning, knowledge, math, multilingual, multimodal }, training: null | { progress, totalTicks, allocatedGpus, startStats, targetStats, cost }, releaseType, contractId }
 
   // Global Map Countries State
   countries: INITIAL_COUNTRIES,
@@ -94,11 +94,11 @@ export const useGameStore = create(
       cash: 30000000, 
       compute: 8500, 
       data: 1200, 
-      stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 },
+      stats: { agentic: 20, coding: 30, reasoning: 25, knowledge: 45, math: 25, multilingual: 35, multimodal: 30 },
       models: [
-        { name: 'BERT-Large', stats: { knowledge: 15, coding: 5, math: 5, creativity: 10, hallucination: 60 } },
-        { name: 'T5-XXL', stats: { knowledge: 25, coding: 10, math: 15, creativity: 20, hallucination: 45 } },
-        { name: 'PaLM 1.0', stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } }
+        { name: 'BERT-Large', stats: { agentic: 5, coding: 5, reasoning: 8, knowledge: 15, math: 5, multilingual: 10, multimodal: 5 } },
+        { name: 'T5-XXL', stats: { agentic: 10, coding: 10, reasoning: 15, knowledge: 25, math: 15, multilingual: 20, multimodal: 15 } },
+        { name: 'PaLM 1.0', stats: { agentic: 20, coding: 30, reasoning: 25, knowledge: 45, math: 25, multilingual: 35, multimodal: 30 } }
       ]
     },
     { 
@@ -112,10 +112,10 @@ export const useGameStore = create(
       cash: 15000000, 
       compute: 6000, 
       data: 500, 
-      stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 },
+      stats: { agentic: 25, coding: 20, reasoning: 30, knowledge: 35, math: 15, multilingual: 20, multimodal: 15 },
       models: [
-        { name: 'GPT 2.0', stats: { knowledge: 20, coding: 10, math: 5, creativity: 25, hallucination: 50 } },
-        { name: 'GPT 3.0', stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } }
+        { name: 'GPT 2.0', stats: { agentic: 10, coding: 10, reasoning: 12, knowledge: 20, math: 5, multilingual: 10, multimodal: 8 } },
+        { name: 'GPT 3.0', stats: { agentic: 25, coding: 20, reasoning: 30, knowledge: 35, math: 15, multilingual: 20, multimodal: 15 } }
       ]
     },
     { 
@@ -129,10 +129,10 @@ export const useGameStore = create(
       cash: 8000000, 
       compute: 3500, 
       data: 300, 
-      stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 },
+      stats: { agentic: 30, coding: 25, reasoning: 35, knowledge: 40, math: 20, multilingual: 25, multimodal: 20 },
       models: [
-        { name: 'Claude Instant', stats: { knowledge: 30, coding: 20, math: 15, creativity: 35, hallucination: 40 } },
-        { name: 'Claude 1.0', stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+        { name: 'Claude Instant', stats: { agentic: 20, coding: 20, reasoning: 25, knowledge: 30, math: 15, multilingual: 18, multimodal: 12 } },
+        { name: 'Claude 1.0', stats: { agentic: 30, coding: 25, reasoning: 35, knowledge: 40, math: 20, multilingual: 25, multimodal: 20 } }
       ]
     }
   ],
@@ -208,11 +208,11 @@ export const useGameStore = create(
         cash: 30000000, 
         compute: 8500, 
         data: 1200, 
-        stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 },
+        stats: { agentic: 20, coding: 30, reasoning: 25, knowledge: 45, math: 25, multilingual: 35, multimodal: 30 },
         models: [
-          { name: 'BERT-Large', stats: { knowledge: 15, coding: 5, math: 5, creativity: 10, hallucination: 60 } },
-          { name: 'T5-XXL', stats: { knowledge: 25, coding: 10, math: 15, creativity: 20, hallucination: 45 } },
-          { name: 'PaLM 1.0', stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } }
+          { name: 'BERT-Large', stats: { agentic: 5, coding: 5, reasoning: 8, knowledge: 15, math: 5, multilingual: 10, multimodal: 5 } },
+          { name: 'T5-XXL', stats: { agentic: 10, coding: 10, reasoning: 15, knowledge: 25, math: 15, multilingual: 20, multimodal: 15 } },
+          { name: 'PaLM 1.0', stats: { agentic: 20, coding: 30, reasoning: 25, knowledge: 45, math: 25, multilingual: 35, multimodal: 30 } }
         ]
       },
       { 
@@ -226,10 +226,10 @@ export const useGameStore = create(
         cash: 15000000, 
         compute: 6000, 
         data: 500, 
-        stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 },
+        stats: { agentic: 25, coding: 20, reasoning: 30, knowledge: 35, math: 15, multilingual: 20, multimodal: 15 },
         models: [
-          { name: 'GPT 2.0', stats: { knowledge: 20, coding: 10, math: 5, creativity: 25, hallucination: 50 } },
-          { name: 'GPT 3.0', stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } }
+          { name: 'GPT 2.0', stats: { agentic: 10, coding: 10, reasoning: 12, knowledge: 20, math: 5, multilingual: 10, multimodal: 8 } },
+          { name: 'GPT 3.0', stats: { agentic: 25, coding: 20, reasoning: 30, knowledge: 35, math: 15, multilingual: 20, multimodal: 15 } }
         ]
       },
       { 
@@ -243,10 +243,10 @@ export const useGameStore = create(
         cash: 8000000, 
         compute: 3500, 
         data: 300, 
-        stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 },
+        stats: { agentic: 30, coding: 25, reasoning: 35, knowledge: 40, math: 20, multilingual: 25, multimodal: 20 },
         models: [
-          { name: 'Claude Instant', stats: { knowledge: 30, coding: 20, math: 15, creativity: 35, hallucination: 40 } },
-          { name: 'Claude 1.0', stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+          { name: 'Claude Instant', stats: { agentic: 20, coding: 20, reasoning: 25, knowledge: 30, math: 15, multilingual: 18, multimodal: 12 } },
+          { name: 'Claude 1.0', stats: { agentic: 30, coding: 25, reasoning: 35, knowledge: 40, math: 20, multilingual: 25, multimodal: 20 } }
         ]
       }
     ],
@@ -592,7 +592,7 @@ export const useGameStore = create(
       version: 1.0,
       architecture: architecture,
       status: 'draft',
-      stats: { knowledge: 15, coding: 10, math: 10, creativity: 15, hallucination: 35 },
+      stats: { agentic: 10, coding: 10, reasoning: 10, knowledge: 15, math: 10, multilingual: 8, multimodal: 8 },
       training: null,
       releaseType: null,
       contractId: null,
@@ -628,24 +628,24 @@ export const useGameStore = create(
 
     // Calculate Cost and Target Stats
     let datasetCost = 0;
-    let statBonus = { knowledge: 0, coding: 0, math: 0, creativity: 0, hallucinationReduction: 0 };
+    let statBonus = { agentic: 0, coding: 0, reasoning: 0, knowledge: 0, math: 0, multilingual: 0, multimodal: 0 };
 
     switch (datasetType) {
       case 'web_dump':
         datasetCost = 15000;
-        statBonus = { knowledge: 5, coding: 2, math: 1, creativity: 5, hallucinationReduction: -5 }; // increases hallucination
+        statBonus = { agentic: 2, coding: 2, reasoning: 1, knowledge: 5, math: 1, multilingual: 5, multimodal: 3 };
         break;
       case 'textbooks':
         datasetCost = 80000;
-        statBonus = { knowledge: 12, coding: 8, math: 8, creativity: 5, hallucinationReduction: 6 };
+        statBonus = { agentic: 3, coding: 8, reasoning: 8, knowledge: 12, math: 8, multilingual: 6, multimodal: 4 };
         break;
       case 'synthetic':
         datasetCost = 200000;
-        statBonus = { knowledge: 10, coding: 20, math: 20, creativity: 5, hallucinationReduction: 5 };
+        statBonus = { agentic: 8, coding: 20, reasoning: 15, knowledge: 10, math: 20, multilingual: 3, multimodal: 5 };
         break;
       case 'rlhf_align':
         datasetCost = 350000;
-        statBonus = { knowledge: 15, coding: 15, math: 10, creativity: 10, hallucinationReduction: 12 };
+        statBonus = { agentic: 15, coding: 10, reasoning: 12, knowledge: 15, math: 10, multilingual: 8, multimodal: 10 };
         break;
       default:
         break;
@@ -662,11 +662,13 @@ export const useGameStore = create(
     const baseGains = epochs * 3 * archMultiplier;
 
     const targetStats = {
-      knowledge: Math.min(100, model.stats.knowledge + Math.round(baseGains + statBonus.knowledge)),
+      agentic: Math.min(100, model.stats.agentic + Math.round(baseGains + statBonus.agentic)),
       coding: Math.min(100, model.stats.coding + Math.round(baseGains + statBonus.coding)),
+      reasoning: Math.min(100, model.stats.reasoning + Math.round(baseGains + statBonus.reasoning)),
+      knowledge: Math.min(100, model.stats.knowledge + Math.round(baseGains + statBonus.knowledge)),
       math: Math.min(100, model.stats.math + Math.round(baseGains + statBonus.math)),
-      creativity: Math.min(100, model.stats.creativity + Math.round(baseGains + statBonus.creativity)),
-      hallucination: Math.max(1, model.stats.hallucination - Math.round(baseGains/2 + statBonus.hallucinationReduction))
+      multilingual: Math.min(100, model.stats.multilingual + Math.round(baseGains + statBonus.multilingual)),
+      multimodal: Math.min(100, model.stats.multimodal + Math.round(baseGains + statBonus.multimodal))
     };
 
     const durationTicks = epochs * 8;
@@ -693,9 +695,8 @@ export const useGameStore = create(
     const model = state.llms.find(m => m.id === modelId);
     if (!model || model.status === 'training' || model.status === 'draft') return state;
 
-    const statSum = model.stats.knowledge + model.stats.coding + model.stats.math + model.stats.creativity;
-    const penalty = model.stats.hallucination * 2.5;
-    const rating = Math.max(10, statSum - penalty);
+    const statSum = model.stats.agentic + model.stats.coding + model.stats.reasoning + model.stats.knowledge + model.stats.math + model.stats.multilingual + model.stats.multimodal;
+    const rating = Math.max(10, Math.round(statSum / 7));
     const hypeGained = Math.min(30, Math.round(rating * 0.15));
 
     let initialUsers = 0;
@@ -815,11 +816,7 @@ export const useGameStore = create(
     const reqVal = contract.requirement.value;
     const modelVal = model.stats[reqStat];
 
-    if (reqStat === 'hallucination') {
-      if (modelVal > reqVal) return state;
-    } else {
-      if (modelVal < reqVal) return state;
-    }
+    if (modelVal < reqVal) return state;
 
     return {
       llms: state.llms.map(m => m.id === modelId ? { ...m, contractId: contractId } : m),
@@ -1045,7 +1042,7 @@ export const useGameStore = create(
             id: 't_done_' + Date.now().toString(),
             sender: 'Facility Operations',
             subject: `Training Finished: ${m.name} v${nextVer.toFixed(1)}`,
-            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.\n\nBenchmark Stats:\n- Knowledge: ${finalStats.knowledge}%\n- Coding: ${finalStats.coding}%\n- Math: ${finalStats.math}%\n- Creativity: ${finalStats.creativity}%\n- Hallucinations: ${finalStats.hallucination}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
+            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.\n\nBenchmark Stats:\n- Agentic: ${finalStats.agentic}%\n- Coding: ${finalStats.coding}%\n- Reasoning: ${finalStats.reasoning}%\n- Knowledge: ${finalStats.knowledge}%\n- Math: ${finalStats.math}%\n- Multilingual: ${finalStats.multilingual}%\n- Multimodal: ${finalStats.multimodal}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
             tick: currentTick,
             read: false,
             reward: null,
@@ -1082,10 +1079,10 @@ export const useGameStore = create(
 
     // 4. Released models economics, user adoption, required compute, and billing revenue
     const segmentConfigs = {
-      consumer: { basePrice: 15, weightStats: ['creativity', 'knowledge'], userGrowthFactor: 1.5, computePerUser: 0.005, maxMarket: 50000 },
-      dev: { basePrice: 5, weightStats: ['coding', 'math'], userGrowthFactor: 0.8, computePerUser: 0.05, maxMarket: 5000 },
-      business: { basePrice: 25, weightStats: ['coding', 'knowledge'], userGrowthFactor: 0.2, computePerUser: 0.15, maxMarket: 1000 },
-      enterprise: { basePrice: 5000, weightStats: ['math', 'knowledge'], userGrowthFactor: 0.005, computePerUser: 2.0, maxMarket: 50 }
+      consumer: { basePrice: 15, weightStats: ['multilingual', 'knowledge'], userGrowthFactor: 1.5, computePerUser: 0.005, maxMarket: 50000 },
+      dev: { basePrice: 5, weightStats: ['coding', 'reasoning'], userGrowthFactor: 0.8, computePerUser: 0.05, maxMarket: 5000 },
+      business: { basePrice: 25, weightStats: ['agentic', 'coding'], userGrowthFactor: 0.2, computePerUser: 0.15, maxMarket: 1000 },
+      enterprise: { basePrice: 5000, weightStats: ['math', 'reasoning'], userGrowthFactor: 0.005, computePerUser: 2.0, maxMarket: 50 }
     };
 
     let totalProductionGpus = 0;
@@ -1121,17 +1118,15 @@ export const useGameStore = create(
         const cfg = segmentConfigs[model.targetSegment];
         const allocated = country.allocatedGpus || 0;
         
-        // Quality score: mean of key stats, penalized by hallucination
+        // Quality score: mean of two weighted stats for segment
         const rating = (model.stats[cfg.weightStats[0]] + model.stats[cfg.weightStats[1]]) / 2;
-        const penalty = model.stats.hallucination * 1.5;
-        const qualityScore = Math.max(5, rating - penalty);
+        const qualityScore = Math.max(5, rating);
 
         // Competitor baseline quality score (best rival in that segment)
         let maxRivalScore = 30;
         state.rivals.forEach(r => {
           const rRating = (r.stats[cfg.weightStats[0]] + r.stats[cfg.weightStats[1]]) / 2;
-          const rPenalty = r.stats.hallucination * 1.5;
-          const rScore = Math.max(5, rRating - rPenalty);
+          const rScore = Math.max(5, rRating);
           if (rScore > maxRivalScore) maxRivalScore = rScore;
         });
 
@@ -1339,7 +1334,7 @@ export const useGameStore = create(
           if (modelToFree) modelToFree.contractId = null;
 
           // Replace contract with new one
-          const statNames = ['knowledge', 'coding', 'math', 'creativity'];
+          const statNames = ['agentic', 'coding', 'reasoning', 'knowledge', 'math', 'multilingual', 'multimodal'];
           const randomStat = statNames[Math.floor(Math.random() * statNames.length)];
           const randomVal = 40 + Math.floor(Math.random() * 40);
           const reward = 5000 + Math.floor(Math.random() * 12000);
@@ -1373,7 +1368,7 @@ export const useGameStore = create(
       // Rival upgrades their model!
       const randomRivalIdx = Math.floor(Math.random() * nextRivals.length);
       const rival = nextRivals[randomRivalIdx];
-      const statsToUpgrade = ['knowledge', 'coding', 'math', 'creativity'];
+      const statsToUpgrade = ['agentic', 'coding', 'reasoning', 'knowledge', 'math', 'multilingual', 'multimodal'];
       const statName = statsToUpgrade[Math.floor(Math.random() * statsToUpgrade.length)];
       
       const upgradedRivals = nextRivals.map((r, i) => {

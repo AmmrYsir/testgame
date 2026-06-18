@@ -48,19 +48,23 @@ export default function CompanyModal({ isOpen, onClose }) {
 
   // Calculate player's capability benchmarks dynamically
   const playerStats = {
-    knowledge: 10,
+    agentic: 10,
     coding: 10,
+    reasoning: 10,
+    knowledge: 10,
     math: 10,
-    creativity: 10,
-    hallucination: 50
+    multilingual: 10,
+    multimodal: 10
   };
   if (playerModels.length > 0) {
     playerModels.forEach(m => {
-      playerStats.knowledge = Math.max(playerStats.knowledge, m.stats.knowledge || 0);
+      playerStats.agentic = Math.max(playerStats.agentic, m.stats.agentic || 0);
       playerStats.coding = Math.max(playerStats.coding, m.stats.coding || 0);
+      playerStats.reasoning = Math.max(playerStats.reasoning, m.stats.reasoning || 0);
+      playerStats.knowledge = Math.max(playerStats.knowledge, m.stats.knowledge || 0);
       playerStats.math = Math.max(playerStats.math, m.stats.math || 0);
-      playerStats.creativity = Math.max(playerStats.creativity, m.stats.creativity || 0);
-      playerStats.hallucination = Math.min(playerStats.hallucination, m.stats.hallucination || 100);
+      playerStats.multilingual = Math.max(playerStats.multilingual, m.stats.multilingual || 0);
+      playerStats.multimodal = Math.max(playerStats.multimodal, m.stats.multimodal || 0);
     });
   }
 
@@ -859,9 +863,7 @@ export default function CompanyModal({ isOpen, onClose }) {
                               className="h-full rounded-full" 
                               style={{ 
                                 width: `${val}%`, 
-                                background: stat === 'hallucination' 
-                                  ? 'linear-gradient(to right, #ef4444, #f87171)' 
-                                  : 'linear-gradient(to right, #3b82f6, #60a5fa)' 
+                                background: 'linear-gradient(to right, #3b82f6, #60a5fa)' 
                               }}
                             ></div>
                           </div>
