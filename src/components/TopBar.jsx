@@ -46,6 +46,14 @@ export default function TopBar({ onMailboxToggle }) {
           </div>
           <div className="w-px h-8 bg-white/10"></div>
           <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-outline" style={{ fontVariationSettings: "'FILL' 0" }}>database</span>
+            <div className="flex flex-col">
+              <span className="font-label-sm text-label-sm text-outline-variant uppercase text-[10px]">Proprietary Data</span>
+              <span className="font-label-md text-label-md text-on-surface font-bold text-sm">{(resources.data || 0)} TB</span>
+            </div>
+          </div>
+          <div className="w-px h-8 bg-white/10"></div>
+          <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-outline" style={{ fontVariationSettings: "'FILL' 0" }}>shutter_speed</span>
             <div className="flex flex-col">
               <span className="font-label-sm text-label-sm text-outline-variant uppercase text-[10px]">Hype Index</span>

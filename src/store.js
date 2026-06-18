@@ -46,8 +46,18 @@ export const useGameStore = create(
   resources: {
     cash: 1000000, // $1M starting capital
     compute: 50, // Base compute power (PFLOPS)
+    data: 100, // Proprietary training data in Terabytes (TB)
     hype: 10,
     currentTick: 0,
+  },
+
+  // Active deals & training bonuses
+  activeApiLeases: [], // Array of { company, ticksLeft }
+  sharedTrainingRunBonuses: {
+    player: 0,
+    google: 0,
+    openai: 0,
+    anthropic: 0
   },
 
   // Infrastructure
@@ -78,9 +88,9 @@ export const useGameStore = create(
 
   // Rivals
   rivals: [
-    { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
-    { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
-    { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+    { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, cash: 30000000, compute: 8500, data: 1200, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
+    { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, cash: 15000000, compute: 6000, data: 500, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
+    { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, cash: 8000000, compute: 3500, data: 300, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
   ],
 
   // Mailbox System
@@ -120,8 +130,16 @@ export const useGameStore = create(
     resources: {
       cash: 1000000,
       compute: 50,
+      data: 100,
       hype: 10,
       currentTick: 0,
+    },
+    activeApiLeases: [],
+    sharedTrainingRunBonuses: {
+      player: 0,
+      google: 0,
+      openai: 0,
+      anthropic: 0
     },
     infrastructure: {
       gpus: 64,
@@ -140,9 +158,9 @@ export const useGameStore = create(
       { id: 'c2', client: 'EduLearn Inc', requirement: { stat: 'knowledge', value: 45 }, rewardPerTick: 7500, duration: 180, timeLeft: 180, activeModelId: null }
     ],
     rivals: [
-      { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
-      { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
-      { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
+      { name: 'Google', bestModel: 'PaLM 1.0', share: 30, color: '#4285F4', logo: 'search', yearEst: 1998, active: true, cash: 30000000, compute: 8500, data: 1200, stats: { knowledge: 45, coding: 30, math: 25, creativity: 30, hallucination: 30 } },
+      { name: 'OpenAI', bestModel: 'GPT 3.0', share: 60, color: '#ea580c', logo: 'smart_toy', yearEst: 2015, active: true, cash: 15000000, compute: 6000, data: 500, stats: { knowledge: 35, coding: 20, math: 15, creativity: 40, hallucination: 40 } },
+      { name: 'Anthropic', bestModel: 'Claude 1.0', share: 0, color: '#a78bfa', logo: 'radar', yearEst: 2021, active: false, cash: 8000000, compute: 3500, data: 300, stats: { knowledge: 40, coding: 25, math: 20, creativity: 45, hallucination: 35 } }
     ],
     emails: [
       {
@@ -258,6 +276,130 @@ export const useGameStore = create(
       isPaused: false
     };
   }),
+
+  executeDeal: (rivalName, playerOffer, playerRequest) => {
+    let returnVal = {};
+    set((state) => {
+      const baseValues = {
+        cash: 1,
+        data: 1500,
+        apiLease: 150000,
+        sharedRun: 250000
+      };
+
+      const modifiers = {
+        Google: { cash: 1.0, data: 0.8, apiLease: 1.2, sharedRun: 1.3, greed: 0.10 },
+        OpenAI: { cash: 0.8, data: 1.5, apiLease: 1.1, sharedRun: 1.2, greed: 0.15 },
+        Anthropic: { cash: 1.0, data: 1.0, apiLease: 1.0, sharedRun: 1.5, greed: 0.05 }
+      };
+
+      const rival = state.rivals.find(r => r.name === rivalName);
+      if (!rival) {
+        returnVal = { dealStatus: 'error', dealMessage: 'Rival not found.' };
+        return {};
+      }
+
+      const mods = modifiers[rivalName] || { cash: 1.0, data: 1.0, apiLease: 1.0, sharedRun: 1.0, greed: 0.1 };
+
+      let offeredValue = 0;
+      offeredValue += playerOffer.cash * mods.cash;
+      offeredValue += playerOffer.data * baseValues.data * mods.data;
+      if (playerOffer.apiLease) offeredValue += baseValues.apiLease * mods.apiLease;
+      if (playerOffer.sharedRun) offeredValue += baseValues.sharedRun * mods.sharedRun;
+
+      let requestedValue = 0;
+      requestedValue += playerRequest.cash * mods.cash;
+      requestedValue += playerRequest.data * baseValues.data * mods.data;
+      if (playerRequest.apiLease) requestedValue += baseValues.apiLease * mods.apiLease;
+      if (playerRequest.sharedRun) requestedValue += baseValues.sharedRun * mods.sharedRun;
+
+      if (state.resources.cash < playerOffer.cash) {
+        returnVal = { dealStatus: 'error', dealMessage: 'Insufficient cash to cover your offer.' };
+        return {};
+      }
+      if ((state.resources.data || 0) < playerOffer.data) {
+        returnVal = { dealStatus: 'error', dealMessage: 'Insufficient proprietary data to cover your offer.' };
+        return {};
+      }
+      if (playerOffer.sharedRun && state.resources.compute < 100) {
+        returnVal = { dealStatus: 'error', dealMessage: 'Shared training runs require at least 100 PFLOPS of compute.' };
+        return {};
+      }
+      const hasReleasedModel = state.llms.some(m => m.status === 'released');
+      if (playerOffer.apiLease && !hasReleasedModel) {
+        returnVal = { dealStatus: 'error', dealMessage: 'API funneling requires you to have at least one released model.' };
+        return {};
+      }
+
+      if ((rival.cash || 0) < playerRequest.cash) {
+        returnVal = { dealStatus: 'error', dealMessage: `${rivalName} does not have enough cash reserves.` };
+        return {};
+      }
+      if ((rival.data || 0) < playerRequest.data) {
+        returnVal = { dealStatus: 'error', dealMessage: `${rivalName} does not have enough proprietary data.` };
+        return {};
+      }
+
+      const requiredValue = requestedValue * (1 + mods.greed);
+
+      if (offeredValue >= requiredValue) {
+        const nextCash = state.resources.cash - playerOffer.cash + playerRequest.cash;
+        const nextData = (state.resources.data || 0) - playerOffer.data + playerRequest.data;
+
+        const nextRivals = state.rivals.map(r => {
+          if (r.name === rivalName) {
+            return {
+              ...r,
+              cash: (r.cash || 0) + playerOffer.cash - playerRequest.cash,
+              data: (r.data || 0) + playerOffer.data - playerRequest.data
+            };
+          }
+          return r;
+        });
+
+        let nextApiLeases = [...(state.activeApiLeases || [])];
+        if (playerRequest.apiLease) {
+          nextApiLeases.push({ company: rivalName, ticksLeft: 60 });
+        }
+
+        let nextSharedTrainingRunBonuses = { ...(state.sharedTrainingRunBonuses || { player: 0, google: 0, openai: 0, anthropic: 0 }) };
+        if (playerOffer.sharedRun || playerRequest.sharedRun) {
+          nextSharedTrainingRunBonuses.player += 5;
+          if (rivalName === 'Google') nextSharedTrainingRunBonuses.google += 5;
+          if (rivalName === 'OpenAI') nextSharedTrainingRunBonuses.openai += 5;
+          if (rivalName === 'Anthropic') nextSharedTrainingRunBonuses.anthropic += 5;
+        }
+
+        const currentTick = state.resources.currentTick;
+        const dealText = `Deal Completed with ${rivalName}! Offered: ${playerOffer.cash > 0 ? `$${playerOffer.cash.toLocaleString()} cash ` : ''}${playerOffer.data > 0 ? `${playerOffer.data} TB data ` : ''}. Requested: ${playerRequest.cash > 0 ? `$${playerRequest.cash.toLocaleString()} cash ` : ''}${playerRequest.data > 0 ? `${playerRequest.data} TB data ` : ''}.`;
+
+        returnVal = { dealStatus: 'accepted', dealMessage: `Deal accepted! ${rivalName} agreed to your proposal.` };
+
+        return {
+          resources: {
+            ...state.resources,
+            cash: nextCash,
+            data: nextData
+          },
+          rivals: nextRivals,
+          activeApiLeases: nextApiLeases,
+          sharedTrainingRunBonuses: nextSharedTrainingRunBonuses,
+          newsFeed: [{ tick: currentTick, type: 'handshake', text: dealText, iconColor: 'text-[#10b981]' }, ...state.newsFeed]
+        };
+      } else {
+        const deficitValue = requiredValue - offeredValue;
+        const cashDeficit = Math.ceil(deficitValue / mods.cash);
+        const dataDeficit = Math.ceil(deficitValue / (baseValues.data * mods.data));
+
+        returnVal = {
+          dealStatus: 'declined',
+          dealMessage: `Deal declined by ${rivalName}. "Our board requires at least $${cashDeficit.toLocaleString()} more cash or ${dataDeficit} TB more data to agree to this exchange."`
+        };
+        return {};
+      }
+    });
+    return returnVal;
+  },
 
   // Mailbox Actions
   markEmailAsRead: (emailId) => set((state) => ({
@@ -752,6 +894,16 @@ export const useGameStore = create(
       }
     }
 
+    // 2.5 API Leases countdown and training speed multiplier
+    const nextApiLeases = (state.activeApiLeases || [])
+      .map(lease => ({ ...lease, ticksLeft: lease.ticksLeft - 1 }))
+      .filter(lease => lease.ticksLeft > 0);
+
+    const speedMultiplier = nextApiLeases.length > 0 ? 1.2 : 1.0;
+    
+    let playerBonusApplied = false;
+    let nextSharedTrainingRunBonuses = { ...(state.sharedTrainingRunBonuses || { player: 0, google: 0, openai: 0, anthropic: 0 }) };
+
     // 3. Train models progress
     let activeTrainingCount = 0;
     let totalTrainingGpus = 0;
@@ -761,11 +913,11 @@ export const useGameStore = create(
         activeTrainingCount++;
         totalTrainingGpus += m.training.allocatedGpus;
         
-        const newProgress = m.training.progress + 1;
+        const newProgress = m.training.progress + speedMultiplier;
         const total = m.training.totalTicks;
         
         // Interpolate stats dynamically
-        const progressRatio = newProgress / total;
+        const progressRatio = Math.min(1.0, newProgress / total);
         const currentStats = {};
         for (const [stat, startVal] of Object.entries(m.training.startStats)) {
           const targetVal = m.training.targetStats[stat];
@@ -776,11 +928,21 @@ export const useGameStore = create(
           // Training completed!
           const nextVer = m.version === 1.0 && m.status === 'draft' ? 1.0 : m.version + 1.0;
           
+          const bonus = nextSharedTrainingRunBonuses.player || 0;
+          const finalStats = { ...m.training.targetStats };
+          if (bonus > 0) {
+            playerBonusApplied = true;
+            finalStats.knowledge = Math.min(100, finalStats.knowledge + bonus);
+            finalStats.coding = Math.min(100, finalStats.coding + bonus);
+            finalStats.math = Math.min(100, finalStats.math + bonus);
+            finalStats.creativity = Math.min(100, finalStats.creativity + bonus);
+          }
+
           nextEmails = [{
             id: 't_done_' + Date.now().toString(),
             sender: 'Facility Operations',
             subject: `Training Finished: ${m.name} v${nextVer.toFixed(1)}`,
-            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.\n\nBenchmark Stats:\n- Knowledge: ${m.training.targetStats.knowledge}%\n- Coding: ${m.training.targetStats.coding}%\n- Math: ${m.training.targetStats.math}%\n- Creativity: ${m.training.targetStats.creativity}%\n- Hallucinations: ${m.training.targetStats.hallucination}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
+            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.${bonus > 0 ? ` A shared training run bonus of +${bonus} to all capabilities was successfully applied!` : ''}\n\nBenchmark Stats:\n- Knowledge: ${finalStats.knowledge}%\n- Coding: ${finalStats.coding}%\n- Math: ${finalStats.math}%\n- Creativity: ${finalStats.creativity}%\n- Hallucinations: ${finalStats.hallucination}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
             tick: currentTick,
             read: false,
             reward: null,
@@ -790,7 +952,7 @@ export const useGameStore = create(
           nextNewsFeed = [{ 
             tick: currentTick, 
             type: 'check_circle', 
-            text: `Training Complete: '${m.name}' successfully aligned to version v${nextVer.toFixed(1)}!`, 
+            text: `Training Complete: '${m.name}' successfully aligned to version v${nextVer.toFixed(1)}!${bonus > 0 ? ` (+${bonus} shared training bonus applied)` : ''}`, 
             iconColor: 'text-secondary' 
           }, ...nextNewsFeed];
           
@@ -798,7 +960,7 @@ export const useGameStore = create(
             ...m,
             version: nextVer,
             status: 'trained',
-            stats: m.training.targetStats,
+            stats: finalStats,
             training: null
           };
         } else {
@@ -814,6 +976,10 @@ export const useGameStore = create(
       }
       return m;
     });
+
+    if (playerBonusApplied) {
+      nextSharedTrainingRunBonuses.player = 0;
+    }
 
     // 4. Released models economics, user adoption, required compute, and billing revenue
     const segmentConfigs = {
@@ -1113,12 +1279,24 @@ export const useGameStore = create(
       
       const upgradedRivals = nextRivals.map((r, i) => {
         if (i === randomRivalIdx) {
-          const nextVal = Math.min(99, r.stats[statName] + 5);
+          const rNameLower = r.name.toLowerCase();
+          const rBonus = nextSharedTrainingRunBonuses[rNameLower] || 0;
+          if (rBonus > 0) {
+            nextSharedTrainingRunBonuses[rNameLower] = 0; // Reset
+          }
+          const nextVal = Math.min(99, r.stats[statName] + 5 + rBonus);
           const nextModelVer = parseFloat(r.bestModel.split(' ')[1] || '4.0') + 0.5;
           return {
             ...r,
             bestModel: `${r.name === 'OpenAI' ? 'GPT' : r.name === 'Google' ? 'Gemini' : 'Claude'} ${nextModelVer.toFixed(1)}`,
-            stats: { ...r.stats, [statName]: nextVal },
+            stats: { 
+              ...r.stats, 
+              [statName]: nextVal,
+              knowledge: Math.min(99, r.stats.knowledge + (statName === 'knowledge' ? 0 : rBonus)),
+              coding: Math.min(99, r.stats.coding + (statName === 'coding' ? 0 : rBonus)),
+              math: Math.min(99, r.stats.math + (statName === 'math' ? 0 : rBonus)),
+              creativity: Math.min(99, r.stats.creativity + (statName === 'creativity' ? 0 : rBonus))
+            },
             share: Math.min(70, r.share + 2)
           };
         } else {
@@ -1146,6 +1324,28 @@ export const useGameStore = create(
         iconColor: 'text-error'
       }, ...nextNewsFeed];
     }
+
+    // 7.5 Passive growth of competitor Cash & Data reserves (keeping inventory alive)
+    nextRivals = nextRivals.map(r => {
+      if (!r.active) return r;
+      let cashGain = 15000;
+      let dataGain = 1;
+      if (r.name === 'Google') {
+        cashGain = 30000;
+        dataGain = 3;
+      } else if (r.name === 'OpenAI') {
+        cashGain = 20000;
+        dataGain = 2;
+      } else if (r.name === 'Anthropic') {
+        cashGain = 15000;
+        dataGain = 2;
+      }
+      return {
+        ...r,
+        cash: (r.cash || 0) + cashGain,
+        data: (r.data || 0) + dataGain
+      };
+    });
 
     // Dynamic Competitor Pricing Actions
     nextLlms.forEach(m => {
@@ -1218,10 +1418,13 @@ export const useGameStore = create(
       resources: {
         ...state.resources,
         cash: state.resources.cash + cashChange,
+        data: (state.resources.data || 0) + 2,
         hype: nextHype,
         currentTick
       },
       rivals: nextRivals,
+      activeApiLeases: nextApiLeases,
+      sharedTrainingRunBonuses: nextSharedTrainingRunBonuses,
       infrastructure: {
         ...state.infrastructure,
         serverHeat: currentHeat

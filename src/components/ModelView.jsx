@@ -155,12 +155,12 @@ export default function ModelView() {
                     <div className="w-full mt-2">
                       <div className="flex justify-between text-[11px] text-outline mb-1">
                         <span>Aligning Weights...</span>
-                        <span>{Math.round((model.training.progress / model.training.totalTicks) * 100)}%</span>
+                        <span>{Math.min(100, Math.round((model.training.progress / model.training.totalTicks) * 100))}%</span>
                       </div>
                       <div className="w-full bg-surface-dim rounded-full h-1.5 overflow-hidden">
                         <div
                           className="bg-secondary h-full rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(78,222,163,0.5)]"
-                          style={{ width: `${(model.training.progress / model.training.totalTicks) * 100}%` }}
+                          style={{ width: `${Math.min(100, (model.training.progress / model.training.totalTicks) * 100)}%` }}
                         ></div>
                       </div>
                     </div>
@@ -459,13 +459,13 @@ export default function ModelView() {
                 {/* Progress bar */}
                 <div className="space-y-sm">
                   <div className="flex justify-between text-label-sm text-label-sm text-outline">
-                    <span>Training Progress (Day {selectedModel.training.progress}/{selectedModel.training.totalTicks})</span>
-                    <span className="text-secondary font-bold">{Math.round((selectedModel.training.progress / selectedModel.training.totalTicks) * 100)}%</span>
+                    <span>Training Progress (Day {Math.min(selectedModel.training.totalTicks, Math.round(selectedModel.training.progress))}/{selectedModel.training.totalTicks})</span>
+                    <span className="text-secondary font-bold">{Math.min(100, Math.round((selectedModel.training.progress / selectedModel.training.totalTicks) * 100))}%</span>
                   </div>
                   <div className="w-full bg-surface-dim rounded-full h-1.5 overflow-hidden">
                     <div
                       className="bg-secondary h-full rounded-full transition-all duration-300 shadow-[0_0_8px_rgba(78,222,163,0.5)]"
-                      style={{ width: `${(selectedModel.training.progress / selectedModel.training.totalTicks) * 100}%` }}
+                      style={{ width: `${Math.min(100, (selectedModel.training.progress / selectedModel.training.totalTicks) * 100)}%` }}
                     ></div>
                   </div>
                 </div>
