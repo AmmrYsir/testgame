@@ -12,16 +12,16 @@ export const formatDateFromTick = (tick) => {
 };
 
 export const INITIAL_COUNTRIES = {
-  US: { name: 'United States', demand: 25000, playerShare: 10, openaiShare: 60, anthropicShare: 30, allocatedGpus: 10, deployedModelId: null, latency: 10, satisfaction: 100 },
+  US: { name: 'United States', demand: 25000, playerShare: 0, openaiShare: 60, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
   CN: { name: 'China', demand: 30000, playerShare: 0, openaiShare: 70, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
-  JP: { name: 'Japan', demand: 12000, playerShare: 5, openaiShare: 65, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
-  DE: { name: 'Germany', demand: 10000, playerShare: 8, openaiShare: 62, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
-  GB: { name: 'United Kingdom', demand: 9000, playerShare: 7, openaiShare: 63, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
-  FR: { name: 'France', demand: 8000, playerShare: 6, openaiShare: 64, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
-  IN: { name: 'India', demand: 20000, playerShare: 2, openaiShare: 68, anthropicShare: 30, allocatedGpus: 1, deployedModelId: null, latency: 10, satisfaction: 100 },
-  BR: { name: 'Brazil', demand: 7000, playerShare: 4, openaiShare: 66, anthropicShare: 30, allocatedGpus: 1, deployedModelId: null, latency: 10, satisfaction: 100 },
-  CA: { name: 'Canada', demand: 6000, playerShare: 12, openaiShare: 58, anthropicShare: 30, allocatedGpus: 2, deployedModelId: null, latency: 10, satisfaction: 100 },
-  AU: { name: 'Australia', demand: 5000, playerShare: 11, openaiShare: 59, anthropicShare: 30, allocatedGpus: 1, deployedModelId: null, latency: 10, satisfaction: 100 }
+  JP: { name: 'Japan', demand: 12000, playerShare: 0, openaiShare: 65, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  DE: { name: 'Germany', demand: 10000, playerShare: 0, openaiShare: 62, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  GB: { name: 'United Kingdom', demand: 9000, playerShare: 0, openaiShare: 63, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  FR: { name: 'France', demand: 8000, playerShare: 0, openaiShare: 64, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  IN: { name: 'India', demand: 20000, playerShare: 0, openaiShare: 68, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  BR: { name: 'Brazil', demand: 7000, playerShare: 0, openaiShare: 66, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  CA: { name: 'Canada', demand: 6000, playerShare: 0, openaiShare: 58, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 },
+  AU: { name: 'Australia', demand: 5000, playerShare: 0, openaiShare: 59, anthropicShare: 30, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100 }
 };
 
 export const useGameStore = create(

@@ -5,6 +5,7 @@ import InfrastructureView from './InfrastructureView';
 import ResearchView from './ResearchView';
 import MarketView from './MarketView';
 import MailboxModal from './MailboxModal';
+import BottomLogsDrawer from './BottomLogsDrawer';
 import { useGameStore, formatDateFromTick } from '../store';
 import worldSvg from '../assets/world.svg?raw';
 
@@ -24,8 +25,8 @@ export default function TycoonUI() {
   const [selectedCountryId, setSelectedCountryId] = useState(null);
   const [activeDrawer, setActiveDrawer] = useState(null); // null, 'models', 'infrastructure', 'research', 'market'
   const [isMailboxOpen, setIsMailboxOpen] = useState(false);
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [hoveredCountry, setHoveredCountry] = useState(null);
-  const [logFilter, setLogFilter] = useState('all');
 
   const country = selectedCountryId ? countries[selectedCountryId] : null;
 
@@ -36,6 +37,8 @@ export default function TycoonUI() {
       const title = path.getAttribute('title') || id;
       initCountry(id, title);
       setSelectedCountryId(id);
+    } else {
+      setSelectedCountryId(null);
     }
   }, [initCountry, setSelectedCountryId]);
 
@@ -63,14 +66,7 @@ export default function TycoonUI() {
     setHoveredCountry(null);
   }, []);
 
-  // Filter logs for bottom-left console
-  const filteredLogs = newsFeed.filter(log => {
-    if (logFilter === 'all') return true;
-    if (logFilter === 'system') return log.type === 'memory' || log.type === 'ac_unit' || log.type === 'cloud';
-    if (logFilter === 'training') return log.type === 'model_training' || log.type === 'check_circle';
-    if (logFilter === 'public') return log.type === 'public' || log.type === 'warning' || log.type === 'handshake';
-    return true;
-  });
+
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background text-on-surface overflow-hidden dark relative">
@@ -85,62 +81,7 @@ export default function TycoonUI() {
       )}
 
       <div className="flex flex-1 overflow-hidden relative">
-        {/* LEFT PANEL: OPERATIONS LOG ONLY */}
-        <aside className="w-80 bg-surface-container/60 dark:bg-surface-container/60 backdrop-blur-2xl border-r border-white/5 z-20 flex-none h-full flex flex-col overflow-hidden">
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="px-md py-3 border-b border-white/5 bg-surface-container/30 flex flex-col gap-1.5 flex-none">
-              <h3 className="font-label-md text-label-md text-on-surface flex items-center gap-2 font-bold uppercase tracking-wider text-[10px]">
-                <span className="material-symbols-outlined text-[13px] text-primary animate-pulse">terminal</span>
-                Operations Log
-              </h3>
-              
-              <div className="flex gap-1">
-                {[
-                  { id: 'all', label: 'All' },
-                  { id: 'system', label: 'Infra' },
-                  { id: 'training', label: 'Train' },
-                  { id: 'public', label: 'Market' }
-                ].map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setLogFilter(cat.id)}
-                    className={`text-[8px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded transition-colors ${
-                      logFilter === cat.id 
-                        ? 'bg-primary/20 text-primary border border-primary/30' 
-                        : 'bg-surface-dim hover:bg-surface-bright/20 border border-white/5 text-outline'
-                    }`}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Logs List Container */}
-            <div className="flex-1 overflow-y-auto p-3 font-mono text-[10px] space-y-1.5 select-text custom-scrollbar">
-              {filteredLogs.length === 0 ? (
-                <p className="text-outline italic text-center pt-8">No operations logged.</p>
-              ) : (
-                filteredLogs.map((log, index) => {
-                  const time = `[${formatDateFromTick(log.tick)}]`;
-                  
-                  let colorClass = 'text-on-surface-variant';
-                  if (log.type === 'warning' || log.type === 'error') colorClass = 'text-error font-bold';
-                  else if (log.type === 'check_circle' || log.type === 'handshake') colorClass = 'text-secondary font-bold';
-                  else if (log.type === 'model_training' || log.type === 'science') colorClass = 'text-primary';
-                  else if (log.type === 'cloud' || log.type === 'memory') colorClass = 'text-outline';
-
-                  return (
-                    <div key={index} className="flex gap-2 items-start leading-relaxed border-b border-white/5 pb-1 last:border-0 hover:bg-white/5 px-1 py-0.5 rounded transition-colors">
-                      <span className="text-outline shrink-0 text-[9px]">{time}</span>
-                      <span className={colorClass}>{log.text}</span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </aside>
 
         {/* LEFT SLIDING DRAWER: REGIONAL OPERATIONS */}
         {selectedCountryId && country && (
@@ -278,15 +219,24 @@ export default function TycoonUI() {
               { id: 'models', label: 'Models', icon: 'psychology' },
               { id: 'infrastructure', label: 'Hardware', icon: 'dns' },
               { id: 'research', label: 'Research', icon: 'science' },
-              { id: 'market', label: 'Contracts', icon: 'handshake' }
+              { id: 'market', label: 'Contracts', icon: 'handshake' },
+              { id: 'logs', label: 'Logs', icon: 'terminal' }
             ].map(drawer => (
               <button
                 key={drawer.id}
                 disabled={!company?.hqCountryId}
-                onClick={() => setActiveDrawer(activeDrawer === drawer.id ? null : drawer.id)}
+                onClick={() => {
+                  if (drawer.id === 'logs') {
+                    setIsLogsOpen(!isLogsOpen);
+                    setActiveDrawer(null);
+                  } else {
+                    setActiveDrawer(activeDrawer === drawer.id ? null : drawer.id);
+                    setIsLogsOpen(false);
+                  }
+                }}
                 title={drawer.label}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
-                  activeDrawer === drawer.id
+                  (drawer.id === 'logs' ? isLogsOpen : activeDrawer === drawer.id)
                     ? 'bg-primary text-white border-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] hover:scale-105'
                     : 'bg-surface-container/60 hover:bg-surface-bright/20 border-white/10 text-outline hover:text-on-surface hover:scale-105'
                 }`}
@@ -326,6 +276,9 @@ export default function TycoonUI() {
           )}
         </main>
       </div>
+
+      {/* Bottom Logs Drawer */}
+      <BottomLogsDrawer isOpen={isLogsOpen} onClose={() => setIsLogsOpen(false)} />
 
       {/* Interactive Mailbox Modal */}
       <MailboxModal isOpen={isMailboxOpen} onClose={() => setIsMailboxOpen(false)} />
