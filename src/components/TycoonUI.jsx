@@ -89,8 +89,11 @@ export default function TycoonUI() {
             {/* Drawer Header */}
             <div className="flex justify-between items-center px-lg py-md border-b border-white/5 bg-surface-container/30">
               <h3 className="font-bold text-on-surface flex items-center gap-2 text-xs uppercase tracking-wider">
-                <span className="material-symbols-outlined text-primary text-base">public</span>
-                Regional Operations
+                <span className="material-symbols-outlined text-primary text-base">location_on</span>
+                {country.name}
+                <span className="text-[9px] px-1.5 py-0.5 bg-white/5 border border-white/10 rounded font-mono text-outline normal-case font-semibold">
+                  {selectedCountryId}
+                </span>
               </h3>
               <button
                 type="button"
@@ -103,15 +106,6 @@ export default function TycoonUI() {
 
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-lg flex flex-col gap-md">
-              <div className="flex items-center justify-between border-b border-white/5 pb-sm bg-surface-container/10 p-2.5 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-xl">location_on</span>
-                  <h3 className="font-bold text-base text-on-surface leading-tight">{country.name}</h3>
-                </div>
-                <span className="text-[10px] px-2 py-0.5 bg-white/5 border border-white/10 rounded font-bold font-mono text-outline">
-                  {selectedCountryId}
-                </span>
-              </div>
 
               {/* HQ Selection Block */}
               {!company?.hqCountryId ? (
