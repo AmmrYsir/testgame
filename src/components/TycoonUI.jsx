@@ -6,6 +6,7 @@ import ResearchView from './ResearchView';
 import MarketView from './MarketView';
 import MailboxModal from './MailboxModal';
 import BottomLogsDrawer from './BottomLogsDrawer';
+import CompanyModal from './CompanyModal';
 import { useGameStore, formatDateFromTick } from '../store';
 import worldSvg from '../assets/world.svg?raw';
 
@@ -26,6 +27,7 @@ export default function TycoonUI() {
   const [activeDrawer, setActiveDrawer] = useState(null); // null, 'models', 'infrastructure', 'research', 'market'
   const [isMailboxOpen, setIsMailboxOpen] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
+  const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [hoveredCountry, setHoveredCountry] = useState(null);
 
   const country = selectedCountryId ? countries[selectedCountryId] : null;
@@ -214,7 +216,8 @@ export default function TycoonUI() {
               { id: 'infrastructure', label: 'Hardware', icon: 'dns' },
               { id: 'research', label: 'Research', icon: 'science' },
               { id: 'market', label: 'Contracts', icon: 'handshake' },
-              { id: 'logs', label: 'Logs', icon: 'terminal' }
+              { id: 'logs', label: 'Logs', icon: 'terminal' },
+              { id: 'companyModal', label: 'Companies', icon: 'corporate_fare' }
             ].map(drawer => (
               <button
                 key={drawer.id}
@@ -223,6 +226,8 @@ export default function TycoonUI() {
                   if (drawer.id === 'logs') {
                     setIsLogsOpen(!isLogsOpen);
                     setActiveDrawer(null);
+                  } else if (drawer.id === 'companyModal') {
+                    setIsCompanyModalOpen(true);
                   } else {
                     setActiveDrawer(activeDrawer === drawer.id ? null : drawer.id);
                     setIsLogsOpen(false);
@@ -230,7 +235,7 @@ export default function TycoonUI() {
                 }}
                 title={drawer.label}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
-                  (drawer.id === 'logs' ? isLogsOpen : activeDrawer === drawer.id)
+                  (drawer.id === 'logs' ? isLogsOpen : drawer.id === 'companyModal' ? isCompanyModalOpen : activeDrawer === drawer.id)
                     ? 'bg-primary text-white border-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] hover:scale-105'
                     : 'bg-surface-container/60 hover:bg-surface-bright/20 border-white/10 text-outline hover:text-on-surface hover:scale-105'
                 }`}
@@ -276,6 +281,9 @@ export default function TycoonUI() {
 
       {/* Interactive Mailbox Modal */}
       <MailboxModal isOpen={isMailboxOpen} onClose={() => setIsMailboxOpen(false)} />
+
+      {/* Company/Rivals Modal */}
+      <CompanyModal isOpen={isCompanyModalOpen} onClose={() => setIsCompanyModalOpen(false)} />
     </div>
   );
 }
