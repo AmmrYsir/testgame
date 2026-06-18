@@ -122,7 +122,7 @@ export default function MailboxModal({ isOpen, onClose }) {
                         <span className="text-[10px] text-outline uppercase font-semibold">Attached Reward</span>
                         <p className="font-label-md text-label-md text-primary font-bold text-sm">
                           {activeEmail.reward.cash && `+$${activeEmail.reward.cash.toLocaleString()} Cash Reserves`}
-                          {activeEmail.reward.hype && ` +${activeEmail.reward.hype} Hype Points`}
+                          {activeEmail.reward.fans && ` +${activeEmail.reward.fans} Fans`}
                         </p>
                       </div>
 

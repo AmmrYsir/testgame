@@ -1,7 +1,8 @@
 import { useGameStore, formatDateFromTick } from '../store';
 
 export default function TopBar({ onMailboxToggle }) {
-  const { resources, company, simulationSpeed, setSimulationSpeed, emails } = useGameStore();
+  const { resources, company, simulationSpeed, setSimulationSpeed, emails, countries } = useGameStore();
+  const totalCustomers = Object.values(countries || {}).reduce((sum, c) => sum + (c.playerUsers || 0), 0);
 
   return (
     <header className="bg-surface/80 dark:bg-surface/80 backdrop-blur-xl w-full z-50 border-b border-white/10 shadow-sm flex-none">
@@ -54,10 +55,10 @@ export default function TopBar({ onMailboxToggle }) {
           </div>
           <div className="w-px h-8 bg-white/10"></div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-outline" style={{ fontVariationSettings: "'FILL' 0" }}>shutter_speed</span>
+            <span className="material-symbols-outlined text-outline" style={{ fontVariationSettings: "'FILL' 0" }}>groups</span>
             <div className="flex flex-col">
-              <span className="font-label-sm text-label-sm text-outline-variant uppercase text-[10px]">Hype Index</span>
-              <span className="font-label-md text-label-md text-on-surface font-bold text-sm">{resources.hype} / 100</span>
+              <span className="font-label-sm text-label-sm text-outline-variant uppercase text-[10px]">Active Customers</span>
+              <span className="font-label-md text-label-md text-on-surface font-bold text-sm">{totalCustomers.toLocaleString()}</span>
             </div>
           </div>
         </div>

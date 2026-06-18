@@ -47,7 +47,7 @@ export const useGameStore = create(
     cash: 1000000, // $1M starting capital
     compute: 50, // Base compute power (PFLOPS)
     data: 100, // Proprietary training data in Terabytes (TB)
-    hype: 10,
+    fans: 10,
     currentTick: 0,
   },
 
@@ -175,7 +175,7 @@ export const useGameStore = create(
       cash: 1000000,
       compute: 50,
       data: 100,
-      hype: 10,
+      fans: 10,
       currentTick: 0,
     },
     activeApiLeases: [],
@@ -534,7 +534,7 @@ export const useGameStore = create(
       resources: {
         ...state.resources,
         cash: state.resources.cash + (reward.cash || 0),
-        hype: Math.min(100, state.resources.hype + (reward.hype || 0))
+        fans: Math.min(100, state.resources.fans + (reward.fans || 0))
       },
       emails: state.emails.map(e => e.id === emailId ? { ...e, claimed: true, read: true } : e),
       newsFeed: [
@@ -565,22 +565,31 @@ export const useGameStore = create(
     return state;
   }),
 
-  toggleCloudGpus: (rentAmount) => set((state) => {
-    const isRenting = state.infrastructure.cloudGpusRented > 0;
-    const nextRented = isRenting ? 0 : rentAmount;
-    const baseCompute = (state.infrastructure.gpus * 5) + (nextRented * 2.5);
+  setCloudGpus: (rentAmount) => set((state) => {
+    const finalAmount = Math.max(0, rentAmount);
+    const baseCompute = (state.infrastructure.gpus * 5) + (finalAmount * 2.5);
     const leaseAdjustment = ((state.activeComputeLeases || []).filter(l => l.type === 'incoming').length - (state.activeComputeLeases || []).filter(l => l.type === 'outgoing').length) * 200;
     const newCompute = Math.max(0, baseCompute + leaseAdjustment);
     
+    let newsText = '';
+    if (finalAmount > state.infrastructure.cloudGpusRented) {
+      newsText = `Upgraded cloud compute lease to ${finalAmount} GPUs.`;
+    } else if (finalAmount < state.infrastructure.cloudGpusRented) {
+      if (finalAmount === 0) {
+        newsText = `Terminated cloud cluster lease.`;
+      } else {
+        newsText = `Reduced cloud compute lease to ${finalAmount} GPUs.`;
+      }
+    }
+
+    const nextNewsFeed = newsText 
+      ? [{ tick: state.resources.currentTick, type: 'cloud', text: newsText, iconColor: 'text-primary' }, ...state.newsFeed]
+      : state.newsFeed;
+
     return {
-      infrastructure: { ...state.infrastructure, cloudGpusRented: nextRented },
+      infrastructure: { ...state.infrastructure, cloudGpusRented: finalAmount },
       resources: { ...state.resources, compute: newCompute },
-      newsFeed: [{ 
-        tick: state.resources.currentTick, 
-        type: 'cloud', 
-        text: isRenting ? `Terminated cloud cluster lease.` : `Leased ${rentAmount}x cloud GPUs ($2,000/tick flat fee).`, 
-        iconColor: isRenting ? 'text-outline' : 'text-primary' 
-      }, ...state.newsFeed]
+      newsFeed: nextNewsFeed
     };
   }),
 
@@ -716,7 +725,7 @@ export const useGameStore = create(
 
     const statSum = model.stats.agentic + model.stats.coding + model.stats.reasoning + model.stats.knowledge + model.stats.math + model.stats.multilingual + model.stats.multimodal;
     const rating = Math.max(10, Math.round(statSum / 7));
-    const hypeGained = Math.min(30, Math.round(rating * 0.15));
+    const fansGained = Math.min(30, Math.round(rating * 0.15));
 
     let initialUsers = 0;
     let segmentLabel = '';
@@ -743,7 +752,7 @@ export const useGameStore = create(
     }
 
     const emailSubject = `Model Released: ${model.name} v${model.version.toFixed(1)} on ${segmentLabel}`;
-    const emailBody = `We have successfully released your model '${model.name}' v${model.version.toFixed(1)} to the ${segmentLabel}.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Hype gained: +${hypeGained}\n- Price: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
+    const emailBody = `We have successfully released your model '${model.name}' v${model.version.toFixed(1)} to the ${segmentLabel}.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
 
     const newEmail = {
       id: 'rel_' + Date.now().toString(),
@@ -770,7 +779,7 @@ export const useGameStore = create(
           satisfaction: 100
         }
       } : m),
-      resources: { ...state.resources, hype: Math.min(100, state.resources.hype + hypeGained) },
+      resources: { ...state.resources, fans: Math.min(100, state.resources.fans + fansGained) },
       emails: [newEmail, ...state.emails],
       newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version.toFixed(1)} to ${segmentLabel} at price $${initialPrice}.`, iconColor: 'text-primary' }, ...state.newsFeed]
     };
@@ -1201,15 +1210,15 @@ export const useGameStore = create(
         const rivalValueScore = maxRivalScore / cfg.basePrice;
         const competitiveness = valueScore / Math.max(0.01, rivalValueScore);
 
-        // Hype scaling
-        const hypeFactor = 0.5 + (state.resources.hype / 50);
+        // Fans scaling
+        const fansFactor = 0.5 + (state.resources.fans / 50);
 
         // Growth or decay rate of market share in percentage points
         let shareChange = 0;
         if (allocated === 0) {
           shareChange = -3.0; // Outage = severe decay
         } else if (competitiveness > 1.25) {
-          shareChange = (competitiveness - 1) * hypeFactor * 1.5;
+          shareChange = (competitiveness - 1) * fansFactor * 1.5;
         } else if (competitiveness < 0.75) {
           shareChange = (competitiveness - 1) * 1.5;
         } else {
@@ -1471,10 +1480,10 @@ export const useGameStore = create(
     });
     cashChange += activeContractPayouts;
 
-    // Hype decay
-    let nextHype = state.resources.hype;
+    // Fans decay
+    let nextFans = state.resources.fans;
     if (currentTick % 10 === 0) {
-      nextHype = Math.max(5, nextHype - 1);
+      nextFans = Math.max(5, nextFans - 1);
     }
 
     // 7. Rivals releases & Dynamic Price Adjustments
@@ -1613,10 +1622,10 @@ export const useGameStore = create(
         id: 'm_cash_' + Date.now().toString(),
         sender: 'Silicon Venture Capital',
         subject: 'Financial Milestone: PR Campaign Launched',
-        body: `Congratulations on reaching $2,000,000 in cash reserves. This milestone has generated a lot of positive press for the company.\n\nWe've put together a PR announcement that will boost our hype by +25 points.\n\nClaim the reward below to publish the news.`,
+        body: `Congratulations on reaching $2,000,000 in cash reserves. This milestone has generated a lot of positive press for the company.\n\nWe've put together a PR announcement that will attract +25 Fans.\n\nClaim the reward below to publish the news.`,
         tick: currentTick,
         read: false,
-        reward: { hype: 25 },
+        reward: { fans: 25 },
         claimed: false
       }, ...nextEmails];
     }
@@ -1625,9 +1634,9 @@ export const useGameStore = create(
       resources: {
         ...state.resources,
         cash: state.resources.cash + cashChange,
-        data: (state.resources.data || 0) + 2,
+        data: state.resources.data || 0,
         compute: nextCompute,
-        hype: nextHype,
+        fans: nextFans,
         currentTick
       },
       rivals: nextRivals,
