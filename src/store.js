@@ -1,6 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export const TECH_PREREQS = {
+  moe: 'transformer',
+  ssm: 'transformer',
+  liquid_nn: 'ssm',
+  synthetic_data: 'textbook_acquisition',
+  multimodal_tokenizers: 'synthetic_data',
+  dpo: 'rlhf',
+  constitutional_ai: 'dpo',
+  speculative_decoding: 'fp8_quantization',
+  flash_attention: 'speculative_decoding'
+};
+
 export const formatDateFromTick = (tick) => {
   const startDate = new Date(2020, 0, 1); // January 1, 2020
   const currentDate = new Date(startDate.getTime() + tick * 24 * 60 * 60 * 1000);
@@ -71,7 +83,7 @@ export const useGameStore = create(
 
   // Research (Progressive)
   research: {
-    unlockedTech: ['transformer'], // default architecture
+    unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
     activeResearch: null, // null or { techId, progress, totalTicks, fundingPerTick }
   },
 
@@ -186,7 +198,7 @@ export const useGameStore = create(
     llms: [],
     countries: INITIAL_COUNTRIES,
     research: {
-      unlockedTech: ['transformer'],
+      unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
       activeResearch: null,
     },
     marketContracts: [],
@@ -649,6 +661,11 @@ export const useGameStore = create(
 
     if (allocatedGpus > idleGpus) return state; // Not enough GPUs
 
+    // Safety check: is dataset unlocked?
+    if (datasetType === 'textbooks' && !state.research.unlockedTech.includes('textbook_acquisition')) return state;
+    if (datasetType === 'synthetic' && !state.research.unlockedTech.includes('synthetic_data')) return state;
+    if (datasetType === 'rlhf_align' && !state.research.unlockedTech.includes('rlhf')) return state;
+
     // Calculate Cost and Target Stats
     let datasetCost = 0;
     let statBonus = { agentic: 0, coding: 0, reasoning: 0, knowledge: 0, math: 0, multilingual: 0, multimodal: 0 };
@@ -681,17 +698,25 @@ export const useGameStore = create(
     let archMultiplier = 1.0;
     if (model.architecture === 'moe') archMultiplier = 1.25;
     if (model.architecture === 'ssm') archMultiplier = 1.4;
+    if (model.architecture === 'liquid_nn') archMultiplier = 1.6;
 
-    const baseGains = epochs * 3 * archMultiplier;
+    // Apply alignment multipliers
+    let alignmentMultiplier = state.research.unlockedTech.includes('dpo') ? 1.15 : 1.0;
+
+    const baseGains = epochs * 3 * archMultiplier * alignmentMultiplier;
+
+    let extraReasoning = state.research.unlockedTech.includes('constitutional_ai') ? 5 : 0;
+    let extraAgentic = state.research.unlockedTech.includes('constitutional_ai') ? 5 : 0;
+    let extraMultimodal = state.research.unlockedTech.includes('multimodal_tokenizers') ? 5 : 0;
 
     const targetStats = {
-      agentic: Math.min(100, model.stats.agentic + Math.round(baseGains + statBonus.agentic)),
+      agentic: Math.min(100, model.stats.agentic + Math.round(baseGains + statBonus.agentic) + extraAgentic),
       coding: Math.min(100, model.stats.coding + Math.round(baseGains + statBonus.coding)),
-      reasoning: Math.min(100, model.stats.reasoning + Math.round(baseGains + statBonus.reasoning)),
+      reasoning: Math.min(100, model.stats.reasoning + Math.round(baseGains + statBonus.reasoning) + extraReasoning),
       knowledge: Math.min(100, model.stats.knowledge + Math.round(baseGains + statBonus.knowledge)),
       math: Math.min(100, model.stats.math + Math.round(baseGains + statBonus.math)),
       multilingual: Math.min(100, model.stats.multilingual + Math.round(baseGains + statBonus.multilingual)),
-      multimodal: Math.min(100, model.stats.multimodal + Math.round(baseGains + statBonus.multimodal))
+      multimodal: Math.min(100, model.stats.multimodal + Math.round(baseGains + statBonus.multimodal) + extraMultimodal)
     };
 
     const durationTicks = Math.max(180, epochs * 60); // Minimum 6 months
@@ -837,6 +862,12 @@ export const useGameStore = create(
   startResearch: (techId, costCash, durationTicks) => set((state) => {
     if (state.research.activeResearch) return state; // Already researching something
     if (state.research.unlockedTech.includes(techId)) return state;
+
+    // Prerequisite check
+    const prereq = TECH_PREREQS[techId];
+    if (prereq && !state.research.unlockedTech.includes(prereq)) {
+      return state; // Prerequisite not unlocked yet
+    }
 
     return {
       research: {
@@ -1022,13 +1053,29 @@ export const useGameStore = create(
         // Research Completed!
         nextUnlockedTech.push(nextActiveResearch.techId);
         
+        const techDetails = {
+          moe: { name: 'Mixture of Experts (MoE)', desc: 'This sparse activation architecture dynamically routes inputs to specialized sub-networks. Models will compile with a faster training speed.' },
+          ssm: { name: 'State Space Models (SSM/Mamba)', desc: 'A linear-time alternative to transformers that processes long sequences extremely efficiently. Training speed is significantly boosted.' },
+          liquid_nn: { name: 'Liquid Neural Networks', desc: 'Inspired by biological brains, this architecture dynamically adapts its weights during inference. Massive boost to training speed.' },
+          textbook_acquisition: { name: 'Textbook Corpus Acquisition', desc: 'Licensed educational textbook materials are now integrated, unlocking high-quality knowledge and reasoning training datasets.' },
+          synthetic_data: { name: 'Synthetic Reasoning Generation', desc: 'Enables LLM-assisted dataset generation, filtering out high-quality logic proofs to unlock the Synthetic Reasoning Data training corpus.' },
+          multimodal_tokenizers: { name: 'Multimodal Data Tokenizers', desc: 'Synchronized visual-text tokenization enhances multimodal training outputs by +5%.' },
+          rlhf: { name: 'RLHF Alignment', desc: 'Reinforcement Learning from Human Feedback. Unlocks professional human evaluation and preference datasets for model training.' },
+          dpo: { name: 'Direct Preference Optimization (DPO)', desc: 'Replaces complex policy reinforcement loops with direct preference losses, boosting SFT/RLHF alignment gains by +15%.' },
+          constitutional_ai: { name: 'Constitutional AI', desc: 'Enables automated AI-critique feedback loops. Boosts reasoning and agentic scores by +5% on training runs.' },
+          fp8_quantization: { name: 'FP8 Quantization', desc: 'Downscales weights to 8-bit precision, reducing the physical GPU node requirements for model routing by 20%.' },
+          speculative_decoding: { name: 'Speculative Decoding', desc: 'Uses a smaller draft model to pre-verify sequences, accelerating response latency under high load spikes.' },
+          flash_attention: { name: 'FlashAttention', desc: 'Optimizes GPU memory-access routines to reduce compute footprint by a cumulative 40%.' }
+        };
+
+        const techInfo = techDetails[nextActiveResearch.techId] || { name: nextActiveResearch.techId.toUpperCase(), desc: 'This technology is now available.' };
+        
         // Send email
-        const techName = nextActiveResearch.techId.toUpperCase();
         nextEmails = [{
           id: 'r_done_' + Date.now().toString(),
           sender: 'Labs Director',
-          subject: `Research Finished: ${techName} unlocked`,
-          body: `Good news! Our research team has finished studying ${techName}.\n\nThis technology is now available. You can now select it when creating or training models.`,
+          subject: `Research Completed: ${techInfo.name}`,
+          body: `Good news! Our research team has finished studying ${techInfo.name}.\n\n${techInfo.desc}\n\nYou can see its benefits active in model development or training panels.`,
           tick: currentTick,
           read: false,
           reward: null,
@@ -1038,7 +1085,7 @@ export const useGameStore = create(
         nextNewsFeed = [{ 
           tick: currentTick, 
           type: 'science', 
-          text: `Research Complete: Unlocked ${nextActiveResearch.techId.toUpperCase()}!`, 
+          text: `Research Complete: Unlocked ${techInfo.name}!`, 
           iconColor: 'text-primary' 
         }, ...nextNewsFeed];
         nextActiveResearch = null;
@@ -1260,8 +1307,15 @@ export const useGameStore = create(
           anthropicShare = 0;
         }
 
+        let computePerUser = 0.01;
+        if (state.research.unlockedTech.includes('flash_attention')) {
+          computePerUser = 0.006;
+        } else if (state.research.unlockedTech.includes('fp8_quantization')) {
+          computePerUser = 0.008;
+        }
+
         playerUsers = Math.round(country.demand * (playerShare / 100));
-        gpusRequired = Math.ceil(playerUsers * 0.01);
+        gpusRequired = Math.ceil(playerUsers * computePerUser);
         totalProductionGpus += allocated;
 
         if (allocated === 0) {

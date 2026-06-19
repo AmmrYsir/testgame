@@ -60,10 +60,10 @@ export default function ModelModal({ isOpen, onClose }) {
 
   // Dataset descriptions and gains
   const datasets = {
-    web_dump: { name: 'Common Crawl Scraping', cost: 15000, desc: 'Scrape raw public web data. Broad coverage but lower quality.', gainText: '+5% Knowledge, +5% Multilingual, +3% Multimodal' },
-    textbooks: { name: 'Premium Textbook Corpus', cost: 80000, desc: 'Licensed educational text. Strong knowledge and reasoning foundations.', gainText: '+12% Knowledge, +8% Reasoning, +6% Math' },
-    synthetic: { name: 'Synthetic Reasoning Data', cost: 200000, desc: 'AI-generated logic proofs and code. Heavy coding and math boost.', gainText: '+20% Coding & Math, +10% Reasoning' },
-    rlhf_align: { name: 'RLHF Expert Alignment', cost: 350000, desc: 'Human feedback refinement. Boosts agentic capability and broad skills.', gainText: '+15% Agentic, +10% Coding, +8% Reasoning' }
+    web_dump: { name: 'Common Crawl Scraping', cost: 15000, desc: 'Scrape raw public web data. Broad coverage but lower quality.', gainText: '+5% Knowledge, +5% Multilingual, +3% Multimodal', unlocked: true },
+    textbooks: { name: 'Premium Textbook Corpus', cost: 80000, desc: 'Licensed educational text. Strong knowledge and reasoning foundations.', gainText: '+12% Knowledge, +8% Reasoning, +6% Math', unlocked: research.unlockedTech.includes('textbook_acquisition') },
+    synthetic: { name: 'Synthetic Reasoning Data', cost: 200000, desc: 'AI-generated logic proofs and code. Heavy coding and math boost.', gainText: '+20% Coding & Math, +10% Reasoning', unlocked: research.unlockedTech.includes('synthetic_data') },
+    rlhf_align: { name: 'RLHF Expert Alignment', cost: 350000, desc: 'Human feedback refinement. Boosts agentic capability and broad skills.', gainText: '+15% Agentic, +10% Coding, +8% Reasoning', unlocked: research.unlockedTech.includes('rlhf') }
   };
 
   // Helper to calculate total training cost
@@ -158,7 +158,7 @@ export default function ModelModal({ isOpen, onClose }) {
                             </span>
                           </h3>
                           <span className="font-label-sm text-[10px] text-outline capitalize block mt-0.5">
-                            {model.architecture === 'moe' ? 'Mixture of Experts' : model.architecture === 'ssm' ? 'State Space' : 'Transformer'}
+                            {model.architecture === 'moe' ? 'Mixture of Experts' : model.architecture === 'ssm' ? 'State Space' : model.architecture === 'liquid_nn' ? 'Liquid Neural Network' : 'Transformer'}
                           </span>
                         </div>
 
@@ -257,7 +257,7 @@ export default function ModelModal({ isOpen, onClose }) {
 
                 <div className="flex flex-col gap-xs">
                   <label className="font-label-sm text-label-sm text-outline font-semibold mb-2">Backbone Architecture</label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
                     {/* Transformer */}
                     <label className="cursor-pointer">
                       <input
@@ -297,7 +297,7 @@ export default function ModelModal({ isOpen, onClose }) {
                         </div>
                       </label>
                     ) : (
-                      <div className="p-4 rounded-xl bg-surface-dim/30 border border-white/5 opacity-40 flex flex-col gap-2 items-center text-center select-none">
+                      <div className="p-4 rounded-xl bg-surface-dim/30 border border-white/5 opacity-40 flex flex-col gap-2 items-center text-center select-none animate-pulse-slow">
                         <span className="material-symbols-outlined text-outline text-sm">lock</span>
                         <div>
                           <h4 className="font-label-md text-label-md text-outline font-bold text-xs">MoE Locked</h4>
@@ -321,15 +321,44 @@ export default function ModelModal({ isOpen, onClose }) {
                           <span className="material-symbols-outlined text-outline peer-checked:text-primary">dns</span>
                           <div>
                             <h4 className="font-label-md text-label-md text-on-surface font-bold text-xs">SSM</h4>
-                            <p className="text-[10px] text-outline mt-0.5">Efficient context processing.</p>
+                            <p className="text-[10px] text-outline mt-0.5">Linear complexity model.</p>
                           </div>
                         </div>
                       </label>
                     ) : (
-                      <div className="p-4 rounded-xl bg-surface-dim/30 border border-white/5 opacity-40 flex flex-col gap-2 items-center text-center select-none">
+                      <div className="p-4 rounded-xl bg-surface-dim/30 border border-white/5 opacity-40 flex flex-col gap-2 items-center text-center select-none animate-pulse-slow">
                         <span className="material-symbols-outlined text-outline text-sm">lock</span>
                         <div>
                           <h4 className="font-label-md text-label-md text-outline font-bold text-xs">SSM Locked</h4>
+                          <p className="text-[10px] text-outline mt-0.5">Requires research.</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Liquid NN */}
+                    {research.unlockedTech.includes('liquid_nn') ? (
+                      <label className="cursor-pointer">
+                        <input
+                          type="radio"
+                          name="newArch"
+                          value="liquid_nn"
+                          checked={newArch === 'liquid_nn'}
+                          onChange={() => setNewArch('liquid_nn')}
+                          className="peer sr-only"
+                        />
+                        <div className="p-4 rounded-xl bg-[#0b0e15]/40 border border-white/5 peer-checked:border-primary peer-checked:bg-primary/10 transition-all flex flex-col gap-2 items-center text-center hover:bg-[#0b0e15]/80">
+                          <span className="material-symbols-outlined text-outline peer-checked:text-primary">waves</span>
+                          <div>
+                            <h4 className="font-label-md text-label-md text-on-surface font-bold text-xs">Liquid NN</h4>
+                            <p className="text-[10px] text-outline mt-0.5">Adaptive differential flow.</p>
+                          </div>
+                        </div>
+                      </label>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-surface-dim/30 border border-white/5 opacity-40 flex flex-col gap-2 items-center text-center select-none animate-pulse-slow">
+                        <span className="material-symbols-outlined text-outline text-sm">lock</span>
+                        <div>
+                          <h4 className="font-label-md text-label-md text-outline font-bold text-xs">Liquid Locked</h4>
                           <p className="text-[10px] text-outline mt-0.5">Requires research.</p>
                         </div>
                       </div>
@@ -367,7 +396,7 @@ export default function ModelModal({ isOpen, onClose }) {
                       </span>
                     </div>
                     <p className="text-outline text-xs capitalize mt-1">
-                      Neural Architecture: {selectedModel.architecture === 'moe' ? 'Mixture of Experts' : selectedModel.architecture === 'ssm' ? 'State Space Model' : 'Transformer'}
+                      Neural Architecture: {selectedModel.architecture === 'moe' ? 'Mixture of Experts' : selectedModel.architecture === 'ssm' ? 'State Space Model' : selectedModel.architecture === 'liquid_nn' ? 'Liquid Neural Network' : 'Transformer'}
                     </p>
                   </div>
 
@@ -754,29 +783,44 @@ export default function ModelModal({ isOpen, onClose }) {
                             </div>
 
                             {/* Dataset Selector */}
-                            <div className="space-y-sm flex flex-col">
+                            <div className="space-y-sm flex flex-col text-left">
                               <label className="text-outline font-mono text-[10px] uppercase font-bold tracking-wider">Select Training Corpus</label>
                               <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[160px] custom-scrollbar">
-                                {Object.entries(datasets).map(([key, dataset]) => (
-                                  <div
-                                    key={key}
-                                    onClick={() => setDatasetType(key)}
-                                    className={`p-2.5 rounded-lg border text-left cursor-pointer transition-all flex justify-between items-start gap-sm ${
-                                      datasetType === key
-                                        ? 'bg-primary/5 border-primary shadow-[0_0_8px_rgba(59,130,246,0.15)]'
-                                        : 'bg-[#0b0e15]/50 border-white/5 hover:border-white/10'
-                                    }`}
-                                  >
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="text-on-surface font-bold text-xs truncate">{dataset.name}</h4>
-                                      <p className="text-[9.5px] text-outline leading-tight mt-0.5">{dataset.desc}</p>
-                                      <span className="text-[9px] text-primary font-semibold font-mono block mt-1">{dataset.gainText}</span>
+                                {Object.entries(datasets).map(([key, dataset]) => {
+                                  const isDatasetUnlocked = dataset.unlocked;
+                                  return (
+                                    <div
+                                      key={key}
+                                      onClick={() => isDatasetUnlocked && setDatasetType(key)}
+                                      className={`p-2.5 rounded-lg border text-left transition-all flex justify-between items-start gap-sm ${
+                                        !isDatasetUnlocked
+                                          ? 'opacity-45 bg-[#0c0f16]/30 border-white/5 cursor-not-allowed'
+                                          : datasetType === key
+                                          ? 'bg-primary/5 border-primary shadow-[0_0_8px_rgba(59,130,246,0.15)] cursor-pointer'
+                                          : 'bg-[#0b0e15]/50 border-white/5 hover:border-white/10 cursor-pointer'
+                                      }`}
+                                    >
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                          <h4 className="text-on-surface font-bold text-xs truncate">{dataset.name}</h4>
+                                          {!isDatasetUnlocked && (
+                                            <span className="material-symbols-outlined text-[11px] text-outline font-bold">lock</span>
+                                          )}
+                                        </div>
+                                        <p className="text-[9.5px] text-outline leading-tight mt-0.5">
+                                          {isDatasetUnlocked ? dataset.desc : `Requires research: ${
+                                            key === 'textbooks' ? 'Textbook Acquisition' :
+                                            key === 'synthetic' ? 'Synthetic Data Generation' : 'RLHF Alignment'
+                                          }`}
+                                        </p>
+                                        <span className="text-[9px] text-primary font-semibold font-mono block mt-1">{dataset.gainText}</span>
+                                      </div>
+                                      <span className="font-mono text-xs font-bold text-on-surface shrink-0">
+                                        ${(dataset.cost / 1000).toFixed(0)}k
+                                      </span>
                                     </div>
-                                    <span className="font-mono text-xs font-bold text-on-surface shrink-0">
-                                      ${(dataset.cost / 1000).toFixed(0)}k
-                                    </span>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>

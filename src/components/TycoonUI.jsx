@@ -3,7 +3,7 @@ import TopBar from './TopBar';
 import ModelModal from './ModelModal';
 import TrainingCompletionPopup from './TrainingCompletionPopup';
 import InfrastructureModal from './InfrastructureModal';
-import ResearchView from './ResearchView';
+import ResearchModal from './ResearchModal';
 import MailboxModal from './MailboxModal';
 import BottomLogsDrawer from './BottomLogsDrawer';
 import CompanyModal from './CompanyModal';
@@ -27,12 +27,12 @@ export default function TycoonUI() {
   } = useGameStore();
 
   const [selectedCountryId, setSelectedCountryId] = useState(null);
-  const [activeDrawer, setActiveDrawer] = useState(null); // null, 'research', 'market'
   const [isMailboxOpen, setIsMailboxOpen] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [isInfrastructureModalOpen, setIsInfrastructureModalOpen] = useState(false);
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
+  const [isResearchModalOpen, setIsResearchModalOpen] = useState(false);
   const [hoveredCountry, setHoveredCountry] = useState(null);
 
   const country = selectedCountryId ? countries[selectedCountryId] : null;
@@ -268,21 +268,19 @@ export default function TycoonUI() {
                 onClick={() => {
                   if (drawer.id === 'logs') {
                     setIsLogsOpen(!isLogsOpen);
-                    setActiveDrawer(null);
                   } else if (drawer.id === 'companyModal') {
                     setIsCompanyModalOpen(true);
                   } else if (drawer.id === 'infrastructure') {
                     setIsInfrastructureModalOpen(true);
                   } else if (drawer.id === 'models') {
                     setIsModelModalOpen(true);
-                  } else {
-                    setActiveDrawer(activeDrawer === drawer.id ? null : drawer.id);
-                    setIsLogsOpen(false);
+                  } else if (drawer.id === 'research') {
+                    setIsResearchModalOpen(true);
                   }
                 }}
                 title={drawer.label}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
-                  (drawer.id === 'logs' ? isLogsOpen : drawer.id === 'companyModal' ? isCompanyModalOpen : drawer.id === 'infrastructure' ? isInfrastructureModalOpen : drawer.id === 'models' ? isModelModalOpen : activeDrawer === drawer.id)
+                  (drawer.id === 'logs' ? isLogsOpen : drawer.id === 'companyModal' ? isCompanyModalOpen : drawer.id === 'infrastructure' ? isInfrastructureModalOpen : drawer.id === 'models' ? isModelModalOpen : drawer.id === 'research' ? isResearchModalOpen : false)
                     ? 'bg-primary text-white border-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] hover:scale-105'
                     : 'bg-surface-container/60 hover:bg-surface-bright/20 border-white/10 text-outline hover:text-on-surface hover:scale-105'
                 }`}
@@ -292,28 +290,6 @@ export default function TycoonUI() {
             ))}
           </div>
 
-          {/* SLIDE-OUT OVERLAY VIEW DRAWERS (Right Side) */}
-          {activeDrawer && company?.hqCountryId && (
-            <div className="absolute right-0 top-0 bottom-0 w-[80vw] max-w-[850px] bg-[#0c0f16]/95 border-l border-white/10 z-30 shadow-2xl backdrop-blur-2xl flex flex-col animate-slide-in">
-              {/* Drawer Header */}
-              <div className="flex justify-between items-center px-lg py-md border-b border-white/5 bg-surface-container/30">
-                <h3 className="font-bold text-on-surface flex items-center gap-2 text-xs uppercase tracking-wider">
-                  {activeDrawer === 'research' && <><span className="material-symbols-outlined text-primary text-base">science</span> Research Lab</>}
-                </h3>
-                <button
-                  onClick={() => setActiveDrawer(null)}
-                  className="text-outline hover:text-on-surface p-1 rounded-lg hover:bg-white/5 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-base">close</span>
-                </button>
-              </div>
-              
-              {/* Drawer Body */}
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-lg">
-                {activeDrawer === 'research' && <ResearchView />}
-              </div>
-            </div>
-          )}
         </main>
       </div>
 
@@ -331,6 +307,9 @@ export default function TycoonUI() {
 
       {/* Model Modal */}
       <ModelModal isOpen={isModelModalOpen} onClose={() => setIsModelModalOpen(false)} />
+
+      {/* Research Modal */}
+      <ResearchModal isOpen={isResearchModalOpen} onClose={() => setIsResearchModalOpen(false)} />
 
       {/* Training Completion Popup */}
       {llms?.find(m => m.status === 'trained_pending') && (
