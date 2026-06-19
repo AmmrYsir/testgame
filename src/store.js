@@ -926,6 +926,54 @@ export const useGameStore = create(
     };
   }),
 
+  initializeAllCountries: (countryList) => set((state) => {
+    const nextCountries = { ...state.countries };
+    let changed = false;
+
+    const anthropicRival = state.rivals.find(r => r.name === 'Anthropic');
+    const isAnthropicActive = anthropicRival ? anthropicRival.active : false;
+
+    countryList.forEach(({ id, name }) => {
+      if (!nextCountries[id]) {
+        changed = true;
+        const demand = Math.floor(Math.random() * 8000) + 2000;
+
+        let openaiShare = Math.floor(Math.random() * 15) + 45; // 45-60
+        let googleShare = 100 - openaiShare;
+        let anthropicShare = 0;
+
+        if (isAnthropicActive) {
+          anthropicShare = Math.floor(Math.random() * 15) + 15; // 15-30
+          const totalRival = openaiShare + googleShare;
+          openaiShare = (openaiShare / totalRival) * (100 - anthropicShare);
+          googleShare = (googleShare / totalRival) * (100 - anthropicShare);
+        }
+
+        nextCountries[id] = {
+          name: name || id,
+          demand,
+          playerShare: 0,
+          openaiShare: parseFloat(openaiShare.toFixed(2)),
+          googleShare: parseFloat(googleShare.toFixed(2)),
+          anthropicShare: parseFloat(anthropicShare.toFixed(2)),
+          allocatedGpus: 0,
+          deployedModelId: null,
+          latency: 10,
+          satisfaction: 100,
+          openMarkets: {
+            player: false,
+            openai: true,
+            google: true,
+            anthropic: isAnthropicActive
+          }
+        };
+      }
+    });
+
+    if (!changed) return {};
+    return { countries: nextCountries };
+  }),
+
   deployModelToCountry: (countryId, modelId) => set((state) => {
     const country = state.countries[countryId];
     if (!country) return {};

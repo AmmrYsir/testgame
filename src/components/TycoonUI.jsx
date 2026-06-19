@@ -59,9 +59,10 @@ export default function TycoonUI() {
       setHoveredCountry({
         name: title,
         playerShare: countryState ? countryState.playerShare : 0,
-        openaiShare: countryState ? countryState.openaiShare : 0,
-        googleShare: countryState ? (countryState.googleShare || 0) : 0,
+        openaiShare: countryState ? countryState.openaiShare : 60,
+        googleShare: countryState ? (countryState.googleShare || 0) : 40,
         anthropicShare: countryState ? countryState.anthropicShare : 0,
+        openMarkets: countryState ? countryState.openMarkets : { openai: true, google: true },
         x: e.clientX - rect.left + 15,
         y: e.clientY - rect.top + 15
       });
@@ -320,10 +321,32 @@ export default function TycoonUI() {
 }
 
 const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company, rivals, onClick, onMouseMove, onMouseLeave }) {
+  const initializeAllCountries = useGameStore(state => state.initializeAllCountries);
+
   // Pre-process raw SVG to make it fluid from the very first render (preventing size jump)
   const processedWorldSvg = worldSvg
     .replace('width="1009.6727"', 'viewBox="0 0 1010 666" width="100%"')
     .replace('height="665.96301"', 'height="100%" style="max-width: 100%; max-height: 100%;"');
+
+  // Initialize all countries on mount
+  useEffect(() => {
+    const container = document.getElementById('world-map-svg-container');
+    if (!container) return;
+    const svg = container.querySelector('svg');
+    if (!svg) return;
+
+    const paths = svg.querySelectorAll('path');
+    const countryList = [];
+    paths.forEach(p => {
+      const id = p.getAttribute('id');
+      const name = p.getAttribute('title') || id;
+      if (id) countryList.push({ id, name });
+    });
+
+    if (countryList.length > 0) {
+      initializeAllCountries(countryList);
+    }
+  }, [initializeAllCountries]);
 
   // Update country path colors dynamically when state or selection changes
   useEffect(() => {
@@ -362,29 +385,36 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company,
       let dominantShare = 0;
       let dominantColor = '#3b82f6';
       
-      if (countryState) {
-        // Player
-        if (countryState.openMarkets?.player && countryState.playerShare > dominantShare) {
-          dominantShare = countryState.playerShare;
-          dominantCompany = 'player';
-          dominantColor = company?.color || '#3b82f6';
-        }
-        // Rivals
-        if (rivals) {
-          rivals.forEach(rival => {
-            const rivalKey = rival.name.toLowerCase();
-            const isRivalOpen = countryState.openMarkets?.[rivalKey];
-            if (isRivalOpen) {
-              const shareKey = `${rivalKey}Share`;
-              const share = countryState[shareKey] || 0;
-              if (share > dominantShare) {
-                dominantShare = share;
-                dominantCompany = rivalKey;
-                dominantColor = rival.color;
-              }
+      const openMarkets = countryState ? countryState.openMarkets : { openai: true, google: true };
+      const playerShare = countryState ? countryState.playerShare : 0;
+      const openaiShare = countryState ? countryState.openaiShare : 60;
+      const googleShare = countryState ? countryState.googleShare : 40;
+      const anthropicShare = countryState ? countryState.anthropicShare : 0;
+
+      // Player
+      if (openMarkets?.player && playerShare > dominantShare) {
+        dominantShare = playerShare;
+        dominantCompany = 'player';
+        dominantColor = company?.color || '#3b82f6';
+      }
+      // Rivals
+      if (rivals) {
+        rivals.forEach(rival => {
+          const rivalKey = rival.name.toLowerCase();
+          const isRivalOpen = openMarkets?.[rivalKey];
+          if (isRivalOpen) {
+            let share = 0;
+            if (rivalKey === 'openai') share = openaiShare;
+            else if (rivalKey === 'google') share = googleShare;
+            else if (rivalKey === 'anthropic') share = anthropicShare;
+
+            if (share > dominantShare) {
+              dominantShare = share;
+              dominantCompany = rivalKey;
+              dominantColor = rival.color;
             }
-          });
-        }
+          }
+        });
       }
       
       let companyRgb = { r: 59, g: 130, b: 246 };
