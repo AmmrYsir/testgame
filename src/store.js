@@ -24,7 +24,7 @@ export const formatDateFromTick = (tick) => {
 };
 
 export const INITIAL_COUNTRIES = {
-  US: { name: 'United States', demand: 25000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
+  US: { name: 'United States', demand: 25000, playerShare: 0, openaiShare: 40, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
   CN: { name: 'China', demand: 30000, playerShare: 0, openaiShare: 65, googleShare: 35, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
   JP: { name: 'Japan', demand: 12000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
   DE: { name: 'Germany', demand: 10000, playerShare: 0, openaiShare: 60, googleShare: 40, anthropicShare: 0, allocatedGpus: 0, deployedModelId: null, latency: 10, satisfaction: 100, openMarkets: { player: false, openai: true, google: true, anthropic: false } },
@@ -104,13 +104,24 @@ export const useGameStore = create(
           compute: 8500,
           data: 1200,
           stats: { agentic: 20, coding: 30, reasoning: 25, knowledge: 45, math: 25, multilingual: 35, multimodal: 30 },
-          models: []
+          models: [],
+          unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
+          activeResearch: null,
+          activeTraining: {
+            modelName: 'Gemini 1.0',
+            progress: 90,
+            totalTicks: 180,
+            datasetType: 'web_dump',
+            targetStats: { agentic: 22, coding: 32, reasoning: 26, knowledge: 50, math: 26, multilingual: 40, multimodal: 33 },
+            cost: 15640
+          },
+          price: 15
         },
         {
           name: 'OpenAI',
           bestModel: 'None',
           share: 60,
-          color: '#ea580c',
+          color: '#4b5563',
           logo: 'smart_toy',
           yearEst: 2015,
           active: true,
@@ -118,13 +129,24 @@ export const useGameStore = create(
           compute: 6000,
           data: 500,
           stats: { agentic: 25, coding: 20, reasoning: 30, knowledge: 35, math: 15, multilingual: 20, multimodal: 15 },
-          models: []
+          models: [],
+          unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
+          activeResearch: null,
+          activeTraining: {
+            modelName: 'GPT 1.0',
+            progress: 60,
+            totalTicks: 180,
+            datasetType: 'web_dump',
+            targetStats: { agentic: 27, coding: 22, reasoning: 31, knowledge: 40, math: 16, multilingual: 25, multimodal: 18 },
+            cost: 15640
+          },
+          price: 15
         },
         {
           name: 'Anthropic',
           bestModel: 'None',
           share: 0,
-          color: '#a78bfa',
+          color: '#ea580c',
           logo: 'radar',
           yearEst: 2021,
           active: false,
@@ -132,7 +154,11 @@ export const useGameStore = create(
           compute: 3500,
           data: 300,
           stats: { agentic: 30, coding: 25, reasoning: 35, knowledge: 40, math: 20, multilingual: 25, multimodal: 20 },
-          models: []
+          models: [],
+          unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
+          activeResearch: null,
+          activeTraining: null,
+          price: 15
         }
       ],
 
@@ -205,13 +231,24 @@ export const useGameStore = create(
             compute: 8500,
             data: 1200,
             stats: { agentic: 20, coding: 30, reasoning: 25, knowledge: 45, math: 25, multilingual: 35, multimodal: 30 },
-            models: []
+            models: [],
+            unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
+            activeResearch: null,
+            activeTraining: {
+              modelName: 'Gemini 1.0',
+              progress: 90,
+              totalTicks: 180,
+              datasetType: 'web_dump',
+              targetStats: { agentic: 22, coding: 32, reasoning: 26, knowledge: 50, math: 26, multilingual: 40, multimodal: 33 },
+              cost: 15640
+            },
+            price: 15
           },
           {
             name: 'OpenAI',
             bestModel: 'None',
             share: 60,
-            color: '#ea580c',
+            color: '#4b5563',
             logo: 'smart_toy',
             yearEst: 2015,
             active: true,
@@ -219,13 +256,24 @@ export const useGameStore = create(
             compute: 6000,
             data: 500,
             stats: { agentic: 25, coding: 20, reasoning: 30, knowledge: 35, math: 15, multilingual: 20, multimodal: 15 },
-            models: []
+            models: [],
+            unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
+            activeResearch: null,
+            activeTraining: {
+              modelName: 'GPT 1.0',
+              progress: 60,
+              totalTicks: 180,
+              datasetType: 'web_dump',
+              targetStats: { agentic: 27, coding: 22, reasoning: 31, knowledge: 40, math: 16, multilingual: 25, multimodal: 18 },
+              cost: 15640
+            },
+            price: 15
           },
           {
             name: 'Anthropic',
             bestModel: 'None',
             share: 0,
-            color: '#a78bfa',
+            color: '#ea580c',
             logo: 'radar',
             yearEst: 2021,
             active: false,
@@ -233,7 +281,11 @@ export const useGameStore = create(
             compute: 3500,
             data: 300,
             stats: { agentic: 30, coding: 25, reasoning: 35, knowledge: 40, math: 20, multilingual: 25, multimodal: 20 },
-            models: []
+            models: [],
+            unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
+            activeResearch: null,
+            activeTraining: null,
+            price: 15
           }
         ],
         emails: [
@@ -719,50 +771,6 @@ export const useGameStore = create(
         };
       }),
 
-      releaseLLM: (modelId, initialPrice) => set((state) => {
-        const model = state.llms.find(m => m.id === modelId);
-        if (!model || model.status === 'training' || model.status === 'draft') return state;
-
-        const statSum = model.stats.agentic + model.stats.coding + model.stats.reasoning + model.stats.knowledge + model.stats.math + model.stats.multilingual + model.stats.multimodal;
-        const rating = Math.max(10, Math.round(statSum / 7));
-        const fansGained = Math.min(30, Math.round(rating * 0.15));
-
-        let initialUsers = 100;
-
-        const emailSubject = `Model Released: ${model.name} v${model.version}`;
-        const emailBody = `We have successfully released your model '${model.name}' v${model.version} for global commercial use.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $${initialPrice.toLocaleString()}/month subscription.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
-
-        const newEmail = {
-          id: 'rel_' + Date.now().toString(),
-          sender: 'Facility Operations',
-          subject: emailSubject,
-          body: emailBody,
-          tick: state.resources.currentTick,
-          read: false,
-          reward: null,
-          claimed: false
-        };
-
-        return {
-          llms: state.llms.map(m => m.id === modelId ? {
-            ...m,
-            status: 'released',
-            targetSegment: 'global',
-            priceTag: initialPrice,
-            productionGpus: 0,
-            marketMetrics: {
-              users: initialUsers,
-              gpusRequired: 0,
-              latency: 10,
-              satisfaction: 100
-            }
-          } : m),
-          resources: { ...state.resources, fans: Math.min(100, state.resources.fans + fansGained) },
-          emails: [newEmail, ...state.emails],
-          newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version} at price $${initialPrice}/mo.`, iconColor: 'text-primary' }, ...state.newsFeed]
-        };
-      }),
-
       finalizeModelTraining: (modelId, versionLabel) => set((state) => {
         const model = state.llms.find(m => m.id === modelId);
         if (!model || model.status !== 'trained_pending' || !model.trainingCompletion) return {};
@@ -772,9 +780,10 @@ export const useGameStore = create(
 
         const statSum = finalStats.agentic + finalStats.coding + finalStats.reasoning + finalStats.knowledge + finalStats.math + finalStats.multilingual + finalStats.multimodal;
         const rating = Math.max(10, Math.round(statSum / 7));
+        const fansGained = Math.min(30, Math.round(rating * 0.15));
 
-        const emailSubject = `Training Finished: ${model.name} v${finalVer}`;
-        const emailBody = `Training is complete. Model '${model.name}' is now at version v${finalVer}.\n\nBenchmark Stats:\n- Agentic: ${finalStats.agentic}%\n- Coding: ${finalStats.coding}%\n- Reasoning: ${finalStats.reasoning}%\n- Knowledge: ${finalStats.knowledge}%\n- Math: ${finalStats.math}%\n- Multilingual: ${finalStats.multilingual}%\n- Multimodal: ${finalStats.multimodal}%\n\nThe model is ready to be released to the market.`;
+        const emailSubject = `Model Released: ${model.name} v${finalVer}`;
+        const emailBody = `We have successfully trained and released your model '${model.name}' v${finalVer} for global commercial use.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $15/month subscription (automated standard pricing).\n\nYour compute capacity has been dynamically allocated to serve incoming regional user traffic.`;
 
         const newEmail = {
           id: 't_done_' + Date.now().toString(),
@@ -790,19 +799,29 @@ export const useGameStore = create(
         const nextNewsFeed = [{
           tick: state.resources.currentTick,
           type: 'check_circle',
-          text: `Training Complete: '${model.name}' successfully aligned to version v${finalVer}!`,
+          text: `Training Complete: '${model.name}' v${finalVer} successfully released globally!`,
           iconColor: 'text-[#10b981]'
         }, ...state.newsFeed];
 
         return {
           llms: state.llms.map(m => m.id === modelId ? {
             ...m,
-            status: 'trained',
+            status: 'released',
             version: finalVer,
             stats: finalStats,
             training: null,
-            trainingCompletion: null
+            trainingCompletion: null,
+            priceTag: 15,
+            targetSegment: 'global',
+            productionGpus: 0,
+            marketMetrics: {
+              users: 100,
+              gpusRequired: 0,
+              latency: 10,
+              satisfaction: 100
+            }
           } : m),
+          resources: { ...state.resources, fans: Math.min(100, state.resources.fans + fansGained) },
           emails: [newEmail, ...state.emails],
           newsFeed: nextNewsFeed,
           simulationSpeed: state.lastActiveSpeed || 1,
@@ -1227,213 +1246,154 @@ export const useGameStore = create(
           return m;
         });
 
-        // 4. Released models economics, user adoption, required compute, and billing revenue
-        let totalProductionGpus = 0;
+        // 4. Global compute pooling and auto-routing calculation
+        let totalGpusRequired = 0;
+        let computePerUser = nextUnlockedTech.includes('flash_attention') ? 0.006 : nextUnlockedTech.includes('fp8_quantization') ? 0.008 : 0.01;
+        
+        Object.values(state.countries).forEach(c => {
+          if (c.openMarkets?.player && c.deployedModelId) {
+            const users = c.playerUsers || 0;
+            totalGpusRequired += Math.ceil(users * computePerUser);
+          }
+        });
+
+        const totalGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
+        const activeTrainingGpus = nextLlms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
+        const totalIdleGpus = Math.max(0, totalGpus - activeTrainingGpus);
+        const adequacy = totalIdleGpus >= totalGpusRequired ? 1.0 : (totalIdleGpus / Math.max(1, totalGpusRequired));
+
+        // Find best player released model to auto-deploy
+        const playerReleasedModels = nextLlms.filter(m => m.status === 'released');
+        const bestModel = playerReleasedModels.length > 0 ? [...playerReleasedModels].sort((a, b) => {
+          const aRating = (a.stats.agentic + a.stats.coding + a.stats.reasoning + a.stats.knowledge + a.stats.math + a.stats.multilingual + a.stats.multimodal) / 7;
+          const bRating = (b.stats.agentic + b.stats.coding + b.stats.reasoning + b.stats.knowledge + b.stats.math + b.stats.multilingual + b.stats.multimodal) / 7;
+          return bRating - aRating;
+        })[0] : null;
+
         const updatedCountries = {};
-        const modelAggregations = {};
+        let googleRevTotal = 0;
+        let openaiRevTotal = 0;
+        let anthropicRevTotal = 0;
 
         for (const [cid, country] of Object.entries(state.countries)) {
           const isOpenPlayer = country.openMarkets?.player;
           const isOpenOpenai = country.openMarkets?.openai;
           const isOpenGoogle = country.openMarkets?.google;
-          let isOpenAnthropic = country.openMarkets?.anthropic;
+          let isOpenAnthropic = country.openMarkets?.anthropic || anthropicJustActivated;
 
-          if (anthropicJustActivated) {
-            isOpenAnthropic = true;
+          // Auto-route player model
+          const playerModelId = bestModel && isOpenPlayer ? bestModel.id : null;
+
+          // Competitiveness calculations
+          let scorePlayer = 0;
+          if (isOpenPlayer && bestModel && totalIdleGpus > 0) {
+            const rating = (bestModel.stats.agentic + bestModel.stats.coding + bestModel.stats.reasoning + bestModel.stats.knowledge + bestModel.stats.math + bestModel.stats.multilingual + bestModel.stats.multimodal) / 7;
+            scorePlayer = (rating / 15) * (country.satisfaction / 100);
           }
 
-          let playerShare = isOpenPlayer ? (country.playerShare || 0) : 0;
-          let openaiShare = isOpenOpenai ? (country.openaiShare || 0) : 0;
-          let googleShare = isOpenGoogle ? (country.googleShare || 0) : 0;
-          let anthropicShare = isOpenAnthropic ? (anthropicJustActivated ? 15 : (country.anthropicShare || 0)) : 0;
-
-          if (anthropicJustActivated) {
-            const totalRival = openaiShare + googleShare;
-            if (totalRival > 0) {
-              openaiShare = (openaiShare / totalRival) * (100 - playerShare - anthropicShare);
-              googleShare = (googleShare / totalRival) * (100 - playerShare - anthropicShare);
-            } else {
-              openaiShare = isOpenOpenai ? (100 - playerShare - anthropicShare) * 0.6 : 0;
-              googleShare = isOpenGoogle ? (100 - playerShare - anthropicShare) * 0.4 : 0;
-            }
+          let scoreGoogle = 0;
+          const googleRival = nextRivals.find(r => r.name === 'Google');
+          if (googleRival && isOpenGoogle) {
+            const rating = (googleRival.stats.agentic + googleRival.stats.coding + googleRival.stats.reasoning + googleRival.stats.knowledge + googleRival.stats.math + googleRival.stats.multilingual + googleRival.stats.multimodal) / 7;
+            scoreGoogle = rating / (googleRival.price || 15);
           }
-          let latency = country.latency || 10;
+
+          let scoreOpenai = 0;
+          const openaiRival = nextRivals.find(r => r.name === 'OpenAI');
+          if (openaiRival && isOpenOpenai) {
+            const rating = (openaiRival.stats.agentic + openaiRival.stats.coding + openaiRival.stats.reasoning + openaiRival.stats.knowledge + openaiRival.stats.math + openaiRival.stats.multilingual + openaiRival.stats.multimodal) / 7;
+            scoreOpenai = rating / (openaiRival.price || 15);
+          }
+
+          let scoreAnthropic = 0;
+          const anthropicRival = nextRivals.find(r => r.name === 'Anthropic');
+          if (anthropicRival && anthropicRival.active && isOpenAnthropic) {
+            const rating = (anthropicRival.stats.agentic + anthropicRival.stats.coding + anthropicRival.stats.reasoning + anthropicRival.stats.knowledge + anthropicRival.stats.math + anthropicRival.stats.multilingual + anthropicRival.stats.multimodal) / 7;
+            scoreAnthropic = rating / (anthropicRival.price || 15);
+          }
+
+          // Target shares based on competitiveness
+          const totalScore = scorePlayer + scoreGoogle + scoreOpenai + scoreAnthropic;
+          let targetPlayer = country.playerShare || 0;
+          let targetGoogle = country.googleShare || 60;
+          let targetOpenai = country.openaiShare || 40;
+          let targetAnthropic = country.anthropicShare || 0;
+
+          if (totalScore > 0) {
+            targetPlayer = (scorePlayer / totalScore) * 100;
+            targetGoogle = (scoreGoogle / totalScore) * 100;
+            targetOpenai = (scoreOpenai / totalScore) * 100;
+            targetAnthropic = (scoreAnthropic / totalScore) * 100;
+          }
+
+          // Drift shares smoothly (2% adjustment per day)
+          let playerShare = (country.playerShare || 0) + (targetPlayer - (country.playerShare || 0)) * 0.02;
+          let googleShare = (country.googleShare || 0) + (targetGoogle - (country.googleShare || 0)) * 0.02;
+          let openaiShare = (country.openaiShare || 0) + (targetOpenai - (country.openaiShare || 0)) * 0.02;
+          let anthropicShare = (country.anthropicShare || 0) + (targetAnthropic - (country.anthropicShare || 0)) * 0.02;
+
+          // Clamp and normalize
+          playerShare = Math.max(0, Math.min(100, playerShare));
+          googleShare = Math.max(0, Math.min(100, googleShare));
+          openaiShare = Math.max(0, Math.min(100, openaiShare));
+          anthropicShare = Math.max(0, Math.min(100, anthropicShare));
+
+          const sumShare = playerShare + googleShare + openaiShare + anthropicShare;
+          if (sumShare > 0) {
+            playerShare = parseFloat(((playerShare / sumShare) * 100).toFixed(2));
+            googleShare = parseFloat(((googleShare / sumShare) * 100).toFixed(2));
+            openaiShare = parseFloat(((openaiShare / sumShare) * 100).toFixed(2));
+            anthropicShare = parseFloat(((anthropicShare / sumShare) * 100).toFixed(2));
+          }
+
+          // Users
+          const playerUsers = Math.round(country.demand * (playerShare / 100));
+          const openaiUsers = Math.round(country.demand * (openaiShare / 100));
+          const googleUsers = Math.round(country.demand * (googleShare / 100));
+          const anthropicUsers = Math.round(country.demand * (anthropicShare / 100));
+
+          const gpusRequired = Math.ceil(playerUsers * computePerUser);
+
+          // Latency & satisfaction updates
+          let latency = 10;
           let satisfaction = country.satisfaction || 100;
-          let playerUsers = 0;
-          let gpusRequired = 0;
 
-          const modelId = country.deployedModelId;
-          const model = modelId ? nextLlms.find(m => m.id === modelId) : null;
-
-          if (model && model.status === 'released' && isOpenPlayer) {
-            const allocated = country.allocatedGpus || 0;
-
-            // Quality score: mean of all 7 stats
-            const rating = (model.stats.agentic + model.stats.coding + model.stats.reasoning + model.stats.knowledge + model.stats.math + model.stats.multilingual + model.stats.multimodal) / 7;
-            const qualityScore = Math.max(5, rating);
-
-            // Competitor baseline quality score (best rival)
-            let maxRivalScore = 30;
-            state.rivals.forEach(r => {
-              const rRating = (r.stats.agentic + r.stats.coding + r.stats.reasoning + r.stats.knowledge + r.stats.math + r.stats.multilingual + r.stats.multimodal) / 7;
-              const rScore = Math.max(5, rRating);
-              if (rScore > maxRivalScore) maxRivalScore = rScore;
-            });
-
-            // Price comparison
-            const finalPrice = model.priceTag || 15;
-            const valueScore = qualityScore / Math.max(0.1, finalPrice);
-            const rivalValueScore = maxRivalScore / 15; // default base price is $15/mo
-            const competitiveness = valueScore / Math.max(0.01, rivalValueScore);
-
-            // Fans scaling
-            const fansFactor = 0.5 + (state.resources.fans / 50);
-
-            // Growth or decay rate of market share in percentage points
-            let shareChange = 0;
-            if (allocated === 0) {
-              shareChange = -3.0; // Outage = severe decay
-            } else if (competitiveness > 1.25) {
-              shareChange = (competitiveness - 1) * fansFactor * 1.5;
-            } else if (competitiveness < 0.75) {
-              shareChange = (competitiveness - 1) * 1.5;
-            } else {
-              shareChange = (competitiveness - 1) * 0.5;
-            }
-
-            // Apply satisfaction penalty to growth
-            if (allocated > 0 && satisfaction < 75) {
-              shareChange -= (100 - satisfaction) * 0.05;
-            }
-
-            playerShare = Math.max(0, Math.min(100, playerShare + shareChange));
-
-            // Normalize open rival shares to fill the rest
-            const openRivals = [];
-            if (isOpenOpenai) openRivals.push({ name: 'openai', share: openaiShare });
-            if (isOpenGoogle) openRivals.push({ name: 'google', share: googleShare });
-            if (isOpenAnthropic) openRivals.push({ name: 'anthropic', share: anthropicShare });
-
-            const totalRivalShare = openRivals.reduce((sum, r) => sum + r.share, 0);
-            const remainingShare = 100 - playerShare;
-
-            if (openRivals.length > 0) {
-              if (totalRivalShare > 0) {
-                openaiShare = isOpenOpenai ? (openaiShare / totalRivalShare) * remainingShare : 0;
-                googleShare = isOpenGoogle ? (googleShare / totalRivalShare) * remainingShare : 0;
-                anthropicShare = isOpenAnthropic ? (anthropicShare / totalRivalShare) * remainingShare : 0;
-              } else {
-                let totalWeight = 0;
-                if (isOpenOpenai) totalWeight += 0.4;
-                if (isOpenGoogle) totalWeight += 0.4;
-                if (isOpenAnthropic) totalWeight += 0.2;
-
-                openaiShare = isOpenOpenai ? (0.4 / totalWeight) * remainingShare : 0;
-                googleShare = isOpenGoogle ? (0.4 / totalWeight) * remainingShare : 0;
-                anthropicShare = isOpenAnthropic ? (0.2 / totalWeight) * remainingShare : 0;
-              }
-            } else {
-              if (isOpenPlayer) playerShare = 100;
-              openaiShare = 0;
-              googleShare = 0;
-              anthropicShare = 0;
-            }
-
-            let computePerUser = 0.01;
-            if (state.research.unlockedTech.includes('flash_attention')) {
-              computePerUser = 0.006;
-            } else if (state.research.unlockedTech.includes('fp8_quantization')) {
-              computePerUser = 0.008;
-            }
-
-            playerUsers = Math.round(country.demand * (playerShare / 100));
-            gpusRequired = Math.ceil(playerUsers * computePerUser);
-            totalProductionGpus += allocated;
-
-            if (allocated === 0) {
-              latency = 999;
-              satisfaction = Math.max(0, satisfaction - 6);
-            } else if (allocated < gpusRequired) {
-              latency = Math.round(10 * (gpusRequired / allocated));
-              satisfaction = Math.max(0, satisfaction - 3);
-            } else {
-              latency = 10;
-              satisfaction = Math.min(100, satisfaction + 2);
-            }
-
-            // Calculate revenue
-            let countryRev = playerUsers * finalPrice;
-            countryRev = countryRev * (satisfaction / 100);
-            if (allocated === 0) {
-              countryRev = 0; // Outage = no revenue
-            }
-            cashChange += Math.round(countryRev);
-
-            // Track metrics for model aggregation
-            if (!modelAggregations[modelId]) {
-              modelAggregations[modelId] = { users: 0, gpusRequired: 0, latencies: [], satisfactions: [] };
-            }
-            modelAggregations[modelId].users += playerUsers;
-            modelAggregations[modelId].gpusRequired += gpusRequired;
-            modelAggregations[modelId].latencies.push(latency);
-            modelAggregations[modelId].satisfactions.push(satisfaction);
+          if (!bestModel || totalIdleGpus === 0) {
+            latency = 999;
+            satisfaction = Math.max(0, satisfaction - 6);
+          } else if (adequacy < 1.0) {
+            latency = Math.round(10 / adequacy);
+            satisfaction = Math.max(0, satisfaction - 3);
           } else {
-            // Decay player share if no model deployed (or player market not open)
-            if (isOpenPlayer) {
-              playerShare = Math.max(0, playerShare - 2);
-            } else {
-              playerShare = 0;
-            }
-
-            const openRivals = [];
-            if (isOpenOpenai) openRivals.push({ name: 'openai', share: openaiShare });
-            if (isOpenGoogle) openRivals.push({ name: 'google', share: googleShare });
-            if (isOpenAnthropic) openRivals.push({ name: 'anthropic', share: anthropicShare });
-
-            const totalRivalShare = openRivals.reduce((sum, r) => sum + r.share, 0);
-            const remainingShare = 100 - playerShare;
-
-            if (openRivals.length > 0) {
-              if (totalRivalShare > 0) {
-                openaiShare = isOpenOpenai ? (openaiShare / totalRivalShare) * remainingShare : 0;
-                googleShare = isOpenGoogle ? (googleShare / totalRivalShare) * remainingShare : 0;
-                anthropicShare = isOpenAnthropic ? (anthropicShare / totalRivalShare) * remainingShare : 0;
-              } else {
-                let totalWeight = 0;
-                if (isOpenOpenai) totalWeight += 0.4;
-                if (isOpenGoogle) totalWeight += 0.4;
-                if (isOpenAnthropic) totalWeight += 0.2;
-
-                openaiShare = isOpenOpenai ? (0.4 / totalWeight) * remainingShare : 0;
-                googleShare = isOpenGoogle ? (0.4 / totalWeight) * remainingShare : 0;
-                anthropicShare = isOpenAnthropic ? (0.2 / totalWeight) * remainingShare : 0;
-              }
-            } else {
-              if (isOpenPlayer) playerShare = 100;
-              openaiShare = 0;
-              googleShare = 0;
-              anthropicShare = 0;
-            }
-            playerUsers = 0;
-            gpusRequired = 0;
             latency = 10;
             satisfaction = Math.min(100, satisfaction + 2);
           }
 
+          // Calculate daily revenue
+          let playerCountryRev = playerUsers * 15 * (satisfaction / 100);
+          if (!bestModel || totalIdleGpus === 0) playerCountryRev = 0;
+
+          cashChange += Math.round(playerCountryRev);
+          googleRevTotal += Math.round(googleUsers * (googleRival?.price || 15));
+          openaiRevTotal += Math.round(openaiUsers * (openaiRival?.price || 15));
+          anthropicRevTotal += Math.round(anthropicUsers * (anthropicRival?.price || 15));
+
           updatedCountries[cid] = {
             ...country,
-            playerShare: parseFloat(playerShare.toFixed(2)),
-            openaiShare: parseFloat(openaiShare.toFixed(2)),
-            googleShare: parseFloat(googleShare.toFixed(2)),
-            anthropicShare: parseFloat(anthropicShare.toFixed(2)),
+            playerShare,
+            googleShare,
+            openaiShare,
+            anthropicShare,
             playerUsers,
             gpusRequired,
+            allocatedGpus: gpusRequired, // Auto-allocated GPUs show in the UI
+            deployedModelId: playerModelId,
             latency,
             satisfaction,
             openMarkets: {
               player: !!isOpenPlayer,
-              openai: !!isOpenOpenai,
               google: !!isOpenGoogle,
+              openai: !!isOpenOpenai,
               anthropic: !!isOpenAnthropic
             }
           };
@@ -1441,24 +1401,18 @@ export const useGameStore = create(
 
         nextLlms = nextLlms.map(m => {
           if (m.status === 'released') {
-            const agg = modelAggregations[m.id] || { users: 0, gpusRequired: 0, latencies: [], satisfactions: [] };
-            const avgLatency = agg.latencies.length > 0 ? Math.round(agg.latencies.reduce((a, b) => a + b, 0) / agg.latencies.length) : 10;
-            const avgSatisfaction = agg.satisfactions.length > 0 ? Math.round(agg.satisfactions.reduce((a, b) => a + b, 0) / agg.satisfactions.length) : 100;
-
-            // Count total GPUs allocated to this model across all countries
-            const allocatedGpus = Object.values(updatedCountries).reduce((sum, c) => {
-              if (c.deployedModelId === m.id) {
-                return sum + (c.allocatedGpus || 0);
-              }
-              return sum;
-            }, 0);
+            const aggUsers = Object.values(updatedCountries).reduce((sum, c) => c.deployedModelId === m.id ? sum + c.playerUsers : sum, 0);
+            const aggGpus = Object.values(updatedCountries).reduce((sum, c) => c.deployedModelId === m.id ? sum + c.gpusRequired : sum, 0);
+            const openRegions = Object.values(updatedCountries).filter(c => c.deployedModelId === m.id);
+            const avgLatency = openRegions.length > 0 ? Math.round(openRegions.reduce((sum, c) => sum + c.latency, 0) / openRegions.length) : 10;
+            const avgSatisfaction = openRegions.length > 0 ? Math.round(openRegions.reduce((sum, c) => sum + c.satisfaction, 0) / openRegions.length) : 100;
 
             return {
               ...m,
-              productionGpus: allocatedGpus,
+              productionGpus: aggGpus,
               marketMetrics: {
-                users: agg.users,
-                gpusRequired: agg.gpusRequired,
+                users: aggUsers,
+                gpusRequired: aggGpus,
                 latency: avgLatency,
                 satisfaction: avgSatisfaction
               }
@@ -1468,13 +1422,12 @@ export const useGameStore = create(
         });
 
         // 5. Calculate Server Cluster Temperature
-        let targetHeat = 20; // nominal base heat
-        const activeGpuLoad = totalTrainingGpus + (totalProductionGpus * 0.3);
+        let targetHeat = 20;
+        const activeGpuLoad = activeTrainingGpus + (totalGpusRequired * 0.3);
         if (activeGpuLoad > 0) {
           targetHeat = Math.min(100, 20 + Math.round((activeGpuLoad / 12) / state.infrastructure.coolingLevel));
         }
-
-        // Smooth heat movement
+        
         let currentHeat = state.infrastructure.serverHeat;
         if (currentHeat < targetHeat) {
           currentHeat = Math.min(100, currentHeat + 3);
@@ -1482,7 +1435,6 @@ export const useGameStore = create(
           currentHeat = Math.max(20, currentHeat - 2);
         }
 
-        // Heat Throttling check
         if (currentHeat > 85 && Math.random() < 0.05) {
           const trainingModel = nextLlms.find(m => m.status === 'training');
           if (trainingModel) {
@@ -1508,127 +1460,280 @@ export const useGameStore = create(
           }
         }
 
-        // 6. Contracts removed - no payouts
-
         // Fans decay
         let nextFans = state.resources.fans;
         if (currentTick % 10 === 0) {
           nextFans = Math.max(5, nextFans - 1);
         }
 
-        // 7. Rivals releases & Dynamic Price Adjustments
-        if (currentTick > 0 && currentTick % 120 === 0) {
-          // Rival upgrades their model!
-          const randomRivalIdx = Math.floor(Math.random() * nextRivals.length);
-          const rival = nextRivals[randomRivalIdx];
-          const statsToUpgrade = ['agentic', 'coding', 'reasoning', 'knowledge', 'math', 'multilingual', 'multimodal'];
-          const statName = statsToUpgrade[Math.floor(Math.random() * statsToUpgrade.length)];
+        // 7. Active rival AI competitor operations & intelligence alerts
+        const TECH_NAMES = {
+          moe: 'Mixture of Experts (MoE)',
+          ssm: 'State Space Models (SSM)',
+          liquid_nn: 'Liquid Neural Networks',
+          textbook_acquisition: 'Textbook Acquisition',
+          synthetic_data: 'Synthetic Data Generation',
+          multimodal_tokenizers: 'Multimodal Tokenizers',
+          rlhf: 'RLHF Preference Alignment',
+          dpo: 'Direct Preference Optimization (DPO)',
+          constitutional_ai: 'Constitutional AI',
+          fp8_quantization: 'FP8 Model Quantization',
+          speculative_decoding: 'Speculative Decoding',
+          flash_attention: 'FlashAttention Kernels'
+        };
 
-          const upgradedRivals = nextRivals.map((r, i) => {
-            if (i === randomRivalIdx) {
-              const nextVal = Math.min(99, r.stats[statName] + 5);
-              const isFirstModel = !r.bestModel || r.bestModel === 'None';
-              const nextModelVer = isFirstModel ? 1.0 : (parseFloat(r.bestModel.split(' ')[1] || '1.0') + 0.5);
-              const modelSeries = r.name === 'OpenAI' ? 'ChatGPT' : r.name === 'Google' ? 'Gemini' : 'Sonnet';
-              const nextModelName = `${modelSeries} ${nextModelVer.toFixed(1)}`;
-              const nextStats = {
-                ...r.stats,
-                [statName]: nextVal
-              };
-              const nextModels = [
-                ...(r.models || []),
-                { name: nextModelName, stats: nextStats }
-              ];
+        const ALL_TECHS = [
+          { id: 'moe', cost: 500000, ticks: 100, prereq: 'transformer' },
+          { id: 'ssm', cost: 1500000, ticks: 180, prereq: 'transformer' },
+          { id: 'liquid_nn', cost: 3000000, ticks: 240, prereq: 'ssm' },
+          { id: 'textbook_acquisition', cost: 300000, ticks: 60, prereq: 'web_crawling' },
+          { id: 'synthetic_data', cost: 800000, ticks: 100, prereq: 'textbook_acquisition' },
+          { id: 'multimodal_tokenizers', cost: 1200000, ticks: 140, prereq: 'synthetic_data' },
+          { id: 'rlhf', cost: 600000, ticks: 100, prereq: 'instruction_sft' },
+          { id: 'dpo', cost: 1000000, ticks: 120, prereq: 'rlhf' },
+          { id: 'constitutional_ai', cost: 1800000, ticks: 150, prereq: 'dpo' },
+          { id: 'fp8_quantization', cost: 400000, ticks: 80, prereq: 'transformer' },
+          { id: 'speculative_decoding', cost: 800000, ticks: 110, prereq: 'fp8_quantization' },
+          { id: 'flash_attention', cost: 1200000, ticks: 140, prereq: 'speculative_decoding' }
+        ];
 
-              return {
-                ...r,
-                bestModel: nextModelName,
-                stats: nextStats,
-                models: nextModels,
-                share: Math.min(70, r.share + 2)
-              };
-            } else {
-              return { ...r, share: Math.max(10, r.share - 1) };
-            }
-          });
-          nextRivals = upgradedRivals;
-
-          const updatedRival = nextRivals[randomRivalIdx];
-          nextEmails = [{
-            id: 'rival_' + Date.now().toString(),
-            sender: 'Market Watch',
-            subject: `Competitor Update: ${rival.name} releases ${updatedRival.bestModel}`,
-            body: `We noticed that ${rival.name} has released a major update, launching '${updatedRival.bestModel}'.\n\nThey have gained market share and now hold ${updatedRival.share}%. Their new model performs very well, especially in ${statName} (${updatedRival.stats[statName]}%).\n\nWe need to train and release updated models to stay competitive.`,
-            tick: currentTick,
-            read: false,
-            reward: null,
-            claimed: false
-          }, ...nextEmails];
-
-          nextNewsFeed = [{
-            tick: currentTick,
-            type: 'warning',
-            text: `MARKET UPDATE: ${rival.name} released a new model upgrade! Benchmarks raised.`,
-            iconColor: 'text-error'
-          }, ...nextNewsFeed];
-        }
-
-        // 7.5 Passive growth of competitor Cash & Data reserves (keeping inventory alive)
         nextRivals = nextRivals.map(r => {
           if (!r.active) return r;
-          let cashGain = 15000;
-          let dataGain = 1;
-          if (r.name === 'Google') {
-            cashGain = 30000;
-            dataGain = 3;
-          } else if (r.name === 'OpenAI') {
-            cashGain = 20000;
-            dataGain = 2;
-          } else if (r.name === 'Anthropic') {
-            cashGain = 15000;
-            dataGain = 2;
-          }
-          return {
-            ...r,
-            cash: (r.cash || 0) + cashGain,
-            data: (r.data || 0) + dataGain
-          };
-        });
 
-        // Dynamic Competitor Pricing Actions
-        const totalOpenedDemand = Object.values(state.countries)
-          .filter(c => c.openMarkets?.player)
-          .reduce((sum, c) => sum + c.demand, 0);
+          let cash = r.cash || 0;
+          let compute = r.compute || 1000;
+          let data = r.data || 100;
+          let price = r.price || 15;
+          let activeResearch = r.activeResearch ? { ...r.activeResearch } : null;
+          let activeTraining = r.activeTraining ? { ...r.activeTraining } : null;
+          const unlockedTech = [...(r.unlockedTech || ['transformer', 'web_crawling', 'instruction_sft'])];
+          const models = [...(r.models || [])];
+          let bestModelName = r.bestModel || 'None';
+          let rivalStats = { ...r.stats };
 
-        const activeGlobalDemand = Math.max(1, totalOpenedDemand);
+          // Add daily country revenue
+          let rivalRev = 0;
+          if (r.name === 'Google') rivalRev = googleRevTotal;
+          else if (r.name === 'OpenAI') rivalRev = openaiRevTotal;
+          else if (r.name === 'Anthropic') rivalRev = anthropicRevTotal;
 
-        nextLlms.forEach(m => {
-          if (m.status === 'released') {
-            const playerShare = (m.marketMetrics.users / activeGlobalDemand) * 100;
+          cash += rivalRev;
 
-            // If player market share grows over 30%, and a random trigger is hit, rivals cut prices!
-            if (playerShare > 30 && Math.random() < 0.03) {
-              const randomRival = nextRivals[Math.floor(Math.random() * nextRivals.length)];
+          // Passive crawl data
+          const passiveCrawl = r.name === 'Google' ? 3 : 2;
+          data += passiveCrawl;
+
+          // 7.1 R&D (Research) Loop
+          if (activeResearch) {
+            cash -= activeResearch.fundingPerTick;
+            activeResearch.progress++;
+
+            if (activeResearch.progress >= activeResearch.totalTicks) {
+              // Unlock tech
+              unlockedTech.push(activeResearch.techId);
+              const techName = TECH_NAMES[activeResearch.techId] || activeResearch.techId;
+
+              nextNewsFeed = [{
+                tick: currentTick,
+                type: 'science',
+                text: `R&D Breakthrough: ${r.name} has completed research on ${techName}!`,
+                iconColor: 'text-primary'
+              }, ...nextNewsFeed];
 
               nextEmails = [{
-                id: 'rival_cut_' + Date.now().toString(),
-                sender: 'Market Watch',
-                subject: `Competitor Action: ${randomRival.name} cuts prices`,
-                body: `We've received word that ${randomRival.name} has cut their subscription prices by 15% globally to protect their market share.\n\nThis price cut makes their services more attractive. You might need to lower your prices or upgrade your model's stats to keep your customers.`,
+                id: `intel_rd_done_${r.name}_${Date.now()}`,
+                sender: 'AI Market Intelligence',
+                subject: `Competitor R&D: ${r.name} unlocks ${techName}`,
+                body: `Market Update:\n\nOur intelligence reports that ${r.name} has successfully completed research on '${techName}'.\n\nThey have added this technology to their active development pipeline, which will improve their future model capabilities.`,
                 tick: currentTick,
                 read: false,
                 reward: null,
                 claimed: false
               }, ...nextEmails];
 
+              activeResearch = null;
+            }
+          } else {
+            // Find a valid research candidate
+            const candidates = ALL_TECHS.filter(t => !unlockedTech.includes(t.id) && unlockedTech.includes(t.prereq));
+            if (candidates.length > 0 && cash > candidates[0].cost * 1.5 && Math.random() < 0.02) {
+              const targetTech = candidates[0];
+              activeResearch = {
+                techId: targetTech.id,
+                progress: 0,
+                totalTicks: targetTech.ticks,
+                fundingPerTick: Math.round(targetTech.cost / targetTech.ticks)
+              };
+
+              const techName = TECH_NAMES[targetTech.id] || targetTech.id;
+              nextEmails = [{
+                id: `intel_rd_start_${r.name}_${Date.now()}`,
+                sender: 'AI Market Intelligence',
+                subject: `Competitor R&D: ${r.name} targets ${techName}`,
+                body: `Market Update:\n\nOur sources indicate that ${r.name} has allocated funding and researchers to study '${techName}'.\n\nThey are estimated to finish this research in ${targetTech.ticks} days.`,
+                tick: currentTick,
+                read: false,
+                reward: null,
+                claimed: false
+              }, ...nextEmails];
+            }
+          }
+
+          // 7.2 Hardware Expansion Loop
+          if (cash > 500000 && Math.random() < 0.02) {
+            cash -= 150000;
+            compute += 320;
+
+            nextNewsFeed = [{
+              tick: currentTick,
+              type: 'memory',
+              text: `${r.name} expanded their data center infrastructure, adding +320 PFLOPS compute.`,
+              iconColor: 'text-outline-variant'
+            }, ...nextNewsFeed];
+          }
+
+          // 7.3 Model Training Loop
+          if (activeTraining) {
+            activeTraining.progress++;
+
+            if (activeTraining.progress >= activeTraining.totalTicks) {
+              // Complete training and release model
+              models.push({
+                name: activeTraining.modelName,
+                stats: activeTraining.targetStats
+              });
+              bestModelName = activeTraining.modelName;
+              rivalStats = { ...activeTraining.targetStats };
+
+              nextNewsFeed = [{
+                tick: currentTick,
+                type: 'check_circle',
+                text: `${r.name} has released a new model: ${activeTraining.modelName}!`,
+                iconColor: 'text-[#10b981]'
+              }, ...nextNewsFeed];
+
+              nextEmails = [{
+                id: `intel_train_done_${r.name}_${Date.now()}`,
+                sender: 'AI Market Intelligence',
+                subject: `Competitor Release: ${r.name} launches ${activeTraining.modelName}`,
+                body: `Industry Alert:\n\n${r.name} has officially released its new flagship model: '${activeTraining.modelName}'.\n\nBenchmark Stats:\n- Agentic: ${rivalStats.agentic}%\n- Coding: ${rivalStats.coding}%\n- Reasoning: ${rivalStats.reasoning}%\n- Knowledge: ${rivalStats.knowledge}%\n- Math: ${rivalStats.math}%\n- Multilingual: ${rivalStats.multilingual}%\n- Multimodal: ${rivalStats.multimodal}%\n\nThis update improves their market competitiveness globally.`,
+                tick: currentTick,
+                read: false,
+                reward: null,
+                claimed: false
+              }, ...nextEmails];
+
+              activeTraining = null;
+            }
+          } else {
+            // Train a new model (0.5% chance per tick if cash > $300k)
+            if (cash > 300000 && Math.random() < 0.005) {
+              let datasetType = 'web_dump';
+              let datasetCost = 15000;
+              let datasetBonus = { agentic: 2, coding: 2, reasoning: 1, knowledge: 5, math: 1, multilingual: 5, multimodal: 3 };
+
+              if (unlockedTech.includes('rlhf')) {
+                datasetType = 'rlhf_align';
+                datasetCost = 350000;
+                datasetBonus = { agentic: 15, coding: 10, reasoning: 12, knowledge: 15, math: 10, multilingual: 8, multimodal: 10 };
+              } else if (unlockedTech.includes('synthetic_data')) {
+                datasetType = 'synthetic';
+                datasetCost = 200000;
+                datasetBonus = { agentic: 8, coding: 20, reasoning: 15, knowledge: 10, math: 20, multilingual: 3, multimodal: 5 };
+              } else if (unlockedTech.includes('textbook_acquisition')) {
+                datasetType = 'textbooks';
+                datasetCost = 80000;
+                datasetBonus = { agentic: 3, coding: 8, reasoning: 8, knowledge: 12, math: 8, multilingual: 6, multimodal: 4 };
+              }
+
+              // Calculate stat gains
+              let archMultiplier = 1.0;
+              if (unlockedTech.includes('moe')) archMultiplier = 1.25;
+              if (unlockedTech.includes('ssm')) archMultiplier = 1.4;
+              if (unlockedTech.includes('liquid_nn')) archMultiplier = 1.6;
+
+              const alignmentMultiplier = unlockedTech.includes('dpo') ? 1.15 : 1.0;
+              const baseGains = Math.round(9 * archMultiplier * alignmentMultiplier);
+
+              const extraReasoning = unlockedTech.includes('constitutional_ai') ? 5 : 0;
+              const extraAgentic = unlockedTech.includes('constitutional_ai') ? 5 : 0;
+              const extraMultimodal = unlockedTech.includes('multimodal_tokenizers') ? 5 : 0;
+
+              const targetStats = {
+                agentic: Math.min(100, rivalStats.agentic + baseGains + datasetBonus.agentic + extraAgentic),
+                coding: Math.min(100, rivalStats.coding + baseGains + datasetBonus.coding),
+                reasoning: Math.min(100, rivalStats.reasoning + baseGains + datasetBonus.reasoning + extraReasoning),
+                knowledge: Math.min(100, rivalStats.knowledge + baseGains + datasetBonus.knowledge),
+                math: Math.min(100, rivalStats.math + baseGains + datasetBonus.math),
+                multilingual: Math.min(100, rivalStats.multilingual + baseGains + datasetBonus.multilingual),
+                multimodal: Math.min(100, rivalStats.multimodal + baseGains + datasetBonus.multimodal + extraMultimodal)
+              };
+
+              const isFirst = !bestModelName || bestModelName === 'None';
+              const nextVer = isFirst ? 1.0 : (parseFloat(bestModelName.split(' ')[1]) || 1.0) + 0.5;
+              const series = r.name === 'OpenAI' ? 'GPT' : r.name === 'Google' ? 'Gemini' : 'Sonnet';
+              const modelName = `${series} ${nextVer.toFixed(1)}`;
+
+              const totalCost = datasetCost + 3840; // baseline 128 GPUs cost
+              cash -= totalCost;
+
+              activeTraining = {
+                modelName,
+                progress: 0,
+                totalTicks: 180,
+                datasetType,
+                targetStats,
+                cost: totalCost
+              };
+
+              nextEmails = [{
+                id: `intel_train_start_${r.name}_${Date.now()}`,
+                sender: 'AI Market Intelligence',
+                subject: `Competitor Training: ${r.name} begins training ${modelName}`,
+                body: `Market Update:\n\nOur sources indicate that ${r.name} has initiated a new pre-training run for '${modelName}' using a '${datasetType}' dataset.\n\nThey have reserved compute and the run is expected to complete in 180 days.`,
+                tick: currentTick,
+                read: false,
+                reward: null,
+                claimed: false
+              }, ...nextEmails];
+            }
+          }
+
+          // 7.4 Dynamic pricing adjustment (cut price if losing share, raise if dominanting)
+          if (currentTick > 0 && currentTick % 30 === 0 && bestModelName !== 'None') {
+            const lastShare = r.share || 0;
+            if (lastShare < 15 && price > 8) {
+              price -= 1;
               nextNewsFeed = [{
                 tick: currentTick,
                 type: 'warning',
-                text: `MARKET ALERTS: ${randomRival.name} cut pricing globally to fight your market share!`,
-                iconColor: 'text-error'
+                text: `${r.name} has cut their model price to $${price}/mo subscription to retain users!`,
+                iconColor: 'text-[#eab308]'
+              }, ...nextNewsFeed];
+            } else if (lastShare > 35 && cash < 200000 && price < 30) {
+              price += 1;
+              nextNewsFeed = [{
+                tick: currentTick,
+                type: 'public',
+                text: `${r.name} has raised subscription prices to $${price}/mo to boost compute expansion.`,
+                iconColor: 'text-primary'
               }, ...nextNewsFeed];
             }
           }
+
+          return {
+            ...r,
+            cash,
+            compute,
+            data,
+            price,
+            activeResearch,
+            activeTraining,
+            unlockedTech,
+            models,
+            bestModel: bestModelName,
+            stats: rivalStats
+          };
         });
 
         // 8. Milestone Detections & VC Grant Emails

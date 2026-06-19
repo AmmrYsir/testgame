@@ -2,6 +2,24 @@ import { useState } from 'react';
 import { useGameStore } from '../store';
 import RivalLogo from './RivalLogo';
 
+const TECH_NAMES = {
+  transformer: 'Transformer Base',
+  web_crawling: 'Web Crawling',
+  instruction_sft: 'Instruction Tuning (SFT)',
+  moe: 'Mixture of Experts (MoE)',
+  ssm: 'State Space Models (SSM)',
+  liquid_nn: 'Liquid Neural Networks',
+  textbook_acquisition: 'Textbook Acquisition',
+  synthetic_data: 'Synthetic Data',
+  multimodal_tokenizers: 'Multimodal Tokenizers',
+  rlhf: 'RLHF Preference Alignment',
+  dpo: 'Direct Preference Optimization (DPO)',
+  constitutional_ai: 'Constitutional AI',
+  fp8_quantization: 'FP8 Model Quantization',
+  speculative_decoding: 'Speculative Decoding',
+  flash_attention: 'FlashAttention Kernels'
+};
+
 
 export default function CompanyModal({ isOpen, onClose }) {
   const { company, rivals, countries, llms, resources, executeDeal, activeApiLeases, activeComputeLeases } = useGameStore();
@@ -348,82 +366,164 @@ export default function CompanyModal({ isOpen, onClose }) {
                         </button>
                       </div>
 
-                      {/* Dynamic Content: Benchmarks for Player, Action Panel for Rivals */}
                       {isPlayer ? null : (
-                        /* Rivals Action Panel: Request For Deal */
-                        <div className="space-y-md border-t border-white/5 pt-sm">
-                          <h3 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[10px]">Commercial Relations</h3>
-                          <div className="bg-[#12151c]/40 p-lg rounded-xl border border-white/5 space-y-sm flex flex-col justify-center text-center">
-                            <span className="material-symbols-outlined text-outline text-3xl">handshake</span>
-                            <h4 className="font-bold text-xs text-on-surface uppercase tracking-wider mt-1">Barter & Partnership Agreements</h4>
-                            <p className="text-[11px] text-outline max-w-md mx-auto leading-relaxed">
-                              Negotiate bilateral transactions with {name}. Offer your Cash or Proprietary Crawled Data to acquire their resources, set up shared training runs, or lease their API pipeline to speed up your operations.
-                            </p>
-                            <button
-                              onClick={() => openDealModal(rival)}
-                              className="mt-2 mx-auto px-6 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider font-bold transition-all border border-transparent bg-[#10b981] hover:bg-[#059669] text-white hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] cursor-pointer"
-                            >
-                              Request For Deal
-                            </button>
+                        <div className="space-y-lg border-t border-white/5 pt-sm">
+                          {/* Active Operations & Unlocked Tech */}
+                          <div className="space-y-md">
+                            <h3 className="font-mono text-[10px] text-primary uppercase font-bold tracking-wider">Active Operations</h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+                              {/* R&D Status */}
+                              <div className="bg-[#12151c]/40 p-3 rounded-lg border border-white/5 flex flex-col justify-between min-h-[90px]">
+                                <div>
+                                  <span className="text-[9.5px] text-outline block uppercase tracking-wider font-mono">Current R&D</span>
+                                  <span className="font-bold text-xs text-on-surface mt-1.5 block">
+                                    {rival.activeResearch 
+                                      ? (TECH_NAMES[rival.activeResearch.techId] || rival.activeResearch.techId)
+                                      : 'Idle (No Active Research)'}
+                                  </span>
+                                </div>
+                                {rival.activeResearch && (
+                                  <div className="mt-2 space-y-1">
+                                    <div className="flex justify-between text-[9px] text-outline font-mono">
+                                      <span>Progress ({rival.activeResearch.progress}/{rival.activeResearch.totalTicks} days)</span>
+                                      <span>{Math.round((rival.activeResearch.progress / rival.activeResearch.totalTicks) * 100)}%</span>
+                                    </div>
+                                    <div className="w-full bg-[#0b0e15] h-1.5 rounded-full overflow-hidden border border-white/5">
+                                      <div 
+                                        className="bg-primary h-full rounded-full transition-all duration-300"
+                                        style={{ width: `${(rival.activeResearch.progress / rival.activeResearch.totalTicks) * 100}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Training Status */}
+                              <div className="bg-[#12151c]/40 p-3 rounded-lg border border-white/5 flex flex-col justify-between min-h-[90px]">
+                                <div>
+                                  <span className="text-[9.5px] text-outline block uppercase tracking-wider font-mono">Pre-Training Run</span>
+                                  <span className="font-bold text-xs text-on-surface mt-1.5 block">
+                                    {rival.activeTraining 
+                                      ? rival.activeTraining.modelName 
+                                      : 'Idle (No Active Training)'}
+                                  </span>
+                                </div>
+                                {rival.activeTraining && (
+                                  <div className="mt-2 space-y-1">
+                                    <div className="flex justify-between text-[9px] text-outline font-mono">
+                                      <span>Progress ({rival.activeTraining.progress}/{rival.activeTraining.totalTicks} days)</span>
+                                      <span>{Math.round((rival.activeTraining.progress / rival.activeTraining.totalTicks) * 100)}%</span>
+                                    </div>
+                                    <div className="w-full bg-[#0b0e15] h-1.5 rounded-full overflow-hidden border border-white/5">
+                                      <div 
+                                        className="bg-secondary h-full rounded-full transition-all duration-300"
+                                        style={{ width: `${(rival.activeTraining.progress / rival.activeTraining.totalTicks) * 100}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Unlocked Technologies */}
+                            <div className="space-y-1.5">
+                              <span className="text-[9.5px] text-outline block uppercase tracking-wider font-mono">Unlocked Technologies</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {rival.unlockedTech && rival.unlockedTech.length > 0 ? (
+                                  rival.unlockedTech.map(techId => {
+                                    const name = TECH_NAMES[techId] || techId;
+                                    return (
+                                      <span 
+                                        key={techId} 
+                                        className="text-[10px] px-2 py-0.5 bg-white/5 border border-white/10 rounded text-on-surface font-mono"
+                                      >
+                                        {name}
+                                      </span>
+                                    );
+                                  })
+                                ) : (
+                                  <span className="text-xs text-outline italic">No technology unlocked.</span>
+                                )}
+                              </div>
+                            </div>
                           </div>
 
-                          {/* Active Agreements section */}
-                          {(() => {
-                            const rivalApiLeases = (activeApiLeases || []).filter(l => l.company === name);
-                            const rivalComputeLeases = (activeComputeLeases || []).filter(l => l.company === name);
-                            const hasActiveAgreements = rivalApiLeases.length > 0 || rivalComputeLeases.length > 0;
-                            if (!hasActiveAgreements) return null;
-                            return (
-                              <div className="mt-md space-y-sm bg-[#12151c]/40 p-md rounded-xl border border-white/5">
-                                <h4 className="font-bold text-[10px] text-on-surface uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1.5">
-                                  <span className="material-symbols-outlined text-sm text-[#10b981]">verified_user</span>
-                                  Active Agreements ({rivalApiLeases.length + rivalComputeLeases.length})
-                                </h4>
-                                <div className="space-y-2">
-                                  {rivalApiLeases.map((lease, idx) => (
-                                    <div key={`api-lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
-                                      <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-[#10b981] text-md">
-                                          {lease.type === 'outgoing' ? 'upload' : 'download'}
-                                        </span>
-                                        <div>
-                                          <span className="font-semibold text-on-surface block">
-                                            {lease.type === 'outgoing' ? 'Model API Leased to Them' : 'Lease Model API Access'}
+                          {/* Rivals Action Panel: Request For Deal */}
+                          <div className="space-y-md border-t border-white/5 pt-md">
+                            <h3 className="font-label-md text-label-md text-on-surface font-bold uppercase tracking-wider text-[10px]">Commercial Relations</h3>
+                            <div className="bg-[#12151c]/40 p-lg rounded-xl border border-white/5 space-y-sm flex flex-col justify-center text-center">
+                              <span className="material-symbols-outlined text-outline text-3xl">handshake</span>
+                              <h4 className="font-bold text-xs text-on-surface uppercase tracking-wider mt-1">Barter & Partnership Agreements</h4>
+                              <p className="text-[11px] text-outline max-w-md mx-auto leading-relaxed">
+                                Negotiate bilateral transactions with {name}. Offer your Cash or Proprietary Crawled Data to acquire their resources, set up shared training runs, or lease their API pipeline to speed up your operations.
+                              </p>
+                              <button
+                                onClick={() => openDealModal(rival)}
+                                className="mt-2 mx-auto px-6 py-2.5 rounded-lg font-mono text-xs uppercase tracking-wider font-bold transition-all border border-transparent bg-[#10b981] hover:bg-[#059669] text-white hover:shadow-[0_0_12px_rgba(16,185,129,0.3)] cursor-pointer"
+                              >
+                                Request For Deal
+                              </button>
+                            </div>
+
+                            {/* Active Agreements section */}
+                            {(() => {
+                              const rivalApiLeases = (activeApiLeases || []).filter(l => l.company === name);
+                              const rivalComputeLeases = (activeComputeLeases || []).filter(l => l.company === name);
+                              const hasActiveAgreements = rivalApiLeases.length > 0 || rivalComputeLeases.length > 0;
+                              if (!hasActiveAgreements) return null;
+                              return (
+                                <div className="mt-md space-y-sm bg-[#12151c]/40 p-md rounded-xl border border-white/5">
+                                  <h4 className="font-bold text-[10px] text-on-surface uppercase tracking-wider flex items-center gap-1.5 border-b border-white/5 pb-1.5">
+                                    <span className="material-symbols-outlined text-sm text-[#10b981]">verified_user</span>
+                                    Active Agreements ({rivalApiLeases.length + rivalComputeLeases.length})
+                                  </h4>
+                                  <div className="space-y-2">
+                                    {rivalApiLeases.map((lease, idx) => (
+                                      <div key={`api-lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
+                                        <div className="flex items-center gap-2">
+                                          <span className="material-symbols-outlined text-[#10b981] text-md">
+                                            {lease.type === 'outgoing' ? 'upload' : 'download'}
                                           </span>
-                                          <span className="text-[9px] text-outline">
-                                            {lease.type === 'outgoing' ? 'Outbound API Funnel' : 'Inbound Training speed (+20%)'}
-                                          </span>
+                                          <div>
+                                            <span className="font-semibold text-on-surface block">
+                                              {lease.type === 'outgoing' ? 'Model API Leased to Them' : 'Lease Model API Access'}
+                                            </span>
+                                            <span className="text-[9px] text-outline">
+                                              {lease.type === 'outgoing' ? 'Outbound API Funnel' : 'Inbound Training speed (+20%)'}
+                                            </span>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <span className="font-mono text-outline bg-white/5 px-2 py-0.5 rounded text-[10px]">
-                                        {lease.ticksLeft} days left ({(lease.ticksLeft / 365).toFixed(1)} yr)
-                                      </span>
-                                    </div>
-                                  ))}
-                                  {rivalComputeLeases.map((lease, idx) => (
-                                    <div key={`compute-lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
-                                      <div className="flex items-center gap-2">
-                                        <span className="material-symbols-outlined text-primary text-md">
-                                          {lease.type === 'outgoing' ? 'dns' : 'memory'}
+                                        <span className="font-mono text-outline bg-white/5 px-2 py-0.5 rounded text-[10px]">
+                                          {lease.ticksLeft} days left ({(lease.ticksLeft / 365).toFixed(1)} yr)
                                         </span>
-                                        <div>
-                                          <span className="font-semibold text-on-surface block">
-                                            {lease.type === 'outgoing' ? 'Compute Leased to Them' : 'Lease Compute Power'}
-                                          </span>
-                                          <span className="text-[9px] text-outline">
-                                            {lease.type === 'outgoing' ? 'Outbound -200 PFLOPS' : 'Inbound +200 PFLOPS'}
-                                          </span>
-                                        </div>
                                       </div>
-                                      <span className="font-mono text-outline bg-white/5 px-2 py-0.5 rounded text-[10px]">
-                                        {lease.ticksLeft} days left ({(lease.ticksLeft / 365).toFixed(1)} yr)
-                                      </span>
-                                    </div>
-                                  ))}
+                                    ))}
+                                    {rivalComputeLeases.map((lease, idx) => (
+                                      <div key={`compute-lease-${idx}`} className="flex justify-between items-center bg-black/20 p-2.5 rounded-lg border border-white/5 text-[11px]">
+                                        <div className="flex items-center gap-2">
+                                          <span className="material-symbols-outlined text-primary text-md">
+                                            {lease.type === 'outgoing' ? 'dns' : 'memory'}
+                                          </span>
+                                          <div>
+                                            <span className="font-semibold text-on-surface block">
+                                              {lease.type === 'outgoing' ? 'Compute Leased to Them' : 'Lease Compute Power'}
+                                            </span>
+                                            <span className="text-[9px] text-outline">
+                                              {lease.type === 'outgoing' ? 'Outbound -200 PFLOPS' : 'Inbound +200 PFLOPS'}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <span className="font-mono text-outline bg-white/5 px-2 py-0.5 rounded text-[10px]">
+                                          {lease.ticksLeft} days left ({(lease.ticksLeft / 365).toFixed(1)} yr)
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
-                              </div>
-                            );
-                          })()}
+                              );
+                            })()}
+                          </div>
                         </div>
                       )}
                     </>

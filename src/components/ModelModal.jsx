@@ -9,11 +9,7 @@ export default function ModelModal({ isOpen, onClose }) {
     resources, 
     createModel, 
     startTraining, 
-    releaseLLM, 
-    setModelPrice, 
-    countries, 
-    deployModelToCountry, 
-    allocateGpusToCountry 
+    countries 
   } = useGameStore();
   
   const [selectedModelId, setSelectedModelId] = useState(null);
@@ -28,8 +24,7 @@ export default function ModelModal({ isOpen, onClose }) {
   const [epochs, setEpochs] = useState(3);
   const [datasetType, setDatasetType] = useState('web_dump');
 
-  // Release Config State
-  const [releasePrice, setReleasePrice] = useState(15);
+
 
   if (!isOpen) return null;
 
@@ -39,10 +34,9 @@ export default function ModelModal({ isOpen, onClose }) {
   // Calculate available GPUs
   const totalGpus = infrastructure.gpus + infrastructure.cloudGpusRented;
   const activeTrainingGpus = llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-  const activeProductionGpus = llms.reduce((sum, m) => sum + (m.productionGpus || 0), 0);
-  const idleGpus = Math.max(0, totalGpus - activeTrainingGpus - activeProductionGpus);
+  const idleGpus = Math.max(0, totalGpus - activeTrainingGpus);
 
-  const liveYield = selectedModel ? Math.round((selectedModel.marketMetrics?.users || 0) * (selectedModel.priceTag || 0) * ((selectedModel.marketMetrics?.satisfaction || 100) / 100)) : 0;
+  const liveYield = selectedModel ? Math.round((selectedModel.marketMetrics?.users || 0) * 15 * ((selectedModel.marketMetrics?.satisfaction || 100) / 100)) : 0;
 
   const handleCreateModelSubmit = (e) => {
     e.preventDefault();
@@ -600,129 +594,27 @@ export default function ModelModal({ isOpen, onClose }) {
                                 </span>
                               </div>
 
-                              {/* Pricing tag slider */}
-                              <div className="bg-[#0b0e15] p-2.5 rounded-lg border border-white/5 space-y-1 text-xs">
-                                <div className="flex justify-between items-center text-[10px] font-mono">
-                                  <span className="text-outline uppercase">Adjust Price</span>
-                                  <span className="font-bold text-primary">
-                                    ${(selectedModel.priceTag || 15).toLocaleString()}/mo
-                                  </span>
-                                </div>
-                                <input
-                                  type="range"
-                                  min={1}
-                                  max={100}
-                                  step={1}
-                                  value={selectedModel.priceTag || 15}
-                                  onChange={(e) => setModelPrice(selectedModel.id, parseInt(e.target.value))}
-                                  className="w-full accent-primary h-1 cursor-pointer"
-                                />
+                              <div className="bg-[#0b0e15] p-2.5 rounded-lg border border-white/5 text-xs font-mono text-center">
+                                <span className="text-outline text-[9.5px] uppercase block">Automated Price</span>
+                                <span className="font-bold text-primary">$15.00/mo subscription</span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Regional Deployments */}
-                          <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl space-y-md">
-                            <div>
-                              <h4 className="font-bold text-xs text-on-surface">Regional Routing Hub</h4>
-                              <p className="text-[10.5px] text-outline mt-0.5">Route incoming regional queries to this model.</p>
-                            </div>
-
-                            {(() => {
-                              const deployed = Object.entries(countries || {}).filter(
-                                ([_, country]) => country.deployedModelId === selectedModel.id
-                              );
-
-                              if (deployed.length === 0) {
-                                return (
-                                  <div className="text-center py-6 border border-dashed border-white/10 rounded-lg">
-                                    <p className="text-xs text-outline italic">No regional instances deployed.</p>
-                                  </div>
-                                );
-                              }
-
-                              return (
-                                <div className="space-y-sm max-h-[160px] overflow-y-auto custom-scrollbar pr-xs font-mono">
-                                  {deployed.map(([code, country]) => (
-                                    <div key={code} className="flex flex-col gap-2 bg-[#0c0f16]/60 p-2.5 rounded-lg border border-white/5 text-xs">
-                                      <div className="flex justify-between items-center">
-                                        <span className="font-bold text-on-surface">{country.name}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => deployModelToCountry(code, null)}
-                                          className="text-[9.5px] text-error hover:underline font-bold"
-                                        >
-                                          Undeploy
-                                        </button>
-                                      </div>
-                                      
-                                      <div className="flex gap-md text-[10px] text-outline">
-                                        <span>Share: <strong className="text-primary">{country.playerShare}%</strong></span>
-                                        <span>Latency: <strong className="text-emerald-500">{country.latency}ms</strong></span>
-                                      </div>
-
-                                      {/* GPU Allocator inside Regional Hub */}
-                                      {(() => {
-                                        const allocatedToOthers = Object.entries(countries || {}).reduce((sum, [cid, c]) => {
-                                          if (cid === code) return sum;
-                                          return sum + (c.allocatedGpus || 0);
-                                        }, 0);
-                                        const maxAlloc = totalGpus - activeTrainingGpus - allocatedToOthers;
-                                        const currentAlloc = country.allocatedGpus || 0;
-
-                                        return (
-                                          <div className="mt-1 bg-[#0b0e15]/60 p-2 rounded border border-white/5 space-y-1">
-                                            <div className="flex justify-between text-[9px] text-outline font-semibold">
-                                              <span>Route Compute Nodes</span>
-                                              <span>Available Pool: {maxAlloc} GPUs</span>
-                                            </div>
-                                            <div className="flex items-center gap-sm">
-                                              <input
-                                                type="range"
-                                                min="0"
-                                                max={maxAlloc}
-                                                value={currentAlloc}
-                                                onChange={(e) => allocateGpusToCountry(code, parseInt(e.target.value))}
-                                                className="flex-1 accent-primary h-1 cursor-pointer"
-                                              />
-                                              <span className="text-[11px] font-bold text-primary w-6 text-right shrink-0">
-                                                {currentAlloc}
-                                              </span>
-                                            </div>
-                                          </div>
-                                        );
-                                      })()}
-                                    </div>
-                                  ))}
-                                </div>
-                              );
-                            })()}
-
-                            {/* Select Dropdown to Deploy */}
-                            <div className="flex gap-sm items-center border-t border-white/5 pt-md">
-                              <select
-                                className="bg-[#0b0e15] border border-white/10 rounded-lg p-2 text-xs text-on-surface focus:border-primary transition-all outline-none flex-1"
-                                defaultValue=""
-                                onChange={(e) => {
-                                  const code = e.target.value;
-                                  if (code) {
-                                    deployModelToCountry(code, selectedModel.id);
-                                    e.target.value = "";
-                                  }
-                                }}
-                              >
-                                <option value="">-- Route to New Region --</option>
-                                {Object.entries(countries || {}).map(([code, country]) => {
-                                  if (country.deployedModelId !== selectedModel.id && country.openMarkets?.player) {
-                                    return (
-                                      <option key={code} value={code}>
-                                        {country.name} ({code}) {country.deployedModelId ? ' - Overwrite' : ''}
-                                      </option>
-                                    );
-                                  }
-                                  return null;
-                                })}
-                              </select>
+                          {/* Regional Deployments Info */}
+                          <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl space-y-sm text-xs text-left">
+                            <h4 className="font-bold text-xs text-on-surface">Active Deployments</h4>
+                            <p className="text-[10.5px] text-outline">
+                              This model is automatically deployed to all regions with open player operations.
+                            </p>
+                            <div className="flex flex-wrap gap-xs font-mono text-[10px] mt-2">
+                              {Object.entries(countries || {})
+                                .filter(([_, country]) => country.deployedModelId === selectedModel.id && country.openMarkets?.player)
+                                .map(([code, country]) => (
+                                  <span key={code} className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-primary">
+                                    {country.name} ({code})
+                                  </span>
+                                ))}
                             </div>
                           </div>
                         </div>
@@ -842,43 +734,7 @@ export default function ModelModal({ isOpen, onClose }) {
                             </button>
                           </div>
 
-                          {/* Release settings panel for trained */}
-                          {selectedModel.status === 'trained' && (
-                            <div className="mt-lg border-t border-white/10 pt-lg space-y-md">
-                              <h3 className="font-mono text-[10px] text-primary uppercase font-bold tracking-wider">
-                                Release Commercialization Configuration
-                              </h3>
-                              
-                              <div className="bg-[#0b0e15]/40 p-4 rounded-xl border border-white/5 space-y-md">
-                                {/* Price tag */}
-                                <div className="space-y-1">
-                                  <div className="flex justify-between items-center text-xs font-mono">
-                                    <label className="text-outline font-semibold">Release Price Tag</label>
-                                    <span className="font-bold text-primary">
-                                      ${releasePrice.toLocaleString()}/mo subscription
-                                    </span>
-                                  </div>
-                                  <input
-                                    type="range"
-                                    min={1}
-                                    max={100}
-                                    step={1}
-                                    value={releasePrice}
-                                    onChange={(e) => setReleasePrice(parseInt(e.target.value))}
-                                    className="w-full accent-primary h-1 cursor-pointer"
-                                  />
-                                </div>
-                              </div>
 
-                              <button
-                                onClick={() => releaseLLM(selectedModel.id, releasePrice)}
-                                className="w-full bg-primary hover:bg-primary-container text-on-primary font-mono text-[10.5px] uppercase font-bold tracking-wider py-3 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center justify-center gap-1 cursor-pointer"
-                              >
-                                <span className="material-symbols-outlined text-sm">publish</span>
-                                Release Model & Open API Gateway
-                              </button>
-                            </div>
-                          )}
                         </div>
                       )}
                     </>
