@@ -9,7 +9,8 @@ export default function ModelModal({ isOpen, onClose }) {
     resources, 
     createModel, 
     startTraining, 
-    subscriptionTiers
+    subscriptionTiers,
+    freeModelId
   } = useGameStore();
   
   const [selectedModelId, setSelectedModelId] = useState(null);
@@ -127,7 +128,7 @@ export default function ModelModal({ isOpen, onClose }) {
                 llms.map((model) => {
                   const isActive = selectedModel?.id === model.id && !isCreating;
                   const isDeveloping = model.status === 'developing';
-                  const isTraining = model.status === 'training';
+                  const isTraining = !!model.training;
                   const isReleased = model.status === 'released';
                   
                   return (
@@ -405,7 +406,7 @@ export default function ModelModal({ isOpen, onClose }) {
                     </div>
                   )}
 
-                  {selectedModel.status === 'training' && (
+                  {selectedModel.training && (
                     <span className="px-2.5 py-0.5 rounded bg-secondary/15 border border-secondary/20 text-secondary font-mono text-[9px] uppercase tracking-wider font-bold animate-pulse flex items-center gap-1">
                       <span className="material-symbols-outlined text-[10px] animate-spin">sync</span> Training
                     </span>
@@ -493,9 +494,9 @@ export default function ModelModal({ isOpen, onClose }) {
                       </div>
 
                       {/* Training Progress / Configuration */}
-                      {selectedModel.status === 'training' && selectedModel.training ? (
+                      {selectedModel.training && (
                         /* ACTIVE TRAINING RUN VIEW */
-                        <div className="bg-secondary/5 border border-secondary/15 rounded-xl p-md space-y-md flex flex-col">
+                        <div className="bg-secondary/5 border border-secondary/15 rounded-xl p-md space-y-md flex flex-col mb-4">
                           <h4 className="font-mono text-[10px] text-secondary uppercase font-bold tracking-wider flex items-center gap-1">
                             <span className="material-symbols-outlined text-sm animate-spin">sync</span> Training Weights Aligner Active
                           </h4>
@@ -526,15 +527,17 @@ export default function ModelModal({ isOpen, onClose }) {
                             </div>
                             <div className="w-full bg-[#0b0e15] rounded-full h-1.5 overflow-hidden border border-white/5">
                               <div
-                                className="bg-secondary h-full rounded-full transition-all duration-300"
-                                style={{ width: `${Math.min(100, (selectedModel.training.progress / selectedModel.training.totalTicks) * 100)}%` }}
+                                  className="bg-secondary h-full rounded-full transition-all duration-300"
+                                  style={{ width: `${Math.min(100, (selectedModel.training.progress / selectedModel.training.totalTicks) * 100)}%` }}
                               ></div>
                             </div>
                           </div>
                         </div>
-                      ) : selectedModel.status === 'released' ? (
+                      )}
+
+                      {selectedModel.status === 'released' && (
                         /* SERVE & SCALE FOR RELEASED */
-                        <div className="space-y-md border-t border-white/10 pt-md">
+                        <div className="space-y-md border-t border-white/10 pt-md mb-4 text-left">
                           <h3 className="font-mono text-[10px] text-primary uppercase font-bold tracking-wider flex items-center gap-1">
                             <span className="material-symbols-outlined text-sm">cloud</span> Deployment Platform Settings
                           </h3>
@@ -604,6 +607,11 @@ export default function ModelModal({ isOpen, onClose }) {
                               This model is routed to the following customer billing plans configured in the SaaS Admin panel:
                             </p>
                             <div className="flex flex-wrap gap-xs font-mono text-[10px] mt-2">
+                              {freeModelId === selectedModel.id && (
+                                <span className="px-2 py-0.5 bg-[#10b981]/15 border border-[#10b981]/25 rounded text-[#10b981] font-bold">
+                                  Free Plan (FREE)
+                                </span>
+                              )}
                               {(subscriptionTiers || [])
                                 .filter(t => t.modelId === selectedModel.id)
                                 .map(t => (
@@ -611,15 +619,17 @@ export default function ModelModal({ isOpen, onClose }) {
                                     {t.name} (${t.price}/mo)
                                   </span>
                                 ))}
-                              {(subscriptionTiers || []).filter(t => t.modelId === selectedModel.id).length === 0 && (
+                              {freeModelId !== selectedModel.id && (subscriptionTiers || []).filter(t => t.modelId === selectedModel.id).length === 0 && (
                                 <span className="text-outline italic text-[10.5px]">Not currently routed to any subscription tiers.</span>
                               )}
                             </div>
                           </div>
                         </div>
-                      ) : (
-                        /* TRAINING CONFIGURATOR (FOR DRAFT OR TRAINED MODELS) */
-                        <div className="space-y-md border-t border-white/10 pt-md">
+                      )}
+
+                      {!selectedModel.training && selectedModel.status !== 'developing' && (
+                        /* TRAINING CONFIGURATOR (FOR DRAFT, TRAINED, OR RELEASED MODELS) */
+                        <div className="space-y-md border-t border-white/10 pt-md text-left">
                           <div className="flex justify-between items-center font-mono">
                             <h3 className="text-[10px] text-primary uppercase font-bold tracking-wider">
                               {selectedModel.status === 'draft' ? 'Configure Training' : 'Configure Fine-Tuning'}
@@ -674,7 +684,7 @@ export default function ModelModal({ isOpen, onClose }) {
                             </div>
 
                             {/* Dataset Selector */}
-                            <div className="space-y-sm flex flex-col text-left">
+                            <div className="space-y-sm flex flex-col">
                               <label className="text-outline font-mono text-[10px] uppercase font-bold tracking-wider">Select Training Corpus</label>
                               <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[160px] custom-scrollbar">
                                 {Object.entries(datasets).map(([key, dataset]) => {
@@ -732,8 +742,6 @@ export default function ModelModal({ isOpen, onClose }) {
                               Start Training (6 mo)
                             </button>
                           </div>
-
-
                         </div>
                       )}
                     </>

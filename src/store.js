@@ -83,11 +83,12 @@ export const useGameStore = create(
 
       // Customer SaaS Billing & Tiers
       subscriptionTiers: [
-        { id: 'free', name: 'Free Plan', price: 0, modelId: null, rateLimit: 5, priority: 'low', safety: 'moderate', subscribers: 0, mrr: 0, satisfaction: 100 },
         { id: 'pro', name: 'Pro Plan', price: 20, modelId: null, rateLimit: 100, priority: 'normal', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 },
         { id: 'enterprise', name: 'Enterprise Plan', price: 150, modelId: null, rateLimit: 500, priority: 'high', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 }
       ],
-      marketingCampaign: 'none',
+      freeModelId: null,
+      feedbacks: [],
+      analyticsHistory: [],
 
       // Research (Progressive)
       research: {
@@ -222,11 +223,12 @@ export const useGameStore = create(
         llms: [],
         countries: INITIAL_COUNTRIES,
         subscriptionTiers: [
-          { id: 'free', name: 'Free Plan', price: 0, modelId: null, rateLimit: 5, priority: 'low', safety: 'moderate', subscribers: 0, mrr: 0, satisfaction: 100 },
           { id: 'pro', name: 'Pro Plan', price: 20, modelId: null, rateLimit: 100, priority: 'normal', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 },
           { id: 'enterprise', name: 'Enterprise Plan', price: 150, modelId: null, rateLimit: 500, priority: 'high', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 }
         ],
-        marketingCampaign: 'none',
+        freeModelId: null,
+        feedbacks: [],
+        analyticsHistory: [],
         research: {
           unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
           activeResearch: null,
@@ -638,32 +640,9 @@ export const useGameStore = create(
           ? [{ tick: state.resources.currentTick, type: 'cloud', text: newsText, iconColor: 'text-primary' }, ...state.newsFeed]
           : state.newsFeed;
 
-        // If the new capacity is less than currently allocated + training, we shrink regional allocations
-        const newTotalGpus = state.infrastructure.gpus + finalAmount;
-        let totalAllocated = Object.values(state.countries).reduce((sum, c) => sum + (c.allocatedGpus || 0), 0);
-        const trainingGpus = state.llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-        const maxAvailableForCountries = Math.max(0, newTotalGpus - trainingGpus);
-        
-        let nextCountries = { ...state.countries };
-        if (totalAllocated > maxAvailableForCountries) {
-          const scale = maxAvailableForCountries / totalAllocated;
-          let remaining = maxAvailableForCountries;
-          const countryEntries = Object.entries(nextCountries);
-          countryEntries.forEach(([cid, c], index) => {
-            if (index === countryEntries.length - 1) {
-              nextCountries[cid] = { ...c, allocatedGpus: remaining };
-            } else {
-              const allocated = Math.floor((c.allocatedGpus || 0) * scale);
-              nextCountries[cid] = { ...c, allocatedGpus: allocated };
-              remaining -= allocated;
-            }
-          });
-        }
-
         return {
           infrastructure: { ...state.infrastructure, cloudGpusRented: finalAmount },
           resources: { ...state.resources, compute: newCompute },
-          countries: nextCountries,
           newsFeed: nextNewsFeed
         };
       }),
@@ -720,13 +699,12 @@ export const useGameStore = create(
       startTraining: (modelId, allocatedGpus, epochs, datasetType) => set((state) => {
         // Check if model exists
         const model = state.llms.find(m => m.id === modelId);
-        if (!model || (model.status !== 'draft' && model.status !== 'trained')) return state;
+        if (!model || model.status === 'developing' || model.training) return state;
 
-        // Check available GPUs (excluding training and production allocated gpus)
+        // Check available GPUs (excluding only other active training runs, not serving)
         const activeTrainingGpus = state.llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-        const activeProductionGpus = state.llms.reduce((sum, m) => sum + (m.productionGpus || 0), 0);
         const totalAvailableGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
-        const idleGpus = totalAvailableGpus - activeTrainingGpus - activeProductionGpus;
+        const idleGpus = totalAvailableGpus - activeTrainingGpus;
 
         if (allocatedGpus > idleGpus) return state; // Not enough GPUs
 
@@ -794,7 +772,7 @@ export const useGameStore = create(
           resources: { ...state.resources, cash: state.resources.cash - totalCost },
           llms: state.llms.map(m => m.id === modelId ? {
             ...m,
-            status: 'training',
+            status: m.status === 'released' ? 'released' : 'training',
             training: {
               progress: 0,
               totalTicks: durationTicks,
@@ -810,7 +788,7 @@ export const useGameStore = create(
 
       finalizeModelTraining: (modelId, versionLabel) => set((state) => {
         const model = state.llms.find(m => m.id === modelId);
-        if (!model || model.status !== 'trained_pending' || !model.trainingCompletion) return {};
+        if (!model || !model.trainingCompletion) return {};
 
         const finalStats = model.trainingCompletion.newStats;
         const finalVer = versionLabel.trim() || model.version;
@@ -820,7 +798,7 @@ export const useGameStore = create(
         const fansGained = Math.min(30, Math.round(rating * 0.15));
 
         const emailSubject = `Model Released: ${model.name} v${finalVer}`;
-        const emailBody = `We have successfully trained and released your model '${model.name}' v${finalVer} for global commercial use.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $15/month subscription (automated standard pricing).\n\nYour compute capacity has been dynamically allocated to serve incoming regional user traffic.`;
+        const emailBody = `We have successfully trained and released your model '${model.name}' v${finalVer} for global commercial use.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}.\n\nYour compute capacity has been dynamically allocated to serve incoming regional user traffic.`;
 
         const newEmail = {
           id: 't_done_' + Date.now().toString(),
@@ -840,8 +818,38 @@ export const useGameStore = create(
           iconColor: 'text-[#10b981]'
         }, ...state.newsFeed];
 
-        return {
-          llms: state.llms.map(m => m.id === modelId ? {
+        let nextLlms;
+        if (model.status === 'released') {
+          const updatedParent = {
+            ...model,
+            training: null,
+            trainingCompletion: null
+          };
+
+          const childModel = {
+            id: 'model_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            name: model.name,
+            version: finalVer,
+            architecture: model.architecture,
+            status: 'released',
+            stats: finalStats,
+            training: null,
+            trainingCompletion: null,
+            priceTag: 15,
+            targetSegment: 'global',
+            productionGpus: 0,
+            marketMetrics: {
+              users: 100,
+              gpusRequired: 0,
+              latency: 10,
+              satisfaction: 100
+            }
+          };
+
+          nextLlms = state.llms.map(m => m.id === modelId ? updatedParent : m);
+          nextLlms.push(childModel);
+        } else {
+          nextLlms = state.llms.map(m => m.id === modelId ? {
             ...m,
             status: 'released',
             version: finalVer,
@@ -857,7 +865,11 @@ export const useGameStore = create(
               latency: 10,
               satisfaction: 100
             }
-          } : m),
+          } : m);
+        }
+
+        return {
+          llms: nextLlms,
           resources: { ...state.resources, fans: Math.min(100, state.resources.fans + fansGained) },
           emails: [newEmail, ...state.emails],
           newsFeed: nextNewsFeed,
@@ -865,34 +877,6 @@ export const useGameStore = create(
           isPaused: false
         };
       }),
-
-      allocateProductionGpus: (modelId, amount) => set((state) => {
-        const totalGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
-        const allocatedToOthers = state.llms.reduce((sum, m) => {
-          if (m.id === modelId) return sum;
-          const trainingGpus = m.training?.allocatedGpus || 0;
-          const productionGpus = m.productionGpus || 0;
-          return sum + trainingGpus + productionGpus;
-        }, 0);
-        const trainingForCurrentModel = state.llms.find(m => m.id === modelId)?.training?.allocatedGpus || 0;
-        const maxAvailableForProduction = totalGpus - allocatedToOthers - trainingForCurrentModel;
-
-        const finalAmount = Math.max(0, Math.min(amount, maxAvailableForProduction));
-
-        return {
-          llms: state.llms.map(m => m.id === modelId ? { ...m, productionGpus: finalAmount } : m),
-          newsFeed: [{
-            tick: state.resources.currentTick,
-            type: 'memory',
-            text: `Adjusted GPU allocation for '${state.llms.find(m => m.id === modelId)?.name}' to ${finalAmount} GPUs.`,
-            iconColor: 'text-outline-variant'
-          }, ...state.newsFeed]
-        };
-      }),
-
-      setModelPrice: (modelId, priceVal) => set((state) => ({
-        llms: state.llms.map(m => m.id === modelId ? { ...m, priceTag: priceVal } : m)
-      })),
 
       // Progressive Research Actions
       startResearch: (techId, costCash, durationTicks) => set((state) => {
@@ -1024,28 +1008,7 @@ export const useGameStore = create(
         };
       }),
 
-      allocateGpusToCountry: (countryId, amount) => set((state) => {
-        const country = state.countries[countryId];
-        if (!country) return {};
-        const totalGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
-        const trainingGpus = state.llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-        const allocatedToOthers = Object.entries(state.countries).reduce((sum, [cid, c]) => {
-          if (cid === countryId) return sum;
-          return sum + (c.allocatedGpus || 0);
-        }, 0);
-        const maxAvailable = totalGpus - trainingGpus - allocatedToOthers;
-        const finalAmount = Math.max(0, Math.min(amount, maxAvailable));
-
-        return {
-          countries: {
-            ...state.countries,
-            [countryId]: {
-              ...country,
-              allocatedGpus: finalAmount
-            }
-          }
-        };
-      }),
+      setFreeModelId: (modelId) => set({ freeModelId: modelId }),
 
       addSubscriptionTier: (name, price, modelId, rateLimit, priority, safety) => set((state) => {
         const newTier = {
@@ -1100,7 +1063,6 @@ export const useGameStore = create(
         };
       }),
 
-      setMarketingCampaign: (level) => set({ marketingCampaign: level }),
 
       openMarket: (countryId) => set((state) => {
         const country = state.countries[countryId];
@@ -1294,7 +1256,7 @@ export const useGameStore = create(
             }
           }
 
-          if (m.status === 'training' && m.training) {
+          if (m.training) {
             totalTrainingGpus += m.training.allocatedGpus;
 
             const newProgress = m.training.progress + speedMultiplier;
@@ -1315,8 +1277,9 @@ export const useGameStore = create(
 
               return {
                 ...m,
-                status: 'trained_pending',
+                status: m.status === 'released' ? 'released' : 'trained_pending',
                 stats: finalStats,
+                training: null,
                 trainingCompletion: {
                   oldStats: { ...m.training.startStats },
                   newStats: finalStats
@@ -1352,8 +1315,18 @@ export const useGameStore = create(
           modelMap[m.id] = m;
         });
 
-        // Compute scores and weights for subscription tiers
-        const activeTiers = (state.subscriptionTiers || []).map(tier => {
+        // Construct virtual free tier and paid tiers
+        const freeTier = {
+          id: 'free',
+          name: 'Free Plan',
+          price: 0,
+          modelId: state.freeModelId,
+          rateLimit: 5,
+          priority: 'low',
+          safety: 'moderate'
+        };
+
+        const mapTier = (tier) => {
           const model = tier.modelId ? modelMap[tier.modelId] : null;
           let tierRating = 0;
           let complexityFactor = 1.0;
@@ -1383,7 +1356,11 @@ export const useGameStore = create(
             complexityFactor,
             rateLimitFactor
           };
-        });
+        };
+
+        const freeTierMapped = mapTier(freeTier);
+        const paidTiersMapped = (state.subscriptionTiers || []).map(mapTier);
+        const activeTiers = [freeTierMapped, ...paidTiersMapped];
 
         let maxPlayerTierScore = 0;
         activeTiers.forEach(t => {
@@ -1392,16 +1369,93 @@ export const useGameStore = create(
           }
         });
 
-        const updatedCountries = {};
-        let googleRevTotal = 0;
-        let openaiRevTotal = 0;
-        let anthropicRevTotal = 0;
-        let totalGpusRequired = 0;
-
         const tierMetrics = {};
         (state.subscriptionTiers || []).forEach(t => {
           tierMetrics[t.id] = { subscribers: 0, mrr: 0, satisfactionSum: 0, satisfactionCount: 0 };
         });
+
+        // Pre-calculate regional query compute requirements and total global required GPUs
+        let totalGpusRequired = 0;
+        const countryGpusRequiredMap = {};
+        const countryTierUsersMap = {};
+        const countryRevenueMap = {};
+
+        for (const [cid, country] of Object.entries(state.countries)) {
+          const isOpenPlayer = country.openMarkets?.player;
+          
+          // Calculate shares and playerUsers
+          let scorePlayer = 0;
+          if (isOpenPlayer && maxPlayerTierScore > 0) {
+            scorePlayer = maxPlayerTierScore * (country.satisfaction / 100);
+          }
+
+          let scoreGoogle = 0;
+          const googleRival = nextRivals.find(r => r.name === 'Google');
+          if (googleRival && country.openMarkets?.google) {
+            const rating = (googleRival.stats.agentic + googleRival.stats.coding + googleRival.stats.reasoning + googleRival.stats.knowledge + googleRival.stats.math + googleRival.stats.multilingual + googleRival.stats.multimodal) / 7;
+            scoreGoogle = rating / (googleRival.price || 15);
+          }
+
+          let scoreOpenai = 0;
+          const openaiRival = nextRivals.find(r => r.name === 'OpenAI');
+          if (openaiRival && country.openMarkets?.openai) {
+            const rating = (openaiRival.stats.agentic + openaiRival.stats.coding + openaiRival.stats.reasoning + openaiRival.stats.knowledge + openaiRival.stats.math + openaiRival.stats.multilingual + openaiRival.stats.multimodal) / 7;
+            scoreOpenai = rating / (openaiRival.price || 15);
+          }
+
+          let scoreAnthropic = 0;
+          const anthropicRival = nextRivals.find(r => r.name === 'Anthropic');
+          if (anthropicRival && anthropicRival.active && country.openMarkets?.anthropic) {
+            const rating = (anthropicRival.stats.agentic + anthropicRival.stats.coding + anthropicRival.stats.reasoning + anthropicRival.stats.knowledge + anthropicRival.stats.math + anthropicRival.stats.multilingual + anthropicRival.stats.multimodal) / 7;
+            scoreAnthropic = rating / (anthropicRival.price || 15);
+          }
+
+          const totalScore = scorePlayer + scoreGoogle + scoreOpenai + scoreAnthropic;
+          let targetPlayer = country.playerShare || 0;
+          if (totalScore > 0) {
+            targetPlayer = (scorePlayer / totalScore) * 100;
+          }
+          let playerShare = (country.playerShare || 0) + (targetPlayer - (country.playerShare || 0)) * 0.02;
+          playerShare = Math.max(0, Math.min(100, playerShare));
+
+          let playerUsers = Math.round(country.demand * (playerShare / 100));
+
+          const totalWtPWeight = activeTiers.reduce((sum, t) => sum + t.wtPWeight, 0);
+          const tierUsersMap = {};
+          let countryGpusRequired = 0;
+          let countryRevenue = 0;
+
+          activeTiers.forEach(t => {
+            let tierUsers = 0;
+            if (isOpenPlayer && totalWtPWeight > 0) {
+              tierUsers = Math.round(playerUsers * (t.wtPWeight / totalWtPWeight));
+            }
+            tierUsersMap[t.id] = tierUsers;
+
+            if (t.model) {
+              const computePerUser = baseComputePerQuery * t.complexityFactor * t.rateLimitFactor;
+              countryGpusRequired += Math.ceil(tierUsers * computePerUser);
+              if (t.id !== 'free') {
+                countryRevenue += tierUsers * t.price;
+              }
+            }
+          });
+
+          countryGpusRequiredMap[cid] = countryGpusRequired;
+          countryTierUsersMap[cid] = tierUsersMap;
+          countryRevenueMap[cid] = countryRevenue;
+          totalGpusRequired += countryGpusRequired;
+        }
+
+        // Global serving capacity and adequacy
+        const totalAvailableGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
+        const commercialGpusLimit = Math.max(0, totalAvailableGpus - totalTrainingGpus);
+        const adequacy = totalGpusRequired <= commercialGpusLimit ? 1.0 : totalGpusRequired > 0 ? commercialGpusLimit / totalGpusRequired : 1.0;
+
+        const updatedCountries = {};
+        let googleRevTotal = 0;
+        let openaiRevTotal = 0;
+        let anthropicRevTotal = 0;
 
         for (const [cid, country] of Object.entries(state.countries)) {
           const isOpenPlayer = country.openMarkets?.player;
@@ -1409,7 +1463,7 @@ export const useGameStore = create(
           const isOpenGoogle = country.openMarkets?.google;
           let isOpenAnthropic = country.openMarkets?.anthropic || anthropicJustActivated;
 
-          // Competitiveness calculations
+          // competitiveness
           let scorePlayer = 0;
           if (isOpenPlayer && maxPlayerTierScore > 0) {
             scorePlayer = maxPlayerTierScore * (country.satisfaction / 100);
@@ -1478,21 +1532,15 @@ export const useGameStore = create(
           const googleUsers = Math.round(country.demand * (googleShare / 100));
           const anthropicUsers = Math.round(country.demand * (anthropicShare / 100));
 
-          // Distribute player users among tiers in this country
-          const totalWtPWeight = activeTiers.reduce((sum, t) => sum + t.wtPWeight, 0);
-          const tierUsersMap = {};
-          let countryGpusRequired = 0;
-          let countryRevenue = 0;
+          // Retrieve calculated values
+          const countryGpusRequired = countryGpusRequiredMap[cid] || 0;
+          const tierUsersMap = countryTierUsersMap[cid] || {};
+          const countryRevenue = countryRevenueMap[cid] || 0;
 
+          // Accumulate global subscriber/MRR tier metrics
           activeTiers.forEach(t => {
-            let tierUsers = 0;
-            if (isOpenPlayer && totalWtPWeight > 0) {
-              tierUsers = Math.round(playerUsers * (t.wtPWeight / totalWtPWeight));
-            }
-            tierUsersMap[t.id] = tierUsers;
-            
-            // Add to global tier metrics
-            if (tierMetrics[t.id]) {
+            const tierUsers = tierUsersMap[t.id] || 0;
+            if (t.id !== 'free' && tierMetrics[t.id]) {
               tierMetrics[t.id].subscribers += tierUsers;
               tierMetrics[t.id].mrr += tierUsers * t.price;
               if (tierUsers > 0) {
@@ -1500,28 +1548,18 @@ export const useGameStore = create(
                 tierMetrics[t.id].satisfactionCount += tierUsers;
               }
             }
-
-            if (t.model) {
-              const computePerUser = baseComputePerQuery * t.complexityFactor * t.rateLimitFactor;
-              countryGpusRequired += Math.ceil(tierUsers * computePerUser);
-              countryRevenue += tierUsers * t.price;
-            }
           });
 
-          totalGpusRequired += countryGpusRequired;
-
-          // Latency & satisfaction updates based on manual country.allocatedGpus
+          // Latency & satisfaction updates based on global adequacy
           let latency;
           let satisfaction = country.satisfaction || 100;
 
           if (countryGpusRequired > 0) {
-            const allocated = country.allocatedGpus || 0;
-            if (allocated === 0) {
+            if (adequacy === 0) {
               latency = 999;
               satisfaction = Math.max(0, satisfaction - 3);
-            } else if (allocated < countryGpusRequired) {
-              const countryAdequacy = allocated / countryGpusRequired;
-              latency = Math.round(10 / countryAdequacy);
+            } else if (adequacy < 1.0) {
+              latency = Math.round(10 / adequacy);
               satisfaction = Math.max(0, satisfaction - 3);
             } else {
               latency = 10;
@@ -1541,6 +1579,9 @@ export const useGameStore = create(
           openaiRevTotal += Math.round(openaiUsers * (openaiRival?.price || 15));
           anthropicRevTotal += Math.round(anthropicUsers * (anthropicRival?.price || 15));
 
+          // Set allocatedGpus to the auto-scaled count
+          const allocatedGpus = Math.round(countryGpusRequired * adequacy);
+
           updatedCountries[cid] = {
             ...country,
             playerShare,
@@ -1549,7 +1590,7 @@ export const useGameStore = create(
             anthropicShare,
             playerUsers,
             gpusRequired: countryGpusRequired,
-            allocatedGpus: country.allocatedGpus || 0, // Player manually sets this
+            allocatedGpus,
             latency,
             satisfaction,
             tierUsers: tierUsersMap, // Save subscriber distribution for visualization
@@ -1578,7 +1619,7 @@ export const useGameStore = create(
 
         nextLlms = nextLlms.map(m => {
           if (m.status === 'released') {
-            const tiersRouted = nextSubscriptionTiers.filter(t => t.modelId === m.id);
+            const tiersRouted = [{ id: 'free', modelId: state.freeModelId }, ...nextSubscriptionTiers].filter(t => t.modelId === m.id);
             let aggUsers = 0;
             let aggGpus = 0;
             let totalLatencySum = 0;
@@ -1592,7 +1633,7 @@ export const useGameStore = create(
                 aggUsers += users;
                 
                 const modelComplexity = 0.5 + 0.5 * (((m.stats.agentic + m.stats.coding + m.stats.reasoning + m.stats.knowledge + m.stats.math + m.stats.multilingual + m.stats.multimodal) / 7) / 100);
-                const rateLimit = t.rateLimit || 100;
+                const rateLimit = t.id === 'free' ? 5 : (t.rateLimit || 100);
                 const rateLimitFactor = rateLimit <= 5 ? 0.3 : rateLimit <= 20 ? 0.6 : rateLimit <= 100 ? 1.0 : rateLimit <= 500 ? 1.5 : 2.0;
                 const computePerUser = baseComputePerQuery * modelComplexity * rateLimitFactor;
                 aggGpus += Math.ceil(users * computePerUser);
@@ -1606,10 +1647,11 @@ export const useGameStore = create(
             
             const avgLatency = totalLatencyCount > 0 ? Math.round(totalLatencySum / totalLatencyCount) : 10;
             const avgSatisfaction = totalSatCount > 0 ? Math.round(totalSatSum / totalSatCount) : 100;
+            const actualServingGpus = Math.round(aggGpus * adequacy);
 
             return {
               ...m,
-              productionGpus: aggGpus,
+              productionGpus: actualServingGpus,
               marketMetrics: {
                 users: aggUsers,
                 gpusRequired: aggGpus,
@@ -1636,7 +1678,7 @@ export const useGameStore = create(
         }
 
         if (currentHeat > 85 && Math.random() < 0.05) {
-          const trainingModel = nextLlms.find(m => m.status === 'training');
+          const trainingModel = nextLlms.find(m => m.training);
           if (trainingModel) {
             nextEmails = [{
               id: 't_abort_' + Date.now().toString(),
@@ -1655,7 +1697,10 @@ export const useGameStore = create(
               text: `CRITICAL: Thermal shutdown triggered on cluster. Training of ${trainingModel.name} was aborted due to overheating!`,
               iconColor: 'text-error'
             }, ...nextNewsFeed];
-            trainingModel.status = 'draft';
+            
+            if (trainingModel.status !== 'released') {
+              trainingModel.status = 'draft';
+            }
             trainingModel.training = null;
           }
         }
@@ -1998,6 +2043,98 @@ export const useGameStore = create(
           }, ...nextEmails];
         }
 
+        // 9. Feedback reviews generator
+        let nextFeedbacks = [...(state.feedbacks || [])];
+        const validTiers = activeTiers.filter(t => t.model);
+        if (Math.random() < 0.2 && validTiers.length > 0) {
+          const randomTier = validTiers[Math.floor(Math.random() * validTiers.length)];
+          const model = randomTier.model;
+          
+          let latencyRating = 5;
+          if (adequacy === 0) latencyRating = 1;
+          else if (adequacy < 0.5) latencyRating = 2;
+          else if (adequacy < 0.8) latencyRating = 3;
+          else if (adequacy < 0.95) latencyRating = 4;
+          
+          const modelQualityAvg = (model.stats.agentic + model.stats.coding + model.stats.reasoning + model.stats.knowledge + model.stats.math + model.stats.multilingual + model.stats.multimodal) / 7;
+          let qualityRating;
+          if (modelQualityAvg >= 85) qualityRating = 5;
+          else if (modelQualityAvg >= 65) qualityRating = 4;
+          else if (modelQualityAvg >= 40) qualityRating = 3;
+          else if (modelQualityAvg >= 20) qualityRating = 2;
+          else qualityRating = 1;
+          
+          let valueRating = 4;
+          if (randomTier.price > 0) {
+            const expectedValue = modelQualityAvg / 3;
+            const ratio = randomTier.price / expectedValue;
+            if (ratio > 2.0) valueRating = 1;
+            else if (ratio > 1.3) valueRating = 2;
+            else if (ratio > 0.9) valueRating = 3;
+            else if (ratio < 0.5) valueRating = 5;
+          } else {
+            valueRating = 5;
+          }
+          
+          const calculatedRating = Math.max(1, Math.min(5, Math.round((latencyRating * 0.3) + (qualityRating * 0.4) + (valueRating * 0.3))));
+          
+          let comments;
+          if (latencyRating <= 2) {
+            comments = [
+              `This is painfully slow... Getting timeouts constantly.`,
+              `The routed model '${model.name}' is good but queries take forever. Fix your serving GPUs!`,
+              `Deficit in compute makes this plan unusable for production.`,
+              `Unacceptable response times today.`
+            ];
+          } else if (valueRating <= 2) {
+            comments = [
+              `Way too expensive for this level of capability.`,
+              `Price is $${randomTier.price}/mo, but model performance on coding/reasoning is mediocre.`,
+              `Competitors offer better models for less cash.`,
+              `Decent model, but the pricing is just too high.`
+            ];
+          } else if (qualityRating <= 2) {
+            comments = [
+              `The model '${model.name}' keeps hallucinating. Need better datasets.`,
+              `Tried coding with '${model.name}', but it failed on basic syntax.`,
+              `Not smart enough. The reasoning capabilities are lacking.`,
+              `Underperforming model. It needs more training epochs.`
+            ];
+          } else {
+            comments = [
+              `Amazing performance! '${model.name}' handles our tasks with ease.`,
+              `Great value plan. Multilingual capabilities are top-notch.`,
+              `Using the '${model.name}' router for our dev team, works flawlessly.`,
+              `Highly satisfied with the latency and accuracy.`,
+              `Really solid model. Glad we routed to this tier!`
+            ];
+          }
+          
+          const commentText = comments[Math.floor(Math.random() * comments.length)];
+          const names = ['Amina', 'Marcus', 'Yuki', 'Sarah', 'Chen', 'David', 'Elena', 'Raj', 'Oliver', 'Sofia'];
+          const companies = ['VeloTech', 'NeuraSoft', 'CognitiveCorp', 'FlowState', 'DataForge', 'ApexAI', 'Synthetix', 'ByteScale'];
+          const author = `${names[Math.floor(Math.random() * names.length)]} (${companies[Math.floor(Math.random() * companies.length)]})`;
+          
+          nextFeedbacks = [{
+            id: Date.now().toString(),
+            author,
+            rating: calculatedRating,
+            comment: commentText,
+            tierName: randomTier.name,
+            modelName: model.name,
+            tick: currentTick
+          }, ...nextFeedbacks].slice(0, 15);
+        }
+
+        // 10. Historical analytics tracker
+        const totalPaidSubscribers = nextSubscriptionTiers.reduce((sum, t) => sum + (t.subscribers || 0), 0);
+        const totalMrrVal = nextSubscriptionTiers.reduce((sum, t) => sum + (t.mrr || 0), 0);
+        const nextAnalyticsHistory = [...(state.analyticsHistory || []), {
+          tick: currentTick,
+          mrr: totalMrrVal,
+          subscribers: totalPaidSubscribers
+        }].slice(-20);
+
         return {
           resources: {
             ...state.resources,
@@ -2026,7 +2163,9 @@ export const useGameStore = create(
           milestones: nextMilestones,
           newsFeed: nextNewsFeed,
           simulationSpeed: isPausedTriggered ? 0 : state.simulationSpeed,
-          isPaused: isPausedTriggered ? true : state.isPaused
+          isPaused: isPausedTriggered ? true : state.isPaused,
+          feedbacks: nextFeedbacks,
+          analyticsHistory: nextAnalyticsHistory
         };
       }),
     }),

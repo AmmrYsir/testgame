@@ -6,11 +6,13 @@ export default function AdminModal({ isOpen, onClose }) {
     subscriptionTiers,
     llms,
     countries,
-    marketingCampaign,
     addSubscriptionTier,
     updateSubscriptionTier,
     deleteSubscriptionTier,
-    setMarketingCampaign
+    freeModelId,
+    setFreeModelId,
+    analyticsHistory,
+    feedbacks
   } = useGameStore();
 
   const [editingTierId, setEditingTierId] = useState(null);
@@ -31,6 +33,8 @@ export default function AdminModal({ isOpen, onClose }) {
   // Global SaaS Stats
   const totalSubscribers = (subscriptionTiers || []).reduce((sum, t) => sum + (t.subscribers || 0), 0);
   const totalMrr = (subscriptionTiers || []).reduce((sum, t) => sum + (t.mrr || 0), 0);
+  const totalFreeUsers = Object.values(countries || {}).reduce((sum, c) => sum + (c.tierUsers?.free || 0), 0);
+  const totalRegisteredAccounts = totalFreeUsers + totalSubscribers;
   
   const activeTiersCount = (subscriptionTiers || []).filter(t => t.modelId).length;
   
@@ -159,7 +163,9 @@ export default function AdminModal({ isOpen, onClose }) {
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="font-display font-bold text-xs text-primary">${tier.price}</span>
+                          <span className="font-display font-bold text-xs text-primary">
+                            {tier.price === 0 ? 'FREE' : `$${tier.price}`}
+                          </span>
                           <span className="text-[9px] text-outline block font-mono">/mo</span>
                         </div>
                       </div>
@@ -186,34 +192,27 @@ export default function AdminModal({ isOpen, onClose }) {
               </div>
             </div>
 
-            {/* MARKETING CAMPAIGNS CONTAINER */}
+            {/* FREE ACCOUNTS ROUTER CARD */}
             <div className="p-md border-t border-white/5 bg-[#171d2b]/60 flex flex-col gap-sm">
-              <span className="font-mono text-[9.5px] text-outline uppercase tracking-wider font-bold flex items-center gap-1">
-                <span className="material-symbols-outlined text-xs">campaign</span> Acquisition Marketing Campaigns
+              <span className="font-mono text-[9.5px] text-outline uppercase tracking-wider font-bold flex items-center gap-1 text-left">
+                <span className="material-symbols-outlined text-xs">router</span> Free Accounts Router
               </span>
-              
-              <div className="grid grid-cols-4 gap-xs bg-[#0b0e15] border border-white/5 p-1 rounded-xl">
-                {[
-                  { id: 'none', label: 'None', cost: '$0', boost: 'Flat' },
-                  { id: 'low', label: 'Low', cost: '$5k', boost: '+25%' },
-                  { id: 'medium', label: 'Med', cost: '$20k', boost: '+60%' },
-                  { id: 'high', label: 'High', cost: '$50k', boost: '+120%' }
-                ].map(campaign => (
-                  <button
-                    key={campaign.id}
-                    type="button"
-                    onClick={() => setMarketingCampaign(campaign.id)}
-                    className={`py-2 px-1 rounded-lg flex flex-col items-center justify-center transition-all cursor-pointer font-mono ${
-                      marketingCampaign === campaign.id
-                        ? 'bg-primary/20 border border-primary/40 text-primary font-bold shadow-[0_0_8px_rgba(59,130,246,0.15)]'
-                        : 'border border-transparent hover:bg-white/5 text-outline hover:text-on-surface'
-                    }`}
-                  >
-                    <span className="text-[10px]">{campaign.label}</span>
-                    <span className="text-[8px] opacity-70 mt-0.5">{campaign.cost}/tick</span>
-                    <span className="text-[7.5px] text-secondary font-bold mt-0.5">{campaign.boost}</span>
-                  </button>
-                ))}
+              <div className="flex flex-col gap-1">
+                <select
+                  value={freeModelId || ''}
+                  onChange={(e) => setFreeModelId(e.target.value || null)}
+                  className="w-full bg-[#0b0e15] border border-white/10 rounded-lg p-2 font-sans text-xs text-on-surface focus:border-primary outline-none"
+                >
+                  <option value="">-- No Model Routed (FREE Tier Disabled) --</option>
+                  {releasedModels.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({Math.round((m.stats.agentic + m.stats.coding + m.stats.reasoning + m.stats.knowledge + m.stats.math + m.stats.multilingual + m.stats.multimodal) / 7)}% avg)
+                    </option>
+                  ))}
+                </select>
+                <p className="font-mono text-[8px] text-outline/60 mt-1 leading-normal text-left">
+                  Routes all non-paying registered users to this model. If disabled, free tier user growth is zero.
+                </p>
               </div>
             </div>
           </div>
@@ -257,7 +256,9 @@ export default function AdminModal({ isOpen, onClose }) {
                     <div className="flex flex-col gap-1.5 bg-[#0b0e15]/40 border border-white/5 p-3 rounded-xl">
                       <div className="flex justify-between font-mono text-[9px] uppercase tracking-wider text-outline mb-1">
                         <span>Pricing</span>
-                        <span className="text-primary font-bold text-xs">${formPrice}/mo</span>
+                        <span className="text-primary font-bold text-xs">
+                          {formPrice === 0 ? 'FREE' : `$${formPrice}/mo`}
+                        </span>
                       </div>
                       <input
                         type="range"
@@ -269,7 +270,7 @@ export default function AdminModal({ isOpen, onClose }) {
                         className="w-full accent-primary cursor-pointer my-1"
                       />
                       <div className="flex justify-between font-mono text-[8px] text-outline/50 mt-1">
-                        <span>Free ($0)</span>
+                        <span>Free (FREE)</span>
                         <span>Premium ($1,000)</span>
                       </div>
                     </div>
@@ -431,84 +432,138 @@ export default function AdminModal({ isOpen, onClose }) {
               </form>
             ) : (
               /* GLOBAL SaaS CONSOLE OVERVIEW */
-              <div className="space-y-lg flex flex-col h-full justify-between">
-                <div className="space-y-md">
-                  <div className="border-b border-white/5 pb-sm">
-                    <h3 className="font-mono text-xs text-primary font-bold uppercase tracking-wider text-left">SaaS Business Analytics</h3>
-                  </div>
+              <div className="space-y-md flex flex-col h-full overflow-hidden text-left">
+                {/* Header */}
+                <div className="border-b border-white/5 pb-xs flex justify-between items-center">
+                  <h3 className="font-mono text-xs text-primary font-bold uppercase tracking-wider">SaaS Business Analytics</h3>
+                  <span className="font-mono text-[9px] text-outline">LIVE CONSOLE</span>
+                </div>
 
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-md">
                   {/* SaaS Metric Cards */}
                   <div className="grid grid-cols-3 gap-sm">
-                    <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl text-center font-mono">
-                      <span className="text-outline text-[9px] uppercase tracking-wider block">Total Subscribers</span>
-                      <span className="font-display font-extrabold text-[22px] text-on-surface mt-1 block">
+                    <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl font-mono text-left relative overflow-hidden group hover:border-white/10 transition-all">
+                      <span className="text-outline text-[9px] uppercase tracking-wider block">Total Registered</span>
+                      <span className="font-display font-extrabold text-[20px] text-on-surface mt-1 block">
+                        {totalRegisteredAccounts.toLocaleString()}
+                      </span>
+                      <span className="text-[8px] text-outline/70 block mt-0.5">
+                        {totalFreeUsers.toLocaleString()} Free • {totalSubscribers.toLocaleString()} Paid
+                      </span>
+                    </div>
+
+                    <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl font-mono text-left relative overflow-hidden group hover:border-white/10 transition-all">
+                      <span className="text-outline text-[9px] uppercase tracking-wider block">Paid Subscriptions</span>
+                      <span className="font-display font-extrabold text-[20px] text-secondary mt-1 block">
                         {totalSubscribers.toLocaleString()}
                       </span>
-                      <span className="text-[7.5px] text-outline block mt-0.5">Across {activeTiersCount} active plans</span>
+                      <span className="text-[8px] text-outline/70 block mt-0.5">
+                        Active paid plans: {activeTiersCount}
+                      </span>
                     </div>
 
-                    <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl text-center font-mono">
-                      <span className="text-outline text-[9px] uppercase tracking-wider block">Total Monthly MRR</span>
-                      <span className="font-display font-extrabold text-[22px] text-primary mt-1 block">
+                    <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl font-mono text-left relative overflow-hidden group hover:border-white/10 transition-all">
+                      <span className="text-outline text-[9px] uppercase tracking-wider block">Monthly Recurring (MRR)</span>
+                      <span className="font-display font-extrabold text-[20px] text-primary mt-1 block">
                         ${totalMrr.toLocaleString()}
                       </span>
-                      <span className="text-[7.5px] text-secondary font-bold block mt-0.5">Global monthly rate</span>
-                    </div>
-
-                    <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl text-center font-mono">
-                      <span className="text-outline text-[9px] uppercase tracking-wider block">Average Satisfaction</span>
-                      <span className={`font-display font-extrabold text-[22px] mt-1 block ${avgSatisfaction < 60 ? 'text-error' : avgSatisfaction < 80 ? 'text-tertiary' : 'text-secondary'}`}>
-                        {avgSatisfaction}%
+                      <span className="text-[8px] text-secondary font-bold block mt-0.5">
+                        Avg Sat: {avgSatisfaction}%
                       </span>
-                      <span className="text-[7.5px] text-outline block mt-0.5">User affinity baseline</span>
                     </div>
                   </div>
 
-                  {/* regional data centers summary */}
-                  <div className="bg-[#0b0e15]/40 border border-white/5 rounded-xl p-md space-y-sm text-left">
-                    <span className="font-mono text-[9.5px] text-outline uppercase tracking-wider font-bold block">Regional Datacenter Status</span>
-                    
-                    <div className="max-h-[220px] overflow-y-auto custom-scrollbar space-y-xs font-mono text-[10px]">
-                      <div className="grid grid-cols-5 text-outline border-b border-white/5 pb-1 font-bold text-[9px] uppercase">
-                        <span className="col-span-2">Country</span>
-                        <span className="text-center">Market Share</span>
-                        <span className="text-center">GPUs (Alloc / Req)</span>
-                        <span className="text-right">Latency</span>
-                      </div>
-                      
-                      {Object.values(countries || {})
-                        .filter(c => c.openMarkets?.player)
-                        .map(c => {
-                          const deficit = (c.allocatedGpus || 0) < (c.gpusRequired || 0);
-                          return (
-                            <div key={c.name} className="grid grid-cols-5 py-1.5 border-b border-white/5 items-center">
-                              <span className="col-span-2 text-on-surface font-semibold truncate">{c.name}</span>
-                              <span className="text-center text-primary font-bold">{c.playerShare}%</span>
-                              <span className="text-center flex justify-center gap-1">
-                                <span className={deficit ? 'text-error font-bold' : 'text-on-surface'}>{c.allocatedGpus || 0}</span>
-                                <span className="text-outline">/</span>
-                                <span className="text-outline">{c.gpusRequired || 0}</span>
-                              </span>
-                              <span className={`text-right font-bold ${c.latency > 15 ? 'text-error animate-pulse' : 'text-secondary'}`}>
-                                {c.latency === 999 ? 'Deficit' : `${c.latency}ms`}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      
-                      {Object.values(countries || {}).filter(c => c.openMarkets?.player).length === 0 && (
-                        <div className="text-center py-4 text-outline italic">No regions currently opened. Establish HQ or open country markets on the world map.</div>
+                  {/* SVG Historical MRR Graph */}
+                  <div className="bg-[#0b0e15]/40 border border-white/5 rounded-xl p-md space-y-sm">
+                    <span className="font-mono text-[9px] text-outline uppercase tracking-wider font-bold block">MRR Growth Trend (Last 20 ticks)</span>
+                    <div className="h-[120px] w-full flex items-center justify-center relative bg-[#07090e]/50 border border-white/5 rounded-lg overflow-hidden">
+                      {analyticsHistory && analyticsHistory.length > 1 ? (
+                        <svg className="w-full h-full p-2" viewBox="0 0 450 120" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="mrrAreaGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.4" />
+                              <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+                          {/* Grid Lines */}
+                          <line x1="0" y1="30" x2="450" y2="30" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                          <line x1="0" y1="60" x2="450" y2="60" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                          <line x1="0" y1="90" x2="450" y2="90" stroke="rgba(255,255,255,0.03)" strokeWidth="1" />
+                          {/* Path & Area */}
+                          <path
+                            d={(() => {
+                              const maxVal = Math.max(...analyticsHistory.map(h => h.mrr), 1);
+                              const points = analyticsHistory.map((h, i) => {
+                                const x = (i / (analyticsHistory.length - 1)) * 430 + 10;
+                                const y = 100 - (h.mrr / maxVal) * 80;
+                                return `${x},${y}`;
+                              });
+                              return `M ${points.join(' L ')}`;
+                            })()}
+                            fill="none"
+                            stroke="#3b82f6"
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d={(() => {
+                              const maxVal = Math.max(...analyticsHistory.map(h => h.mrr), 1);
+                              const points = analyticsHistory.map((h, i) => {
+                                const x = (i / (analyticsHistory.length - 1)) * 430 + 10;
+                                const y = 100 - (h.mrr / maxVal) * 80;
+                                return `${x},${y}`;
+                              });
+                              const lastX = (analyticsHistory.length - 1) / (analyticsHistory.length - 1) * 430 + 10;
+                              return `M 10,110 L ${points.join(' L ')} L ${lastX},110 Z`;
+                            })()}
+                            fill="url(#mrrAreaGrad)"
+                          />
+                        </svg>
+                      ) : (
+                        <div className="text-[10px] text-outline/50 font-mono italic">Gathering more historical tick data...</div>
                       )}
                     </div>
                   </div>
-                </div>
 
-                {/* Info Tip */}
-                <div className="bg-primary/5 border border-primary/20 p-3 rounded-xl flex items-start gap-sm font-mono text-[9px] text-outline leading-relaxed text-left">
-                  <span className="material-symbols-outlined text-primary text-base mt-0.5">info</span>
-                  <div>
-                    <span className="font-bold text-primary block uppercase mb-0.5">SaaS Operation Instructions</span>
-                    Create subscription billing plans and map released models to them. Your total user compute required is calculated dynamically per region. Open country nodes act as regional compute data centers. Allocate GPUs to country nodes in the map sidebar to meet their query loads and maintain low latency.
+                  {/* Customer Review Feedback Feed */}
+                  <div className="bg-[#0b0e15]/40 border border-white/5 rounded-xl p-md space-y-sm flex flex-col">
+                    <span className="font-mono text-[9px] text-outline uppercase tracking-wider font-bold block">Live Customer Reviews & Feedback</span>
+                    <div className="max-h-[170px] overflow-y-auto custom-scrollbar space-y-sm pr-1">
+                      {feedbacks && feedbacks.length > 0 ? (
+                        feedbacks.map(f => (
+                          <div key={f.id} className="bg-[#121620]/60 border border-white/5 rounded-xl p-3 flex gap-3 text-left font-sans text-xs transition-all hover:border-white/10 hover:bg-[#151a27]/60">
+                            {/* Avatar */}
+                            <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold font-mono text-[10px] shrink-0">
+                              {f.author.slice(0, 2).toUpperCase()}
+                            </div>
+                            {/* Body */}
+                            <div className="flex-1 space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-on-surface text-[11px]">{f.author}</span>
+                                <span className="font-mono text-[9px] text-outline/60">Tick {f.tick}</span>
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex text-amber-400">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <span key={i} className="material-symbols-outlined text-xs">
+                                      {i < f.rating ? 'star' : 'star_border'}
+                                    </span>
+                                  ))}
+                                </div>
+                                <span className="text-[9px] text-outline/80 font-mono">
+                                  {f.tierName} • {f.modelName}
+                                </span>
+                              </div>
+                              <p className="text-on-surface-variant text-[11px] leading-relaxed pt-0.5">{f.comment}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4 text-outline/50 font-mono italic text-[10px]">
+                          No reviews received yet. (Ticks occur every few seconds)
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

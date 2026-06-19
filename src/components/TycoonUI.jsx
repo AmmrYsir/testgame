@@ -17,7 +17,6 @@ export default function TycoonUI() {
     llms, 
     infrastructure, 
     initCountry, 
-    allocateGpusToCountry,
     company,
     rivals,
     establishHq,
@@ -40,13 +39,11 @@ export default function TycoonUI() {
 
   const totalGpus = infrastructure.gpus + (infrastructure.cloudGpusRented || 0);
   const trainingGpus = llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-  const allocatedToOthers = Object.entries(countries).reduce((sum, [cid, c]) => {
-    if (cid === selectedCountryId) return sum;
-    return sum + (c.allocatedGpus || 0);
-  }, 0);
-  const idleGpus = totalGpus - trainingGpus - allocatedToOthers;
+  const totalCommercialGpusRequired = Object.values(countries).reduce((sum, c) => sum + (c.gpusRequired || 0), 0);
+  const commercialGpusLimit = Math.max(0, totalGpus - trainingGpus);
+  const commercialGpusActive = Math.min(commercialGpusLimit, totalCommercialGpusRequired);
+  const idleGpus = Math.max(0, totalGpus - trainingGpus - commercialGpusActive);
   const countryAllocatedGpus = country?.allocatedGpus || 0;
-  const maxAllocatable = idleGpus + countryAllocatedGpus;
 
   const handleMapClick = useCallback((e) => {
     const path = e.target.closest('path');
@@ -173,7 +170,7 @@ export default function TycoonUI() {
                           </div>
 
                           {/* GPU Compute Node Allocation */}
-                          <div className="bg-[#10141f] border border-white/5 p-3 rounded-xl space-y-2 mt-4 text-left font-mono">
+                          <div className="bg-[#10141f] border border-white/5 p-4 rounded-xl space-y-3 mt-4 text-left font-mono">
                             <div className="flex justify-between items-center text-[10px]">
                               <span className="text-outline uppercase tracking-wider font-bold">Regional Compute Node</span>
                               <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
@@ -188,63 +185,28 @@ export default function TycoonUI() {
                             </div>
                             
                             <div className="flex justify-between items-center text-xs pt-1">
-                              <span className="text-outline">Allocated H100s:</span>
-                              <span className="font-bold text-on-surface">{countryAllocatedGpus} / {maxAllocatable}</span>
+                              <span className="text-outline">Auto-scaled H100s:</span>
+                              <span className="font-bold text-on-surface">{countryAllocatedGpus} H100s</span>
                             </div>
 
                             <div className="flex justify-between items-center text-xs">
-                              <span className="text-outline">Required Compute:</span>
+                              <span className="text-outline">Required H100s:</span>
                               <span className="font-bold text-primary">{country.gpusRequired || 0} H100s</span>
                             </div>
 
-                            {/* GPU Allocation Control Buttons */}
-                            <div className="flex items-center gap-xs mt-2 w-full">
-                              <button
-                                type="button"
-                                disabled={countryAllocatedGpus <= 0}
-                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus - 4)}
-                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
-                              >
-                                -4
-                              </button>
-                              <button
-                                type="button"
-                                disabled={countryAllocatedGpus <= 0}
-                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus - 1)}
-                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
-                              >
-                                -1
-                              </button>
-                              <button
-                                type="button"
-                                disabled={idleGpus <= 0}
-                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus + 1)}
-                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
-                              >
-                                +1
-                              </button>
-                              <button
-                                type="button"
-                                disabled={idleGpus < 4}
-                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus + 4)}
-                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
-                              >
-                                +4
-                              </button>
-                            </div>
+                            {/* Status warning text for capacity shortages */}
+                            {countryAllocatedGpus < (country.gpusRequired || 0) && (
+                              <div className="bg-error/10 border border-error/20 rounded-lg p-2 mt-2 flex items-start gap-1.5 text-error animate-pulse">
+                                <span className="material-symbols-outlined text-[14px] mt-0.5">warning</span>
+                                <span className="text-[9px] font-sans leading-normal">
+                                  Capacity Shortage! Auto-scaling throttled due to global GPU deficit. Allocate more GPUs or upgrade infrastructure.
+                                </span>
+                              </div>
+                            )}
 
-                            {/* Slider */}
-                            <input
-                              type="range"
-                              min="0"
-                              max={maxAllocatable}
-                              value={countryAllocatedGpus}
-                              onChange={(e) => allocateGpusToCountry(selectedCountryId, parseInt(e.target.value))}
-                              className="w-full accent-primary cursor-pointer mt-2"
-                            />
-                            <div className="flex justify-between text-[8px] text-outline/50 mt-0.5">
-                              <span>0 H100s</span>
-                              <span>Idle Cluster Pool: {idleGpus} H100s</span>
+                            <div className="border-t border-white/5 pt-2 flex justify-between text-[8px] text-outline/50">
+                              <span>Global Idle Pool: {idleGpus} H100s</span>
+                              <span>Total Active Commercial: {commercialGpusActive} H100s</span>
                             </div>
                           </div>
 
@@ -429,10 +391,10 @@ export default function TycoonUI() {
       <AdminModal isOpen={isAdminModalOpen} onClose={() => setIsAdminModalOpen(false)} />
 
       {/* Training Completion Popup */}
-      {llms?.find(m => m.status === 'trained_pending') && (
+      {llms?.find(m => m.trainingCompletion) && (
         <TrainingCompletionPopup 
-          model={llms.find(m => m.status === 'trained_pending')} 
-          key={llms.find(m => m.status === 'trained_pending')?.id || 'none'} 
+          model={llms.find(m => m.trainingCompletion)} 
+          key={llms.find(m => m.trainingCompletion)?.id || 'none'} 
         />
       )}
     </div>

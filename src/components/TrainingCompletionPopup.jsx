@@ -16,7 +16,7 @@ export default function TrainingCompletionPopup({ model }) {
     return '';
   });
 
-  if (!model || model.status !== 'trained_pending' || !model.trainingCompletion) return null;
+  if (!model || !model.trainingCompletion) return null;
 
   const { oldStats, newStats } = model.trainingCompletion;
 
