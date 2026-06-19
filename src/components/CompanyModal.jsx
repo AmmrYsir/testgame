@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store';
+import RivalLogo from './RivalLogo';
+
 
 export default function CompanyModal({ isOpen, onClose }) {
   const { company, rivals, countries, llms, resources, executeDeal, activeApiLeases, activeComputeLeases } = useGameStore();
@@ -231,7 +233,7 @@ export default function CompanyModal({ isOpen, onClose }) {
                         color: isRivalActive ? activeColor : '#94a3b8' 
                       }}
                     >
-                      <span className="material-symbols-outlined text-base">{rival.logo || 'smart_toy'}</span>
+                      <RivalLogo name={rival.name} className="w-4.5 h-4.5 shrink-0" fallbackLogo={rival.logo || 'smart_toy'} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <span className={`text-xs font-bold truncate block ${isRivalActive ? 'text-on-surface' : 'text-outline-variant'}`}>
@@ -293,7 +295,11 @@ export default function CompanyModal({ isOpen, onClose }) {
                         color: isActive ? color : '#94a3b8' 
                       }}
                     >
-                      <span className="material-symbols-outlined text-2xl">{logo}</span>
+                      {isPlayer ? (
+                        <span className="material-symbols-outlined text-2xl">{logo}</span>
+                      ) : (
+                        <RivalLogo name={name} className="w-6 h-6" fallbackLogo={logo} />
+                      )}
                     </div>
                   </div>
 
