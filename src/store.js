@@ -714,7 +714,7 @@ export const useGameStore = create(
     };
   }),
 
-  releaseLLM: (modelId, targetSegment, initialPrice) => set((state) => {
+  releaseLLM: (modelId, initialPrice) => set((state) => {
     const model = state.llms.find(m => m.id === modelId);
     if (!model || model.status === 'training' || model.status === 'draft') return state;
 
@@ -722,32 +722,10 @@ export const useGameStore = create(
     const rating = Math.max(10, Math.round(statSum / 7));
     const fansGained = Math.min(30, Math.round(rating * 0.15));
 
-    let initialUsers = 0;
-    let segmentLabel = '';
-    
-    switch (targetSegment) {
-      case 'consumer':
-        initialUsers = 500;
-        segmentLabel = 'B2C App Store';
-        break;
-      case 'dev':
-        initialUsers = 50;
-        segmentLabel = 'Developer API Gateway';
-        break;
-      case 'business':
-        initialUsers = 10;
-        segmentLabel = 'Business SaaS Portal';
-        break;
-      case 'enterprise':
-        initialUsers = 1;
-        segmentLabel = 'Enterprise Cloud';
-        break;
-      default:
-        break;
-    }
+    let initialUsers = 100;
 
-    const emailSubject = `Model Released: ${model.name} v${model.version} on ${segmentLabel}`;
-    const emailBody = `We have successfully released your model '${model.name}' v${model.version} to the ${segmentLabel}.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
+    const emailSubject = `Model Released: ${model.name} v${model.version}`;
+    const emailBody = `We have successfully released your model '${model.name}' v${model.version} for global commercial use.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $${initialPrice.toLocaleString()}/month subscription.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
 
     const newEmail = {
       id: 'rel_' + Date.now().toString(),
@@ -764,7 +742,7 @@ export const useGameStore = create(
       llms: state.llms.map(m => m.id === modelId ? { 
         ...m, 
         status: 'released', 
-        targetSegment, 
+        targetSegment: 'global', 
         priceTag: initialPrice,
         productionGpus: 0,
         marketMetrics: {
@@ -776,7 +754,7 @@ export const useGameStore = create(
       } : m),
       resources: { ...state.resources, fans: Math.min(100, state.resources.fans + fansGained) },
       emails: [newEmail, ...state.emails],
-      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version} to ${segmentLabel} at price $${initialPrice}.`, iconColor: 'text-primary' }, ...state.newsFeed]
+      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version} at price $${initialPrice}/mo.`, iconColor: 'text-primary' }, ...state.newsFeed]
     };
   }),
 
@@ -1171,13 +1149,6 @@ export const useGameStore = create(
     });
 
     // 4. Released models economics, user adoption, required compute, and billing revenue
-    const segmentConfigs = {
-      consumer: { basePrice: 15, weightStats: ['multilingual', 'knowledge'], userGrowthFactor: 1.5, computePerUser: 0.005, maxMarket: 50000 },
-      dev: { basePrice: 5, weightStats: ['coding', 'reasoning'], userGrowthFactor: 0.8, computePerUser: 0.05, maxMarket: 5000 },
-      business: { basePrice: 25, weightStats: ['agentic', 'coding'], userGrowthFactor: 0.2, computePerUser: 0.15, maxMarket: 1000 },
-      enterprise: { basePrice: 5000, weightStats: ['math', 'reasoning'], userGrowthFactor: 0.005, computePerUser: 2.0, maxMarket: 50 }
-    };
-
     let totalProductionGpus = 0;
     const updatedCountries = {};
     const modelAggregations = {};
@@ -1215,26 +1186,25 @@ export const useGameStore = create(
       const modelId = country.deployedModelId;
       const model = modelId ? nextLlms.find(m => m.id === modelId) : null;
 
-      if (model && model.status === 'released' && model.targetSegment && isOpenPlayer) {
-        const cfg = segmentConfigs[model.targetSegment];
+      if (model && model.status === 'released' && isOpenPlayer) {
         const allocated = country.allocatedGpus || 0;
         
-        // Quality score: mean of two weighted stats for segment
-        const rating = (model.stats[cfg.weightStats[0]] + model.stats[cfg.weightStats[1]]) / 2;
+        // Quality score: mean of all 7 stats
+        const rating = (model.stats.agentic + model.stats.coding + model.stats.reasoning + model.stats.knowledge + model.stats.math + model.stats.multilingual + model.stats.multimodal) / 7;
         const qualityScore = Math.max(5, rating);
 
-        // Competitor baseline quality score (best rival in that segment)
+        // Competitor baseline quality score (best rival)
         let maxRivalScore = 30;
         state.rivals.forEach(r => {
-          const rRating = (r.stats[cfg.weightStats[0]] + r.stats[cfg.weightStats[1]]) / 2;
+          const rRating = (r.stats.agentic + r.stats.coding + r.stats.reasoning + r.stats.knowledge + r.stats.math + r.stats.multilingual + r.stats.multimodal) / 7;
           const rScore = Math.max(5, rRating);
           if (rScore > maxRivalScore) maxRivalScore = rScore;
         });
 
         // Price comparison
-        const finalPrice = model.priceTag || cfg.basePrice;
+        const finalPrice = model.priceTag || 15;
         const valueScore = qualityScore / Math.max(0.1, finalPrice);
-        const rivalValueScore = maxRivalScore / cfg.basePrice;
+        const rivalValueScore = maxRivalScore / 15; // default base price is $15/mo
         const competitiveness = valueScore / Math.max(0.01, rivalValueScore);
 
         // Fans scaling
@@ -1291,7 +1261,7 @@ export const useGameStore = create(
         }
 
         playerUsers = Math.round(country.demand * (playerShare / 100));
-        gpusRequired = Math.ceil(playerUsers * cfg.computePerUser);
+        gpusRequired = Math.ceil(playerUsers * 0.01);
         totalProductionGpus += allocated;
 
         if (allocated === 0) {
@@ -1384,7 +1354,7 @@ export const useGameStore = create(
     }
 
     nextLlms = nextLlms.map(m => {
-      if (m.status === 'released' && m.targetSegment) {
+      if (m.status === 'released') {
         const agg = modelAggregations[m.id] || { users: 0, gpusRequired: 0, latencies: [], satisfactions: [] };
         const avgLatency = agg.latencies.length > 0 ? Math.round(agg.latencies.reduce((a, b) => a + b, 0) / agg.latencies.length) : 10;
         const avgSatisfaction = agg.satisfactions.length > 0 ? Math.round(agg.satisfactions.reduce((a, b) => a + b, 0) / agg.satisfactions.length) : 100;
@@ -1538,21 +1508,25 @@ export const useGameStore = create(
     });
 
     // Dynamic Competitor Pricing Actions
+    const totalOpenedDemand = Object.values(state.countries)
+      .filter(c => c.openMarkets?.player)
+      .reduce((sum, c) => sum + c.demand, 0);
+
+    const activeGlobalDemand = Math.max(1, totalOpenedDemand);
+
     nextLlms.forEach(m => {
-      if (m.status === 'released' && m.targetSegment) {
-        const cfg = segmentConfigs[m.targetSegment];
-        const playerShare = (m.marketMetrics.users / cfg.maxMarket) * 100;
+      if (m.status === 'released') {
+        const playerShare = (m.marketMetrics.users / activeGlobalDemand) * 100;
         
         // If player market share grows over 30%, and a random trigger is hit, rivals cut prices!
         if (playerShare > 30 && Math.random() < 0.03) {
-          // Find rival which holds that segment
           const randomRival = nextRivals[Math.floor(Math.random() * nextRivals.length)];
           
           nextEmails = [{
             id: 'rival_cut_' + Date.now().toString(),
             sender: 'Market Watch',
             subject: `Competitor Action: ${randomRival.name} cuts prices`,
-            body: `We've received word that ${randomRival.name} has cut their prices in the ${m.targetSegment} segment by 15% to protect their market share.\n\nThis price cut makes their services more attractive. You might need to lower your prices or upgrade your model's stats to keep your customers.`,
+            body: `We've received word that ${randomRival.name} has cut their subscription prices by 15% globally to protect their market share.\n\nThis price cut makes their services more attractive. You might need to lower your prices or upgrade your model's stats to keep your customers.`,
             tick: currentTick,
             read: false,
             reward: null,
@@ -1562,7 +1536,7 @@ export const useGameStore = create(
           nextNewsFeed = [{
             tick: currentTick,
             type: 'warning',
-            text: `MARKET ALERTS: ${randomRival.name} cut pricing in ${m.targetSegment.toUpperCase()} to fight your market share!`,
+            text: `MARKET ALERTS: ${randomRival.name} cut pricing globally to fight your market share!`,
             iconColor: 'text-error'
           }, ...nextNewsFeed];
         }

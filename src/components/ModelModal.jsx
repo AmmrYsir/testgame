@@ -29,18 +29,9 @@ export default function ModelModal({ isOpen, onClose }) {
   const [datasetType, setDatasetType] = useState('web_dump');
 
   // Release Config State
-  const [releaseSegment, setReleaseSegment] = useState('consumer');
   const [releasePrice, setReleasePrice] = useState(15);
 
   if (!isOpen) return null;
-
-  const handleSegmentChange = (seg) => {
-    setReleaseSegment(seg);
-    if (seg === 'consumer') setReleasePrice(15);
-    else if (seg === 'dev') setReleasePrice(5);
-    else if (seg === 'business') setReleasePrice(25);
-    else if (seg === 'enterprise') setReleasePrice(5000);
-  };
 
   // Selected Model Object
   const selectedModel = llms.find(m => m.id === selectedModelId) || llms[0];
@@ -383,7 +374,7 @@ export default function ModelModal({ isOpen, onClose }) {
                   {selectedModel.status === 'released' && (
                     <div className="flex flex-col items-end">
                       <span className="px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary font-mono text-[9px] uppercase tracking-wider font-bold">
-                        DEPLOYED ({selectedModel.targetSegment})
+                        DEPLOYED
                       </span>
                       {liveYield > 0 && (
                         <span className="text-[10px] text-emerald-500 font-mono mt-1 font-semibold">+${liveYield.toLocaleString()}/tick</span>
@@ -470,13 +461,9 @@ export default function ModelModal({ isOpen, onClose }) {
                                 {selectedModel.status === 'released' ? 'Yes' : 'No'}
                               </span>
                             </div>
-                            <div className="flex justify-between border-b border-white/5 pb-1">
+                            <div className="flex justify-between pb-1">
                               <span className="text-outline">Allocated Nodes:</span>
                               <span className="text-on-surface font-bold">{selectedModel.productionGpus} GPUs</span>
-                            </div>
-                            <div className="flex justify-between pb-1">
-                              <span className="text-outline">Commercial Segment:</span>
-                              <span className="text-on-surface font-bold capitalize">{selectedModel.targetSegment || 'None'}</span>
                             </div>
                           </div>
                         </div>
@@ -580,11 +567,7 @@ export default function ModelModal({ isOpen, onClose }) {
                                   <span className="font-bold text-on-surface">{(selectedModel.marketMetrics?.users || 0).toLocaleString()}</span>
                                 </div>
                                 <span className="text-[10px] text-outline">
-                                  Max: {
-                                    selectedModel.targetSegment === 'consumer' ? '50,000' :
-                                    selectedModel.targetSegment === 'dev' ? '5,000' :
-                                    selectedModel.targetSegment === 'business' ? '1,000' : '50'
-                                  }
+                                  Max Routed Demand: {Object.values(countries || {}).filter(c => c.deployedModelId === selectedModel.id).reduce((sum, c) => sum + c.demand, 0).toLocaleString()}
                                 </span>
                               </div>
 
@@ -593,19 +576,15 @@ export default function ModelModal({ isOpen, onClose }) {
                                 <div className="flex justify-between items-center text-[10px] font-mono">
                                   <span className="text-outline uppercase">Adjust Price</span>
                                   <span className="font-bold text-primary">
-                                    ${(selectedModel.priceTag || 10).toLocaleString()} {
-                                      selectedModel.targetSegment === 'consumer' ? '/mo' :
-                                      selectedModel.targetSegment === 'dev' ? '/M' :
-                                      selectedModel.targetSegment === 'business' ? '/seat' : '/contract'
-                                    }
+                                    ${(selectedModel.priceTag || 15).toLocaleString()}/mo
                                   </span>
                                 </div>
                                 <input
                                   type="range"
-                                  min={selectedModel.targetSegment === 'enterprise' ? 1000 : 1}
-                                  max={selectedModel.targetSegment === 'enterprise' ? 20000 : selectedModel.targetSegment === 'business' ? 200 : selectedModel.targetSegment === 'consumer' ? 100 : 50}
-                                  step={selectedModel.targetSegment === 'enterprise' ? 500 : 1}
-                                  value={selectedModel.priceTag || 10}
+                                  min={1}
+                                  max={100}
+                                  step={1}
+                                  value={selectedModel.priceTag || 15}
                                   onChange={(e) => setModelPrice(selectedModel.id, parseInt(e.target.value))}
                                   className="w-full accent-primary h-1 cursor-pointer"
                                 />
@@ -827,51 +806,19 @@ export default function ModelModal({ isOpen, onClose }) {
                               </h3>
                               
                               <div className="bg-[#0b0e15]/40 p-4 rounded-xl border border-white/5 space-y-md">
-                                {/* Segment */}
-                                <div>
-                                  <label className="text-outline text-xs block mb-2 font-semibold">Select Target Market Segment</label>
-                                  <div className="grid grid-cols-2 md:grid-cols-4 gap-sm">
-                                    {[
-                                      { id: 'consumer', label: 'B2C App', icon: 'person', desc: 'Subscription' },
-                                      { id: 'dev', label: 'Developer', icon: 'code', desc: 'API usage' },
-                                      { id: 'business', label: 'SaaS Seat', icon: 'business', desc: 'Per seat' },
-                                      { id: 'enterprise', label: 'Enterprise', icon: 'cloud', desc: 'Flat lease' },
-                                    ].map((seg) => (
-                                      <button
-                                        key={seg.id}
-                                        type="button"
-                                        onClick={() => handleSegmentChange(seg.id)}
-                                        className={`p-3 rounded-lg border text-center transition-all flex flex-col items-center gap-xs cursor-pointer ${
-                                          releaseSegment === seg.id
-                                            ? 'bg-primary/15 border-primary text-primary shadow-[0_0_8px_rgba(59,130,246,0.2)]'
-                                            : 'bg-[#0b0e15]/40 border-white/5 hover:border-white/10 text-on-surface'
-                                        }`}
-                                      >
-                                        <span className="material-symbols-outlined text-[18px]">{seg.icon}</span>
-                                        <span className="font-bold text-xs block mt-0.5">{seg.label}</span>
-                                        <span className="text-[9px] text-outline block">{seg.desc}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-
                                 {/* Price tag */}
                                 <div className="space-y-1">
                                   <div className="flex justify-between items-center text-xs font-mono">
                                     <label className="text-outline font-semibold">Release Price Tag</label>
                                     <span className="font-bold text-primary">
-                                      ${releasePrice.toLocaleString()} {
-                                        releaseSegment === 'consumer' ? '/mo subscription' :
-                                        releaseSegment === 'dev' ? '/M tokens' :
-                                        releaseSegment === 'business' ? '/seat/mo' : '/mo lease'
-                                      }
+                                      ${releasePrice.toLocaleString()}/mo subscription
                                     </span>
                                   </div>
                                   <input
                                     type="range"
-                                    min={releaseSegment === 'enterprise' ? 1000 : 1}
-                                    max={releaseSegment === 'enterprise' ? 20000 : releaseSegment === 'business' ? 200 : releaseSegment === 'consumer' ? 100 : 50}
-                                    step={releaseSegment === 'enterprise' ? 500 : 1}
+                                    min={1}
+                                    max={100}
+                                    step={1}
                                     value={releasePrice}
                                     onChange={(e) => setReleasePrice(parseInt(e.target.value))}
                                     className="w-full accent-primary h-1 cursor-pointer"
@@ -880,7 +827,7 @@ export default function ModelModal({ isOpen, onClose }) {
                               </div>
 
                               <button
-                                onClick={() => releaseLLM(selectedModel.id, releaseSegment, releasePrice)}
+                                onClick={() => releaseLLM(selectedModel.id, releasePrice)}
                                 className="w-full bg-primary hover:bg-primary-container text-on-primary font-mono text-[10.5px] uppercase font-bold tracking-wider py-3 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.3)] flex items-center justify-center gap-1 cursor-pointer"
                               >
                                 <span className="material-symbols-outlined text-sm">publish</span>

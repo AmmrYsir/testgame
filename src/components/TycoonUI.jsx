@@ -4,7 +4,6 @@ import ModelModal from './ModelModal';
 import TrainingCompletionPopup from './TrainingCompletionPopup';
 import InfrastructureModal from './InfrastructureModal';
 import ResearchView from './ResearchView';
-import MarketView from './MarketView';
 import MailboxModal from './MailboxModal';
 import BottomLogsDrawer from './BottomLogsDrawer';
 import CompanyModal from './CompanyModal';
@@ -260,7 +259,6 @@ export default function TycoonUI() {
               { id: 'models', label: 'Models', icon: 'psychology' },
               { id: 'infrastructure', label: 'Hardware', icon: 'dns' },
               { id: 'research', label: 'Research', icon: 'science' },
-              { id: 'market', label: 'Markets', icon: 'bar_chart' },
               { id: 'logs', label: 'Logs', icon: 'terminal' },
               { id: 'companyModal', label: 'Companies', icon: 'corporate_fare' }
             ].map(drawer => (
@@ -301,7 +299,6 @@ export default function TycoonUI() {
               <div className="flex justify-between items-center px-lg py-md border-b border-white/5 bg-surface-container/30">
                 <h3 className="font-bold text-on-surface flex items-center gap-2 text-xs uppercase tracking-wider">
                   {activeDrawer === 'research' && <><span className="material-symbols-outlined text-primary text-base">science</span> Research Lab</>}
-                  {activeDrawer === 'market' && <><span className="material-symbols-outlined text-primary text-base">bar_chart</span> Market Segments</>}
                 </h3>
                 <button
                   onClick={() => setActiveDrawer(null)}
@@ -314,7 +311,6 @@ export default function TycoonUI() {
               {/* Drawer Body */}
               <div className="flex-1 overflow-y-auto custom-scrollbar p-lg">
                 {activeDrawer === 'research' && <ResearchView />}
-                {activeDrawer === 'market' && <MarketView />}
               </div>
             </div>
           )}
