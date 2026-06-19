@@ -158,9 +158,9 @@ export default function AdminModal({ isOpen, onClose }) {
                               <span className="text-[7.5px] px-1 bg-white/5 border border-white/10 rounded font-normal text-outline">DEFAULT</span>
                             )}
                           </h4>
-                          <span className="font-mono text-[9.5px] text-outline block mt-0.5">
-                            Route: {routedModel ? routedModel.name : <span className="text-error/70 italic">Not Routed</span>}
-                          </span>
+                           <span className="font-mono text-[9.5px] text-outline block mt-0.5">
+                             Route: {routedModel ? `${routedModel.name} v${routedModel.version}` : <span className="text-error/70 italic">Not Routed</span>}
+                           </span>
                         </div>
                         <div className="text-right">
                           <span className="font-display font-bold text-xs text-primary">
@@ -206,7 +206,7 @@ export default function AdminModal({ isOpen, onClose }) {
                   <option value="">-- No Model Routed (FREE Tier Disabled) --</option>
                   {releasedModels.map(m => (
                     <option key={m.id} value={m.id}>
-                      {m.name} ({Math.round((m.stats.agentic + m.stats.coding + m.stats.reasoning + m.stats.knowledge + m.stats.math + m.stats.multilingual + m.stats.multimodal) / 7)}% avg)
+                      {m.name} v{m.version} ({Math.round((m.stats.agentic + m.stats.coding + m.stats.reasoning + m.stats.knowledge + m.stats.math + m.stats.multilingual + m.stats.multimodal) / 7)}% avg)
                     </option>
                   ))}
                 </select>
@@ -287,7 +287,7 @@ export default function AdminModal({ isOpen, onClose }) {
                         <option value="">-- No Model Routed --</option>
                         {releasedModels.map(m => (
                           <option key={m.id} value={m.id}>
-                            {m.name} ({Math.round((m.stats.agentic + m.stats.coding + m.stats.reasoning + m.stats.knowledge + m.stats.math + m.stats.multilingual + m.stats.multimodal) / 7)}% avg)
+                            {m.name} v{m.version} ({Math.round((m.stats.agentic + m.stats.coding + m.stats.reasoning + m.stats.knowledge + m.stats.math + m.stats.multilingual + m.stats.multimodal) / 7)}% avg)
                           </option>
                         ))}
                       </select>

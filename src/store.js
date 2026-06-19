@@ -1278,7 +1278,7 @@ export const useGameStore = create(
               return {
                 ...m,
                 status: m.status === 'released' ? 'released' : 'trained_pending',
-                stats: finalStats,
+                stats: m.status === 'released' ? m.training.startStats : finalStats,
                 training: null,
                 trainingCompletion: {
                   oldStats: { ...m.training.startStats },
@@ -1288,7 +1288,7 @@ export const useGameStore = create(
             } else {
               return {
                 ...m,
-                stats: currentStats,
+                stats: m.status === 'released' ? m.training.startStats : currentStats,
                 training: {
                   ...m.training,
                   progress: newProgress
