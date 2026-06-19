@@ -1,6 +1,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import TopBar from './TopBar';
-import ModelView from './ModelView';
+import ModelModal from './ModelModal';
+import TrainingCompletionPopup from './TrainingCompletionPopup';
 import InfrastructureModal from './InfrastructureModal';
 import ResearchView from './ResearchView';
 import MarketView from './MarketView';
@@ -27,11 +28,12 @@ export default function TycoonUI() {
   } = useGameStore();
 
   const [selectedCountryId, setSelectedCountryId] = useState(null);
-  const [activeDrawer, setActiveDrawer] = useState(null); // null, 'models', 'research', 'market'
+  const [activeDrawer, setActiveDrawer] = useState(null); // null, 'research', 'market'
   const [isMailboxOpen, setIsMailboxOpen] = useState(false);
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [isInfrastructureModalOpen, setIsInfrastructureModalOpen] = useState(false);
+  const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [hoveredCountry, setHoveredCountry] = useState(null);
 
   const country = selectedCountryId ? countries[selectedCountryId] : null;
@@ -258,7 +260,7 @@ export default function TycoonUI() {
               { id: 'models', label: 'Models', icon: 'psychology' },
               { id: 'infrastructure', label: 'Hardware', icon: 'dns' },
               { id: 'research', label: 'Research', icon: 'science' },
-              { id: 'market', label: 'Contracts', icon: 'handshake' },
+              { id: 'market', label: 'Markets', icon: 'bar_chart' },
               { id: 'logs', label: 'Logs', icon: 'terminal' },
               { id: 'companyModal', label: 'Companies', icon: 'corporate_fare' }
             ].map(drawer => (
@@ -273,6 +275,8 @@ export default function TycoonUI() {
                     setIsCompanyModalOpen(true);
                   } else if (drawer.id === 'infrastructure') {
                     setIsInfrastructureModalOpen(true);
+                  } else if (drawer.id === 'models') {
+                    setIsModelModalOpen(true);
                   } else {
                     setActiveDrawer(activeDrawer === drawer.id ? null : drawer.id);
                     setIsLogsOpen(false);
@@ -280,7 +284,7 @@ export default function TycoonUI() {
                 }}
                 title={drawer.label}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
-                  (drawer.id === 'logs' ? isLogsOpen : drawer.id === 'companyModal' ? isCompanyModalOpen : drawer.id === 'infrastructure' ? isInfrastructureModalOpen : activeDrawer === drawer.id)
+                  (drawer.id === 'logs' ? isLogsOpen : drawer.id === 'companyModal' ? isCompanyModalOpen : drawer.id === 'infrastructure' ? isInfrastructureModalOpen : drawer.id === 'models' ? isModelModalOpen : activeDrawer === drawer.id)
                     ? 'bg-primary text-white border-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] hover:scale-105'
                     : 'bg-surface-container/60 hover:bg-surface-bright/20 border-white/10 text-outline hover:text-on-surface hover:scale-105'
                 }`}
@@ -296,9 +300,8 @@ export default function TycoonUI() {
               {/* Drawer Header */}
               <div className="flex justify-between items-center px-lg py-md border-b border-white/5 bg-surface-container/30">
                 <h3 className="font-bold text-on-surface flex items-center gap-2 text-xs uppercase tracking-wider">
-                  {activeDrawer === 'models' && <><span className="material-symbols-outlined text-primary text-base">psychology</span> Models</>}
                   {activeDrawer === 'research' && <><span className="material-symbols-outlined text-primary text-base">science</span> Research Lab</>}
-                  {activeDrawer === 'market' && <><span className="material-symbols-outlined text-primary text-base">handshake</span> Contracts</>}
+                  {activeDrawer === 'market' && <><span className="material-symbols-outlined text-primary text-base">bar_chart</span> Market Segments</>}
                 </h3>
                 <button
                   onClick={() => setActiveDrawer(null)}
@@ -310,7 +313,6 @@ export default function TycoonUI() {
               
               {/* Drawer Body */}
               <div className="flex-1 overflow-y-auto custom-scrollbar p-lg">
-                {activeDrawer === 'models' && <ModelView />}
                 {activeDrawer === 'research' && <ResearchView />}
                 {activeDrawer === 'market' && <MarketView />}
               </div>
@@ -330,6 +332,14 @@ export default function TycoonUI() {
 
       {/* Infrastructure/Hardware Modal */}
       <InfrastructureModal isOpen={isInfrastructureModalOpen} onClose={() => setIsInfrastructureModalOpen(false)} />
+
+      {/* Model Modal */}
+      <ModelModal isOpen={isModelModalOpen} onClose={() => setIsModelModalOpen(false)} />
+
+      {/* Training Completion Popup */}
+      {llms?.find(m => m.status === 'trained_pending') && (
+        <TrainingCompletionPopup model={llms.find(m => m.status === 'trained_pending')} />
+      )}
     </div>
   );
 }

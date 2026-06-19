@@ -64,7 +64,7 @@ export const useGameStore = create(
   },
 
   // Models Registry
-  llms: [], // { id, name, version, architecture, status, stats: { agentic, coding, reasoning, knowledge, math, multilingual, multimodal }, training: null | { progress, totalTicks, allocatedGpus, startStats, targetStats, cost }, releaseType, contractId }
+  llms: [], // { id, name, version, architecture, status, stats: { agentic, coding, reasoning, knowledge, math, multilingual, multimodal }, training: null | { progress, totalTicks, allocatedGpus, startStats, targetStats, cost }, creationProgress, creationTotalTicks, releaseType }
 
   // Global Map Countries State
   countries: INITIAL_COUNTRIES,
@@ -76,10 +76,7 @@ export const useGameStore = create(
   },
 
   // Contracts Board
-  marketContracts: [
-    { id: 'c1', client: 'Alpha Corp', requirement: { stat: 'coding', value: 30 }, rewardPerTick: 4000, duration: 120, timeLeft: 120, activeModelId: null },
-    { id: 'c2', client: 'EduLearn Inc', requirement: { stat: 'knowledge', value: 45 }, rewardPerTick: 7500, duration: 180, timeLeft: 180, activeModelId: null }
-  ],
+  marketContracts: [],
 
   // Rivals
   rivals: [
@@ -143,7 +140,7 @@ export const useGameStore = create(
       id: 'welcome_email',
       sender: 'Corporate Board',
       subject: 'Founders Memo: Welcome to the AI Race',
-      body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from Google, OpenAI, and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
+      body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from Google, OpenAI, and Anthropic. Keep an eye on server temperatures to prevent overheating. Good luck.',
       tick: 0,
       read: false,
       reward: null,
@@ -192,10 +189,7 @@ export const useGameStore = create(
       unlockedTech: ['transformer'],
       activeResearch: null,
     },
-    marketContracts: [
-      { id: 'c1', client: 'Alpha Corp', requirement: { stat: 'coding', value: 30 }, rewardPerTick: 4000, duration: 120, timeLeft: 120, activeModelId: null },
-      { id: 'c2', client: 'EduLearn Inc', requirement: { stat: 'knowledge', value: 45 }, rewardPerTick: 7500, duration: 180, timeLeft: 180, activeModelId: null }
-    ],
+    marketContracts: [],
     rivals: [
       { 
         name: 'Google', 
@@ -255,7 +249,7 @@ export const useGameStore = create(
         id: 'welcome_email',
         sender: 'Corporate Board',
         subject: 'Founders Memo: Welcome to the AI Race',
-        body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from Google, OpenAI, and Anthropic. Keep an eye on server temperatures to prevent overheating, and complete contracts to earn cash. Good luck.',
+        body: 'Welcome! We have secured $1,000,000 in starting capital for your new company.\n\nYour goal is to build powerful AI models, upgrade your hardware, and research new techniques to win market share from Google, OpenAI, and Anthropic. Keep an eye on server temperatures to prevent overheating. Good luck.',
         tick: 0,
         read: false,
         reward: null,
@@ -617,13 +611,14 @@ export const useGameStore = create(
     const newModel = {
       id: Date.now().toString(),
       name: cleanedName,
-      version: 1.0,
+      version: '1.0',
       architecture: architecture,
-      status: 'draft',
+      status: 'developing',
+      creationProgress: 0,
+      creationTotalTicks: 180, // 6 months
       stats: { agentic: 10, coding: 10, reasoning: 10, knowledge: 15, math: 10, multilingual: 8, multimodal: 8 },
       training: null,
       releaseType: null,
-      contractId: null,
       revenuePerTick: 0,
       productionGpus: 0,
       priceTag: 0,
@@ -637,14 +632,14 @@ export const useGameStore = create(
     };
     return {
       llms: [...state.llms, newModel],
-      newsFeed: [{ tick: state.resources.currentTick, type: 'schema', text: `Model '${name}' created. Ready for training.`, iconColor: 'text-primary' }, ...state.newsFeed]
+      newsFeed: [{ tick: state.resources.currentTick, type: 'schema', text: `Started development on model '${cleanedName}'. Backbone design will take 6 months.`, iconColor: 'text-primary' }, ...state.newsFeed]
     };
   }),
 
   startTraining: (modelId, allocatedGpus, epochs, datasetType) => set((state) => {
     // Check if model exists
     const model = state.llms.find(m => m.id === modelId);
-    if (!model || model.status === 'training') return state;
+    if (!model || (model.status !== 'draft' && model.status !== 'trained')) return state;
 
     // Check available GPUs (excluding training and production allocated gpus)
     const activeTrainingGpus = state.llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
@@ -699,7 +694,7 @@ export const useGameStore = create(
       multimodal: Math.min(100, model.stats.multimodal + Math.round(baseGains + statBonus.multimodal))
     };
 
-    const durationTicks = epochs * 8;
+    const durationTicks = Math.max(180, epochs * 60); // Minimum 6 months
 
     return {
       resources: { ...state.resources, cash: state.resources.cash - totalCost },
@@ -751,8 +746,8 @@ export const useGameStore = create(
         break;
     }
 
-    const emailSubject = `Model Released: ${model.name} v${model.version.toFixed(1)} on ${segmentLabel}`;
-    const emailBody = `We have successfully released your model '${model.name}' v${model.version.toFixed(1)} to the ${segmentLabel}.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
+    const emailSubject = `Model Released: ${model.name} v${model.version} on ${segmentLabel}`;
+    const emailBody = `We have successfully released your model '${model.name}' v${model.version} to the ${segmentLabel}.\n\nModel stats:\n- Score: ${rating.toFixed(0)}\n- Fans gained: +${fansGained}\n- Price: $${initialPrice.toLocaleString()}${targetSegment === 'dev' ? '/M tokens' : targetSegment === 'enterprise' ? '/month flat' : targetSegment === 'business' ? '/seat/month' : '/month subscription'}.\n\nRemember to allocate GPUs to this model from the Hardware tab to serve active user traffic and keep latency low.`;
 
     const newEmail = {
       id: 'rel_' + Date.now().toString(),
@@ -781,7 +776,54 @@ export const useGameStore = create(
       } : m),
       resources: { ...state.resources, fans: Math.min(100, state.resources.fans + fansGained) },
       emails: [newEmail, ...state.emails],
-      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version.toFixed(1)} to ${segmentLabel} at price $${initialPrice}.`, iconColor: 'text-primary' }, ...state.newsFeed]
+      newsFeed: [{ tick: state.resources.currentTick, type: 'public', text: `Released ${model.name} v${model.version} to ${segmentLabel} at price $${initialPrice}.`, iconColor: 'text-primary' }, ...state.newsFeed]
+    };
+  }),
+
+  finalizeModelTraining: (modelId, versionLabel) => set((state) => {
+    const model = state.llms.find(m => m.id === modelId);
+    if (!model || model.status !== 'trained_pending' || !model.trainingCompletion) return {};
+
+    const finalStats = model.trainingCompletion.newStats;
+    const finalVer = versionLabel.trim() || model.version;
+
+    const statSum = finalStats.agentic + finalStats.coding + finalStats.reasoning + finalStats.knowledge + finalStats.math + finalStats.multilingual + finalStats.multimodal;
+    const rating = Math.max(10, Math.round(statSum / 7));
+
+    const emailSubject = `Training Finished: ${model.name} v${finalVer}`;
+    const emailBody = `Training is complete. Model '${model.name}' is now at version v${finalVer}.\n\nBenchmark Stats:\n- Agentic: ${finalStats.agentic}%\n- Coding: ${finalStats.coding}%\n- Reasoning: ${finalStats.reasoning}%\n- Knowledge: ${finalStats.knowledge}%\n- Math: ${finalStats.math}%\n- Multilingual: ${finalStats.multilingual}%\n- Multimodal: ${finalStats.multimodal}%\n\nThe model is ready to be released to the market.`;
+
+    const newEmail = {
+      id: 't_done_' + Date.now().toString(),
+      sender: 'Facility Operations',
+      subject: emailSubject,
+      body: emailBody,
+      tick: state.resources.currentTick,
+      read: false,
+      reward: null,
+      claimed: false
+    };
+
+    const nextNewsFeed = [{
+      tick: state.resources.currentTick,
+      type: 'check_circle',
+      text: `Training Complete: '${model.name}' successfully aligned to version v${finalVer}!`,
+      iconColor: 'text-[#10b981]'
+    }, ...state.newsFeed];
+
+    return {
+      llms: state.llms.map(m => m.id === modelId ? {
+        ...m,
+        status: 'trained',
+        version: finalVer,
+        stats: finalStats,
+        training: null,
+        trainingCompletion: null
+      } : m),
+      emails: [newEmail, ...state.emails],
+      newsFeed: nextNewsFeed,
+      simulationSpeed: state.lastActiveSpeed || 1,
+      isPaused: false
     };
   }),
 
@@ -829,40 +871,6 @@ export const useGameStore = create(
         }
       },
       newsFeed: [{ tick: state.resources.currentTick, type: 'science', text: `Allocated labs to study '${techId}'. Budgeting funding per tick.`, iconColor: 'text-secondary' }, ...state.newsFeed]
-    };
-  }),
-
-  // B2B Contracts Actions
-  bindModelToContract: (modelId, contractId) => set((state) => {
-    const model = state.llms.find(m => m.id === modelId);
-    const contract = state.marketContracts.find(c => c.id === contractId);
-
-    if (!model || !contract || contract.activeModelId || model.status === 'draft' || model.status === 'training') return state;
-
-    // Verify stats
-    const reqStat = contract.requirement.stat;
-    const reqVal = contract.requirement.value;
-    const modelVal = model.stats[reqStat];
-
-    if (modelVal < reqVal) return state;
-
-    return {
-      llms: state.llms.map(m => m.id === modelId ? { ...m, contractId: contractId } : m),
-      marketContracts: state.marketContracts.map(c => c.id === contractId ? { ...c, activeModelId: modelId } : c),
-      newsFeed: [{ tick: state.resources.currentTick, type: 'handshake', text: `Leased ${model.name} v${model.version.toFixed(1)} to client for B2B contract (${contract.client}). Revenue: $${contract.rewardPerTick.toLocaleString()}/day.`, iconColor: 'text-primary' }, ...state.newsFeed]
-    };
-  }),
-
-  cancelContract: (contractId) => set((state) => {
-    const contract = state.marketContracts.find(c => c.id === contractId);
-    if (!contract || !contract.activeModelId) return state;
-
-    const modelId = contract.activeModelId;
-
-    return {
-      llms: state.llms.map(m => m.id === modelId ? { ...m, contractId: null } : m),
-      marketContracts: state.marketContracts.map(c => c.id === contractId ? { ...c, activeModelId: null, timeLeft: c.duration } : c),
-      newsFeed: [{ tick: state.resources.currentTick, type: 'close', text: `Contract with ${contract.client} terminated or completed.`, iconColor: 'text-outline' }, ...state.newsFeed]
     };
   }),
 
@@ -1078,11 +1086,47 @@ export const useGameStore = create(
     const computeAdjustment = (nextComputeLeases.filter(l => l.type === 'incoming').length - nextComputeLeases.filter(l => l.type === 'outgoing').length) * 200;
     const nextCompute = Math.max(0, baseCompute + computeAdjustment);
     
-    // 3. Train models progress
+    // 3. Model creation and training progress
     let activeTrainingCount = 0;
     let totalTrainingGpus = 0;
+    let isPausedTriggered = false;
 
     let nextLlms = state.llms.map(m => {
+      if (m.status === 'developing') {
+        const nextProgress = m.creationProgress + 1;
+        if (nextProgress >= m.creationTotalTicks) {
+          nextEmails = [{
+            id: 'c_created_' + Date.now().toString(),
+            sender: 'Labs Director',
+            subject: `Neural Backbone Created: ${m.name}`,
+            body: `We have completed designing the base neural architecture and backbone layout for '${m.name}' (${m.architecture === 'moe' ? 'Mixture of Experts' : m.architecture === 'ssm' ? 'State Space Model' : 'Transformer'}).\n\nThe model is now in 'DRAFT' status. It cannot be released or deployed yet as it contains randomized weights. Deploy GPUs to launch an initial training run on a dataset to align its parameters.`,
+            tick: currentTick,
+            read: false,
+            reward: null,
+            claimed: false
+          }, ...nextEmails];
+
+          nextNewsFeed = [{
+            tick: currentTick,
+            type: 'schema',
+            text: `Development complete: Neural backbone for '${m.name}' finalized. Ready for training!`,
+            iconColor: 'text-[#10b981]'
+          }, ...nextNewsFeed];
+
+          return {
+            ...m,
+            status: 'draft',
+            creationProgress: undefined,
+            creationTotalTicks: undefined
+          };
+        } else {
+          return {
+            ...m,
+            creationProgress: nextProgress
+          };
+        }
+      }
+
       if (m.status === 'training' && m.training) {
         activeTrainingCount++;
         totalTrainingGpus += m.training.allocatedGpus;
@@ -1099,35 +1143,18 @@ export const useGameStore = create(
         }
 
         if (newProgress >= total) {
-          // Training completed!
-          const nextVer = m.version === 1.0 && m.status === 'draft' ? 1.0 : m.version + 1.0;
-          
+          // Training completed! Pause game and transition to trained_pending.
           const finalStats = { ...m.training.targetStats };
+          isPausedTriggered = true;
 
-          nextEmails = [{
-            id: 't_done_' + Date.now().toString(),
-            sender: 'Facility Operations',
-            subject: `Training Finished: ${m.name} v${nextVer.toFixed(1)}`,
-            body: `Training is complete. Model '${m.name}' is now at version v${nextVer.toFixed(1)}.\n\nBenchmark Stats:\n- Agentic: ${finalStats.agentic}%\n- Coding: ${finalStats.coding}%\n- Reasoning: ${finalStats.reasoning}%\n- Knowledge: ${finalStats.knowledge}%\n- Math: ${finalStats.math}%\n- Multilingual: ${finalStats.multilingual}%\n- Multimodal: ${finalStats.multimodal}%\n\nThe model is ready to be released to the market or assigned to contracts.`,
-            tick: currentTick,
-            read: false,
-            reward: null,
-            claimed: false
-          }, ...nextEmails];
-
-          nextNewsFeed = [{ 
-            tick: currentTick, 
-            type: 'check_circle', 
-            text: `Training Complete: '${m.name}' successfully aligned to version v${nextVer.toFixed(1)}!`, 
-            iconColor: 'text-secondary' 
-          }, ...nextNewsFeed];
-          
           return {
             ...m,
-            version: nextVer,
-            status: 'trained',
+            status: 'trained_pending',
             stats: finalStats,
-            training: null
+            trainingCompletion: {
+              oldStats: { ...m.training.startStats },
+              newStats: finalStats
+            }
           };
         } else {
           return {
@@ -1425,60 +1452,7 @@ export const useGameStore = create(
       }
     }
 
-    // 6. Contract payouts and time elapsed (Enterprise Leases)
-    let activeContractPayouts = 0;
-    const nextContracts = state.marketContracts.map(c => {
-      if (c.activeModelId) {
-        activeContractPayouts += c.rewardPerTick;
-        const nextTime = c.timeLeft - 1;
-
-        if (nextTime <= 0) {
-          // Contract completed!
-          nextEmails = [{
-            id: 'c_done_' + Date.now().toString(),
-            sender: 'Finance Dept',
-            subject: `Contract Completed: ${c.client}`,
-            body: `Our contract with ${c.client} has ended.\n\nThe client has sent the completion bonus of $50,000. Claim the funds below.`,
-            tick: currentTick,
-            read: false,
-            reward: { cash: 50000 },
-            claimed: false
-          }, ...nextEmails];
-
-          nextNewsFeed = [{ 
-            tick: currentTick, 
-            type: 'handshake', 
-            text: `Contract completed with ${c.client}. Wired completion bonus!`, 
-            iconColor: 'text-secondary' 
-          }, ...nextNewsFeed];
-
-          // Free model
-          const modelToFree = nextLlms.find(m => m.id === c.activeModelId);
-          if (modelToFree) modelToFree.contractId = null;
-
-          // Replace contract with new one
-          const statNames = ['agentic', 'coding', 'reasoning', 'knowledge', 'math', 'multilingual', 'multimodal'];
-          const randomStat = statNames[Math.floor(Math.random() * statNames.length)];
-          const randomVal = 40 + Math.floor(Math.random() * 40);
-          const reward = 5000 + Math.floor(Math.random() * 12000);
-          const dur = 100 + Math.floor(Math.random() * 150);
-
-          return {
-            id: 'c_' + Date.now().toString(),
-            client: ['GigaSystems', 'BetaGlobal', 'CyberSec', 'MetaDyne', 'ApexData'][Math.floor(Math.random() * 5)],
-            requirement: { stat: randomStat, value: randomVal },
-            rewardPerTick: reward,
-            duration: dur,
-            timeLeft: dur,
-            activeModelId: null
-          };
-        } else {
-          return { ...c, timeLeft: nextTime };
-        }
-      }
-      return c;
-    });
-    cashChange += activeContractPayouts;
+    // 6. Contracts removed - no payouts
 
     // Fans decay
     let nextFans = state.resources.fans;
@@ -1653,10 +1627,11 @@ export const useGameStore = create(
         activeResearch: nextActiveResearch,
         unlockedTech: nextUnlockedTech
       },
-      marketContracts: nextContracts,
       emails: nextEmails,
       milestones: nextMilestones,
-      newsFeed: nextNewsFeed
+      newsFeed: nextNewsFeed,
+      simulationSpeed: isPausedTriggered ? 0 : state.simulationSpeed,
+      isPaused: isPausedTriggered ? true : state.isPaused
     };
   }),
   }),

@@ -53,7 +53,7 @@ export default function MarketView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter max-w-container-max mx-auto w-full pt-6 pb-24 overflow-y-auto">
       <div className="col-span-1 lg:col-span-12 mb-sm">
-        <h2 className="font-headline-lg text-headline-lg text-on-surface">Market & Contracts</h2>
+        <h2 className="font-headline-lg text-headline-lg text-on-surface">Market Segments</h2>
         <p className="font-body-md text-body-md text-on-surface-variant mt-xs">
           Deploy models to different market segments, allocate GPUs, and monitor competitor benchmarks.
         </p>
@@ -105,7 +105,7 @@ export default function MarketView() {
                             <div className="flex justify-between items-start">
                               <div>
                                 <span className="font-bold text-on-surface text-sm">{model.name}</span>
-                                <span className="text-[10px] text-outline ml-1.5 px-1.5 py-0.5 bg-surface-container rounded border border-white/5">v{model.version.toFixed(1)}</span>
+                                <span className="text-[10px] text-outline ml-1.5 px-1.5 py-0.5 bg-surface-container rounded border border-white/5">v{model.version}</span>
                               </div>
                               <span className="text-primary font-semibold">Active</span>
                             </div>

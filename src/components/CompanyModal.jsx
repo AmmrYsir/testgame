@@ -813,7 +813,7 @@ export default function CompanyModal({ isOpen, onClose }) {
                   companyModels = llms
                     .filter(m => m.status === 'released')
                     .map(m => ({
-                      name: `${m.name} v${m.version.toFixed(1)}`,
+                      name: `${m.name} v${m.version}`,
                       stats: m.stats,
                       isPlayerModel: true,
                       releaseType: m.releaseType
