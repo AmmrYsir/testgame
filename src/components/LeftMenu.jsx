@@ -1,8 +1,5 @@
-import { useGameStore } from '../store';
 
 export default function LeftMenu({ activeTab, setActiveTab, isLogsOpen, setIsLogsOpen }) {
-  const { infrastructure } = useGameStore();
-
   return (
     <nav className="hidden md:flex flex-col w-64 bg-surface-container/80 dark:bg-surface-container/80 backdrop-blur-2xl border-r border-white/5 z-40 flex-none h-full py-md">
       <div className="px-md mb-8 flex items-center gap-3">

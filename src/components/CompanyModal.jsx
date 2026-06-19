@@ -914,7 +914,7 @@ export default function CompanyModal({ isOpen, onClose }) {
             {/* Models List Scrollable Container */}
             <div className="space-y-md overflow-y-auto max-h-[450px] pr-2 mt-sm">
               {(() => {
-                let companyModels = [];
+                let companyModels;
                 if (catalogCompany === 'player') {
                   companyModels = llms
                     .filter(m => m.status === 'released')

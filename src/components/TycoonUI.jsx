@@ -7,23 +7,23 @@ import ResearchModal from './ResearchModal';
 import MailboxModal from './MailboxModal';
 import BottomLogsDrawer from './BottomLogsDrawer';
 import CompanyModal from './CompanyModal';
-import { useGameStore, formatDateFromTick } from '../store';
+import AdminModal from './AdminModal';
+import { useGameStore } from '../store';
 import worldSvg from '../assets/world.svg?raw';
 
 export default function TycoonUI() {
   const { 
     countries, 
     llms, 
-    newsFeed, 
     infrastructure, 
     initCountry, 
-    deployModelToCountry, 
     allocateGpusToCountry,
     company,
     rivals,
     establishHq,
     openMarket,
-    resources
+    resources,
+    subscriptionTiers
   } = useGameStore();
 
   const [selectedCountryId, setSelectedCountryId] = useState(null);
@@ -33,9 +33,20 @@ export default function TycoonUI() {
   const [isInfrastructureModalOpen, setIsInfrastructureModalOpen] = useState(false);
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
   const [isResearchModalOpen, setIsResearchModalOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [hoveredCountry, setHoveredCountry] = useState(null);
 
   const country = selectedCountryId ? countries[selectedCountryId] : null;
+
+  const totalGpus = infrastructure.gpus + (infrastructure.cloudGpusRented || 0);
+  const trainingGpus = llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
+  const allocatedToOthers = Object.entries(countries).reduce((sum, [cid, c]) => {
+    if (cid === selectedCountryId) return sum;
+    return sum + (c.allocatedGpus || 0);
+  }, 0);
+  const idleGpus = totalGpus - trainingGpus - allocatedToOthers;
+  const countryAllocatedGpus = country?.allocatedGpus || 0;
+  const maxAllocatable = idleGpus + countryAllocatedGpus;
 
   const handleMapClick = useCallback((e) => {
     const path = e.target.closest('path');
@@ -146,20 +157,119 @@ export default function TycoonUI() {
                     
                     <div className="space-y-4">
                       {/* Player */}
+                      {/* Player */}
                       {country.openMarkets?.player ? (
-                        <div className="space-y-1 animate-fade-in">
-                          <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-on-surface-variant flex items-center gap-1 text-[10px]">
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Player
-                            </span>
-                            <span className="text-primary font-bold text-[11px]">{country.playerShare}%</span>
+                        <div className="space-y-3 animate-fade-in text-left">
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs font-semibold">
+                              <span className="text-on-surface-variant flex items-center gap-1 text-[10px]">
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span> Player Share
+                              </span>
+                              <span className="text-primary font-bold text-[11px]">{country.playerShare}%</span>
+                            </div>
+                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-primary rounded-full" style={{ width: `${country.playerShare}%` }}></div>
+                            </div>
                           </div>
-                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary rounded-full" style={{ width: `${country.playerShare}%` }}></div>
+
+                          {/* GPU Compute Node Allocation */}
+                          <div className="bg-[#10141f] border border-white/5 p-3 rounded-xl space-y-2 mt-4 text-left font-mono">
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-outline uppercase tracking-wider font-bold">Regional Compute Node</span>
+                              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                country.latency === 999 
+                                  ? 'bg-error/15 text-error animate-pulse' 
+                                  : country.latency > 15 
+                                    ? 'bg-tertiary/15 text-tertiary' 
+                                    : 'bg-secondary/15 text-secondary'
+                              }`}>
+                                {country.latency === 999 ? 'Deficit' : `${country.latency}ms`}
+                              </span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center text-xs pt-1">
+                              <span className="text-outline">Allocated H100s:</span>
+                              <span className="font-bold text-on-surface">{countryAllocatedGpus} / {maxAllocatable}</span>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-outline">Required Compute:</span>
+                              <span className="font-bold text-primary">{country.gpusRequired || 0} H100s</span>
+                            </div>
+
+                            {/* GPU Allocation Control Buttons */}
+                            <div className="flex items-center gap-xs mt-2 w-full">
+                              <button
+                                type="button"
+                                disabled={countryAllocatedGpus <= 0}
+                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus - 4)}
+                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
+                              >
+                                -4
+                              </button>
+                              <button
+                                type="button"
+                                disabled={countryAllocatedGpus <= 0}
+                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus - 1)}
+                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
+                              >
+                                -1
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idleGpus <= 0}
+                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus + 1)}
+                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
+                              >
+                                +1
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idleGpus < 4}
+                                onClick={() => allocateGpusToCountry(selectedCountryId, countryAllocatedGpus + 4)}
+                                className="flex-1 bg-white/5 border border-white/10 text-outline hover:text-on-surface hover:bg-white/10 rounded py-1 font-bold text-xs transition-all disabled:opacity-20 cursor-pointer"
+                              >
+                                +4
+                              </button>
+                            </div>
+
+                            {/* Slider */}
+                            <input
+                              type="range"
+                              min="0"
+                              max={maxAllocatable}
+                              value={countryAllocatedGpus}
+                              onChange={(e) => allocateGpusToCountry(selectedCountryId, parseInt(e.target.value))}
+                              className="w-full accent-primary cursor-pointer mt-2"
+                            />
+                            <div className="flex justify-between text-[8px] text-outline/50 mt-0.5">
+                              <span>0 H100s</span>
+                              <span>Idle Cluster Pool: {idleGpus} H100s</span>
+                            </div>
+                          </div>
+
+                          {/* Regional Subscriptions Breakdown */}
+                          <div className="bg-[#10141f]/50 border border-white/5 p-3 rounded-xl space-y-2 mt-3 text-left font-mono text-[10px]">
+                            <span className="text-outline uppercase tracking-wider font-bold block">Active Users Breakdown</span>
+                            <div className="space-y-xs max-h-[140px] overflow-y-auto custom-scrollbar pr-1 pt-1">
+                              {(subscriptionTiers || []).map(t => {
+                                const usersInCountry = country.tierUsers?.[t.id] || 0;
+                                if (usersInCountry <= 0) return null;
+                                return (
+                                  <div key={t.id} className="flex justify-between items-center py-0.5 border-b border-white/5">
+                                    <span className="text-on-surface/80">{t.name}</span>
+                                    <span className="font-bold text-primary">{usersInCountry.toLocaleString()}</span>
+                                  </div>
+                                );
+                              })}
+                              {(!country.tierUsers || Object.values(country.tierUsers).reduce((sum, u) => sum + u, 0) === 0) && (
+                                <div className="text-center text-outline italic text-[9px] py-2">No local active subscribers.</div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="bg-[#3b82f6]/5 border border-[#3b82f6]/10 rounded-xl p-md flex flex-col gap-sm animate-fade-in">
+                        <div className="bg-[#3b82f6]/5 border border-[#3b82f6]/10 rounded-xl p-md flex flex-col gap-sm animate-fade-in text-left">
                           <div className="flex justify-between items-center">
                             <span className="text-xs text-outline font-semibold">Player Market: Closed</span>
                             <span className="text-[10px] px-1.5 py-0.5 bg-[#3b82f6]/10 border border-[#3b82f6]/20 rounded text-[#3b82f6] font-semibold">$50,000</span>
@@ -257,6 +367,7 @@ export default function TycoonUI() {
           {/* FLOATING ACTION OVERLAY BUTTONS (Right Side) */}
           <div className="absolute right-6 top-6 z-20 flex flex-col gap-sm">
             {[
+              { id: 'admin', label: 'SaaS Admin', icon: 'dashboard' },
               { id: 'models', label: 'Models', icon: 'psychology' },
               { id: 'infrastructure', label: 'Hardware', icon: 'dns' },
               { id: 'research', label: 'Research', icon: 'science' },
@@ -277,11 +388,13 @@ export default function TycoonUI() {
                     setIsModelModalOpen(true);
                   } else if (drawer.id === 'research') {
                     setIsResearchModalOpen(true);
+                  } else if (drawer.id === 'admin') {
+                    setIsAdminModalOpen(true);
                   }
                 }}
                 title={drawer.label}
                 className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 border shadow-lg disabled:opacity-30 disabled:cursor-not-allowed ${
-                  (drawer.id === 'logs' ? isLogsOpen : drawer.id === 'companyModal' ? isCompanyModalOpen : drawer.id === 'infrastructure' ? isInfrastructureModalOpen : drawer.id === 'models' ? isModelModalOpen : drawer.id === 'research' ? isResearchModalOpen : false)
+                  (drawer.id === 'logs' ? isLogsOpen : drawer.id === 'companyModal' ? isCompanyModalOpen : drawer.id === 'infrastructure' ? isInfrastructureModalOpen : drawer.id === 'models' ? isModelModalOpen : drawer.id === 'research' ? isResearchModalOpen : drawer.id === 'admin' ? isAdminModalOpen : false)
                     ? 'bg-primary text-white border-primary shadow-[0_0_12px_rgba(59,130,246,0.6)] hover:scale-105'
                     : 'bg-surface-container/60 hover:bg-surface-bright/20 border-white/10 text-outline hover:text-on-surface hover:scale-105'
                 }`}
@@ -312,9 +425,15 @@ export default function TycoonUI() {
       {/* Research Modal */}
       <ResearchModal isOpen={isResearchModalOpen} onClose={() => setIsResearchModalOpen(false)} />
 
+      {/* SaaS Admin Modal */}
+      <AdminModal isOpen={isAdminModalOpen} onClose={() => setIsAdminModalOpen(false)} />
+
       {/* Training Completion Popup */}
       {llms?.find(m => m.status === 'trained_pending') && (
-        <TrainingCompletionPopup model={llms.find(m => m.status === 'trained_pending')} />
+        <TrainingCompletionPopup 
+          model={llms.find(m => m.status === 'trained_pending')} 
+          key={llms.find(m => m.status === 'trained_pending')?.id || 'none'} 
+        />
       )}
     </div>
   );
@@ -328,7 +447,7 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company,
     .replace('width="1009.6727"', 'viewBox="0 0 1010 666" width="100%"')
     .replace('height="665.96301"', 'height="100%" style="max-width: 100%; max-height: 100%;"');
 
-  // Initialize all countries on mount
+  // Initialize all countries on mount and catch rehydration race conditions
   useEffect(() => {
     const container = document.getElementById('world-map-svg-container');
     if (!container) return;
@@ -343,10 +462,12 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company,
       if (id) countryList.push({ id, name });
     });
 
-    if (countryList.length > 0) {
+    const needsInitialization = countryList.some(({ id }) => !countries[id]);
+
+    if (needsInitialization && countryList.length > 0) {
       initializeAllCountries(countryList);
     }
-  }, [initializeAllCountries]);
+  }, [initializeAllCountries, countries]);
 
   // Update country path colors dynamically when state or selection changes
   useEffect(() => {
@@ -381,7 +502,6 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company,
       let strokeWidth = '0.6';
       
       // Find dominant company with open market in this country
-      let dominantCompany = null;
       let dominantShare = 0;
       let dominantColor = '#3b82f6';
       
@@ -394,7 +514,6 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company,
       // Player
       if (openMarkets?.player && playerShare > dominantShare) {
         dominantShare = playerShare;
-        dominantCompany = 'player';
         dominantColor = company?.color || '#3b82f6';
       }
       // Rivals
@@ -410,7 +529,6 @@ const WorldMap = memo(function WorldMap({ countries, selectedCountryId, company,
 
             if (share > dominantShare) {
               dominantShare = share;
-              dominantCompany = rivalKey;
               dominantColor = rival.color;
             }
           }

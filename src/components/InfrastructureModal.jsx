@@ -48,7 +48,8 @@ export default function InfrastructureModal({ isOpen, onClose }) {
   let trainingLeft = totalTrainingGpus;
   let productionLeft = totalProductionGpus;
 
-  const racks = Array.from({ length: rackCount }, (_, i) => {
+  const racks = [];
+  for (let i = 0; i < rackCount; i++) {
     const rackGpus = Math.min(64, physicalGpus - i * 64);
     let trainingAlloc = 0;
     let productionAlloc = 0;
@@ -87,7 +88,7 @@ export default function InfrastructureModal({ isOpen, onClose }) {
       glow = 'shadow-[0_0_15px_rgba(34,211,238,0.08)]';
     }
 
-    return {
+    racks.push({
       id: i + 1,
       total: rackGpus,
       training: trainingAlloc,
@@ -97,8 +98,8 @@ export default function InfrastructureModal({ isOpen, onClose }) {
       statusColor,
       borderStyle,
       glow
-    };
-  });
+    });
+  }
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-md flex items-center justify-center z-[100] p-6 animate-fade-in" onClick={onClose}>

@@ -38,7 +38,7 @@ export const INITIAL_COUNTRIES = {
 
 export const useGameStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Game Flow State
       gameStage: 'menu', // 'menu', 'newGameSetup', 'playing'
       simulationSpeed: 1, // 0 = paused, 1 = normal, 2 = fast, etc.
@@ -80,6 +80,14 @@ export const useGameStore = create(
 
       // Global Map Countries State
       countries: INITIAL_COUNTRIES,
+
+      // Customer SaaS Billing & Tiers
+      subscriptionTiers: [
+        { id: 'free', name: 'Free Plan', price: 0, modelId: null, rateLimit: 5, priority: 'low', safety: 'moderate', subscribers: 0, mrr: 0, satisfaction: 100 },
+        { id: 'pro', name: 'Pro Plan', price: 20, modelId: null, rateLimit: 100, priority: 'normal', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 },
+        { id: 'enterprise', name: 'Enterprise Plan', price: 150, modelId: null, rateLimit: 500, priority: 'high', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 }
+      ],
+      marketingCampaign: 'none',
 
       // Research (Progressive)
       research: {
@@ -188,7 +196,7 @@ export const useGameStore = create(
       ],
 
       // Actions
-      resetGame: () => set((state) => ({
+      resetGame: () => set(() => ({
         company: {
           name: '',
           founder: '',
@@ -213,6 +221,12 @@ export const useGameStore = create(
         },
         llms: [],
         countries: INITIAL_COUNTRIES,
+        subscriptionTiers: [
+          { id: 'free', name: 'Free Plan', price: 0, modelId: null, rateLimit: 5, priority: 'low', safety: 'moderate', subscribers: 0, mrr: 0, satisfaction: 100 },
+          { id: 'pro', name: 'Pro Plan', price: 20, modelId: null, rateLimit: 100, priority: 'normal', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 },
+          { id: 'enterprise', name: 'Enterprise Plan', price: 150, modelId: null, rateLimit: 500, priority: 'high', safety: 'strict', subscribers: 0, mrr: 0, satisfaction: 100 }
+        ],
+        marketingCampaign: 'none',
         research: {
           unlockedTech: ['transformer', 'web_crawling', 'instruction_sft'],
           activeResearch: null,
@@ -372,9 +386,9 @@ export const useGameStore = create(
         const targetAnthropic = country.anthropicShare || 0;
         const totalRival = targetOpenai + targetGoogle + targetAnthropic;
 
-        let newOpenai = 0;
-        let newGoogle = 0;
-        let newAnthropic = 0;
+        let newOpenai;
+        let newGoogle;
+        let newAnthropic;
 
         if (totalRival > 0) {
           newOpenai = parseFloat(((targetOpenai / totalRival) * 90).toFixed(2));
@@ -624,9 +638,32 @@ export const useGameStore = create(
           ? [{ tick: state.resources.currentTick, type: 'cloud', text: newsText, iconColor: 'text-primary' }, ...state.newsFeed]
           : state.newsFeed;
 
+        // If the new capacity is less than currently allocated + training, we shrink regional allocations
+        const newTotalGpus = state.infrastructure.gpus + finalAmount;
+        let totalAllocated = Object.values(state.countries).reduce((sum, c) => sum + (c.allocatedGpus || 0), 0);
+        const trainingGpus = state.llms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
+        const maxAvailableForCountries = Math.max(0, newTotalGpus - trainingGpus);
+        
+        let nextCountries = { ...state.countries };
+        if (totalAllocated > maxAvailableForCountries) {
+          const scale = maxAvailableForCountries / totalAllocated;
+          let remaining = maxAvailableForCountries;
+          const countryEntries = Object.entries(nextCountries);
+          countryEntries.forEach(([cid, c], index) => {
+            if (index === countryEntries.length - 1) {
+              nextCountries[cid] = { ...c, allocatedGpus: remaining };
+            } else {
+              const allocated = Math.floor((c.allocatedGpus || 0) * scale);
+              nextCountries[cid] = { ...c, allocatedGpus: allocated };
+              remaining -= allocated;
+            }
+          });
+        }
+
         return {
           infrastructure: { ...state.infrastructure, cloudGpusRented: finalAmount },
           resources: { ...state.resources, compute: newCompute },
+          countries: nextCountries,
           newsFeed: nextNewsFeed
         };
       }),
@@ -1010,6 +1047,61 @@ export const useGameStore = create(
         };
       }),
 
+      addSubscriptionTier: (name, price, modelId, rateLimit, priority, safety) => set((state) => {
+        const newTier = {
+          id: 'tier_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          name: name || 'Custom Plan',
+          price: Number(price) || 0,
+          modelId: modelId || null,
+          rateLimit: Number(rateLimit) || 100,
+          priority: priority || 'normal',
+          safety: safety || 'strict',
+          subscribers: 0,
+          mrr: 0,
+          satisfaction: 100
+        };
+        return {
+          subscriptionTiers: [...(state.subscriptionTiers || []), newTier]
+        };
+      }),
+
+      updateSubscriptionTier: (id, updates) => set((state) => {
+        return {
+          subscriptionTiers: (state.subscriptionTiers || []).map(t => 
+            t.id === id ? { ...t, ...updates } : t
+          )
+        };
+      }),
+
+      deleteSubscriptionTier: (id) => set((state) => {
+        const currentTiers = state.subscriptionTiers || [];
+        if (currentTiers.length <= 1) return {};
+        const remainingTiers = currentTiers.filter(t => t.id !== id);
+        
+        // Find subscribers of the deleted tier, migrate them to the Free plan if it exists
+        const freeTier = remainingTiers.find(t => t.id === 'free') || remainingTiers[0];
+        
+        let nextCountries = { ...state.countries };
+        if (freeTier) {
+          Object.entries(nextCountries).forEach(([cid, c]) => {
+            if (c.tierUsers && c.tierUsers[id]) {
+              const usersToMigrate = c.tierUsers[id];
+              const nextTierUsers = { ...c.tierUsers };
+              delete nextTierUsers[id];
+              nextTierUsers[freeTier.id] = (nextTierUsers[freeTier.id] || 0) + usersToMigrate;
+              nextCountries[cid] = { ...c, tierUsers: nextTierUsers };
+            }
+          });
+        }
+
+        return {
+          subscriptionTiers: remainingTiers,
+          countries: nextCountries
+        };
+      }),
+
+      setMarketingCampaign: (level) => set({ marketingCampaign: level }),
+
       openMarket: (countryId) => set((state) => {
         const country = state.countries[countryId];
         if (!country) return {};
@@ -1163,7 +1255,6 @@ export const useGameStore = create(
         const nextCompute = Math.max(0, baseCompute + computeAdjustment);
 
         // 3. Model creation and training progress
-        let activeTrainingCount = 0;
         let totalTrainingGpus = 0;
         let isPausedTriggered = false;
 
@@ -1204,7 +1295,6 @@ export const useGameStore = create(
           }
 
           if (m.status === 'training' && m.training) {
-            activeTrainingCount++;
             totalTrainingGpus += m.training.allocatedGpus;
 
             const newProgress = m.training.progress + speedMultiplier;
@@ -1247,33 +1337,71 @@ export const useGameStore = create(
         });
 
         // 4. Global compute pooling and auto-routing calculation
-        let totalGpusRequired = 0;
-        let computePerUser = nextUnlockedTech.includes('flash_attention') ? 0.006 : nextUnlockedTech.includes('fp8_quantization') ? 0.008 : 0.01;
-        
-        Object.values(state.countries).forEach(c => {
-          if (c.openMarkets?.player && c.deployedModelId) {
-            const users = c.playerUsers || 0;
-            totalGpusRequired += Math.ceil(users * computePerUser);
-          }
+        const marketingCampaign = state.marketingCampaign || 'none';
+        const marketingCosts = { none: 0, low: 5000, medium: 20000, high: 50000 };
+        const marketingMultipliers = { none: 1.0, low: 1.25, medium: 1.6, high: 2.2 };
+        const mCost = marketingCosts[marketingCampaign] || 0;
+        const mMultiplier = marketingMultipliers[marketingCampaign] || 1.0;
+        cashChange -= mCost;
+
+        let baseComputePerQuery = nextUnlockedTech.includes('flash_attention') ? 0.006 : nextUnlockedTech.includes('fp8_quantization') ? 0.008 : 0.01;
+
+        const releasedModels = nextLlms.filter(m => m.status === 'released');
+        const modelMap = {};
+        releasedModels.forEach(m => {
+          modelMap[m.id] = m;
         });
 
-        const totalGpus = state.infrastructure.gpus + state.infrastructure.cloudGpusRented;
-        const activeTrainingGpus = nextLlms.reduce((sum, m) => sum + (m.training?.allocatedGpus || 0), 0);
-        const totalIdleGpus = Math.max(0, totalGpus - activeTrainingGpus);
-        const adequacy = totalIdleGpus >= totalGpusRequired ? 1.0 : (totalIdleGpus / Math.max(1, totalGpusRequired));
+        // Compute scores and weights for subscription tiers
+        const activeTiers = (state.subscriptionTiers || []).map(tier => {
+          const model = tier.modelId ? modelMap[tier.modelId] : null;
+          let tierRating = 0;
+          let complexityFactor = 1.0;
+          if (model) {
+            tierRating = (model.stats.agentic + model.stats.coding + model.stats.reasoning + model.stats.knowledge + model.stats.math + model.stats.multilingual + model.stats.multimodal) / 7;
+            complexityFactor = 0.5 + 0.5 * (tierRating / 100);
+          }
+          
+          const rateLimit = tier.rateLimit || 100;
+          const rateLimitMod = rateLimit <= 5 ? 0.6 : rateLimit <= 20 ? 0.8 : rateLimit <= 100 ? 1.0 : rateLimit <= 500 ? 1.2 : 1.4;
+          const rateLimitFactor = rateLimit <= 5 ? 0.3 : rateLimit <= 20 ? 0.6 : rateLimit <= 100 ? 1.0 : rateLimit <= 500 ? 1.5 : 2.0;
+          
+          const priority = tier.priority || 'normal';
+          const priorityMod = priority === 'low' ? 0.8 : priority === 'normal' ? 1.0 : 1.25;
+          
+          const safety = tier.safety || 'strict';
+          const safetyMod = safety === 'none' ? 1.15 : safety === 'moderate' ? 1.0 : 0.9;
+          
+          const valueScore = model ? (tierRating * rateLimitMod * priorityMod * safetyMod) / (tier.price + 15) : 0;
+          const wtPWeight = model ? (tierRating * rateLimitMod * priorityMod * safetyMod) * Math.exp(-tier.price / 35) : 0;
+          
+          return {
+            ...tier,
+            model,
+            valueScore,
+            wtPWeight,
+            complexityFactor,
+            rateLimitFactor
+          };
+        });
 
-        // Find best player released model to auto-deploy
-        const playerReleasedModels = nextLlms.filter(m => m.status === 'released');
-        const bestModel = playerReleasedModels.length > 0 ? [...playerReleasedModels].sort((a, b) => {
-          const aRating = (a.stats.agentic + a.stats.coding + a.stats.reasoning + a.stats.knowledge + a.stats.math + a.stats.multilingual + a.stats.multimodal) / 7;
-          const bRating = (b.stats.agentic + b.stats.coding + b.stats.reasoning + b.stats.knowledge + b.stats.math + b.stats.multilingual + b.stats.multimodal) / 7;
-          return bRating - aRating;
-        })[0] : null;
+        let maxPlayerTierScore = 0;
+        activeTiers.forEach(t => {
+          if (t.valueScore > maxPlayerTierScore) {
+            maxPlayerTierScore = t.valueScore;
+          }
+        });
 
         const updatedCountries = {};
         let googleRevTotal = 0;
         let openaiRevTotal = 0;
         let anthropicRevTotal = 0;
+        let totalGpusRequired = 0;
+
+        const tierMetrics = {};
+        (state.subscriptionTiers || []).forEach(t => {
+          tierMetrics[t.id] = { subscribers: 0, mrr: 0, satisfactionSum: 0, satisfactionCount: 0 };
+        });
 
         for (const [cid, country] of Object.entries(state.countries)) {
           const isOpenPlayer = country.openMarkets?.player;
@@ -1281,14 +1409,10 @@ export const useGameStore = create(
           const isOpenGoogle = country.openMarkets?.google;
           let isOpenAnthropic = country.openMarkets?.anthropic || anthropicJustActivated;
 
-          // Auto-route player model
-          const playerModelId = bestModel && isOpenPlayer ? bestModel.id : null;
-
           // Competitiveness calculations
           let scorePlayer = 0;
-          if (isOpenPlayer && bestModel && totalIdleGpus > 0) {
-            const rating = (bestModel.stats.agentic + bestModel.stats.coding + bestModel.stats.reasoning + bestModel.stats.knowledge + bestModel.stats.math + bestModel.stats.multilingual + bestModel.stats.multimodal) / 7;
-            scorePlayer = (rating / 15) * (country.satisfaction / 100);
+          if (isOpenPlayer && maxPlayerTierScore > 0) {
+            scorePlayer = maxPlayerTierScore * (country.satisfaction / 100);
           }
 
           let scoreGoogle = 0;
@@ -1347,31 +1471,70 @@ export const useGameStore = create(
           }
 
           // Users
-          const playerUsers = Math.round(country.demand * (playerShare / 100));
+          let playerUsers = Math.round(country.demand * (playerShare / 100));
+          playerUsers = Math.round(playerUsers * mMultiplier); // marketing campaign boost
+
           const openaiUsers = Math.round(country.demand * (openaiShare / 100));
           const googleUsers = Math.round(country.demand * (googleShare / 100));
           const anthropicUsers = Math.round(country.demand * (anthropicShare / 100));
 
-          const gpusRequired = Math.ceil(playerUsers * computePerUser);
+          // Distribute player users among tiers in this country
+          const totalWtPWeight = activeTiers.reduce((sum, t) => sum + t.wtPWeight, 0);
+          const tierUsersMap = {};
+          let countryGpusRequired = 0;
+          let countryRevenue = 0;
 
-          // Latency & satisfaction updates
-          let latency = 10;
+          activeTiers.forEach(t => {
+            let tierUsers = 0;
+            if (isOpenPlayer && totalWtPWeight > 0) {
+              tierUsers = Math.round(playerUsers * (t.wtPWeight / totalWtPWeight));
+            }
+            tierUsersMap[t.id] = tierUsers;
+            
+            // Add to global tier metrics
+            if (tierMetrics[t.id]) {
+              tierMetrics[t.id].subscribers += tierUsers;
+              tierMetrics[t.id].mrr += tierUsers * t.price;
+              if (tierUsers > 0) {
+                tierMetrics[t.id].satisfactionSum += country.satisfaction * tierUsers;
+                tierMetrics[t.id].satisfactionCount += tierUsers;
+              }
+            }
+
+            if (t.model) {
+              const computePerUser = baseComputePerQuery * t.complexityFactor * t.rateLimitFactor;
+              countryGpusRequired += Math.ceil(tierUsers * computePerUser);
+              countryRevenue += tierUsers * t.price;
+            }
+          });
+
+          totalGpusRequired += countryGpusRequired;
+
+          // Latency & satisfaction updates based on manual country.allocatedGpus
+          let latency;
           let satisfaction = country.satisfaction || 100;
 
-          if (!bestModel || totalIdleGpus === 0) {
-            latency = 999;
-            satisfaction = Math.max(0, satisfaction - 6);
-          } else if (adequacy < 1.0) {
-            latency = Math.round(10 / adequacy);
-            satisfaction = Math.max(0, satisfaction - 3);
+          if (countryGpusRequired > 0) {
+            const allocated = country.allocatedGpus || 0;
+            if (allocated === 0) {
+              latency = 999;
+              satisfaction = Math.max(0, satisfaction - 3);
+            } else if (allocated < countryGpusRequired) {
+              const countryAdequacy = allocated / countryGpusRequired;
+              latency = Math.round(10 / countryAdequacy);
+              satisfaction = Math.max(0, satisfaction - 3);
+            } else {
+              latency = 10;
+              satisfaction = Math.min(100, satisfaction + 2);
+            }
           } else {
             latency = 10;
             satisfaction = Math.min(100, satisfaction + 2);
           }
 
-          // Calculate daily revenue
-          let playerCountryRev = playerUsers * 15 * (satisfaction / 100);
-          if (!bestModel || totalIdleGpus === 0) playerCountryRev = 0;
+          // Scale country revenue by satisfaction
+          let playerCountryRev = countryRevenue * (satisfaction / 100);
+          if (!isOpenPlayer || maxPlayerTierScore === 0) playerCountryRev = 0;
 
           cashChange += Math.round(playerCountryRev);
           googleRevTotal += Math.round(googleUsers * (googleRival?.price || 15));
@@ -1385,11 +1548,11 @@ export const useGameStore = create(
             openaiShare,
             anthropicShare,
             playerUsers,
-            gpusRequired,
-            allocatedGpus: gpusRequired, // Auto-allocated GPUs show in the UI
-            deployedModelId: playerModelId,
+            gpusRequired: countryGpusRequired,
+            allocatedGpus: country.allocatedGpus || 0, // Player manually sets this
             latency,
             satisfaction,
+            tierUsers: tierUsersMap, // Save subscriber distribution for visualization
             openMarkets: {
               player: !!isOpenPlayer,
               google: !!isOpenGoogle,
@@ -1399,13 +1562,50 @@ export const useGameStore = create(
           };
         }
 
+        // Aggregate global tier stats and calculate average satisfaction
+        const nextSubscriptionTiers = (state.subscriptionTiers || []).map(t => {
+          const metrics = tierMetrics[t.id] || { subscribers: 0, mrr: 0, satisfactionSum: 0, satisfactionCount: 0 };
+          const avgSatisfaction = metrics.satisfactionCount > 0 
+            ? Math.round(metrics.satisfactionSum / metrics.satisfactionCount) 
+            : 100;
+          return {
+            ...t,
+            subscribers: metrics.subscribers,
+            mrr: metrics.mrr,
+            satisfaction: avgSatisfaction
+          };
+        });
+
         nextLlms = nextLlms.map(m => {
           if (m.status === 'released') {
-            const aggUsers = Object.values(updatedCountries).reduce((sum, c) => c.deployedModelId === m.id ? sum + c.playerUsers : sum, 0);
-            const aggGpus = Object.values(updatedCountries).reduce((sum, c) => c.deployedModelId === m.id ? sum + c.gpusRequired : sum, 0);
-            const openRegions = Object.values(updatedCountries).filter(c => c.deployedModelId === m.id);
-            const avgLatency = openRegions.length > 0 ? Math.round(openRegions.reduce((sum, c) => sum + c.latency, 0) / openRegions.length) : 10;
-            const avgSatisfaction = openRegions.length > 0 ? Math.round(openRegions.reduce((sum, c) => sum + c.satisfaction, 0) / openRegions.length) : 100;
+            const tiersRouted = nextSubscriptionTiers.filter(t => t.modelId === m.id);
+            let aggUsers = 0;
+            let aggGpus = 0;
+            let totalLatencySum = 0;
+            let totalLatencyCount = 0;
+            let totalSatSum = 0;
+            let totalSatCount = 0;
+            
+            Object.entries(updatedCountries).forEach(([, c]) => {
+              tiersRouted.forEach(t => {
+                const users = c.tierUsers?.[t.id] || 0;
+                aggUsers += users;
+                
+                const modelComplexity = 0.5 + 0.5 * (((m.stats.agentic + m.stats.coding + m.stats.reasoning + m.stats.knowledge + m.stats.math + m.stats.multilingual + m.stats.multimodal) / 7) / 100);
+                const rateLimit = t.rateLimit || 100;
+                const rateLimitFactor = rateLimit <= 5 ? 0.3 : rateLimit <= 20 ? 0.6 : rateLimit <= 100 ? 1.0 : rateLimit <= 500 ? 1.5 : 2.0;
+                const computePerUser = baseComputePerQuery * modelComplexity * rateLimitFactor;
+                aggGpus += Math.ceil(users * computePerUser);
+                
+                totalLatencySum += c.latency * users;
+                totalLatencyCount += users;
+                totalSatSum += c.satisfaction * users;
+                totalSatCount += users;
+              });
+            });
+            
+            const avgLatency = totalLatencyCount > 0 ? Math.round(totalLatencySum / totalLatencyCount) : 10;
+            const avgSatisfaction = totalSatCount > 0 ? Math.round(totalSatSum / totalSatCount) : 100;
 
             return {
               ...m,
@@ -1423,7 +1623,7 @@ export const useGameStore = create(
 
         // 5. Calculate Server Cluster Temperature
         let targetHeat = 20;
-        const activeGpuLoad = activeTrainingGpus + (totalGpusRequired * 0.3);
+        const activeGpuLoad = totalTrainingGpus + (totalGpusRequired * 0.3);
         if (activeGpuLoad > 0) {
           targetHeat = Math.min(100, 20 + Math.round((activeGpuLoad / 12) / state.infrastructure.coolingLevel));
         }
@@ -1736,6 +1936,33 @@ export const useGameStore = create(
           };
         });
 
+        // 7.4 Safety Moderation Incident Check (1% chance per tick for active tiers with no safety)
+        const unsafeTier = nextSubscriptionTiers.find(t => t.safety === 'none' && t.subscribers > 0);
+        if (unsafeTier && Math.random() < 0.01) {
+          const prFine = 50000;
+          const prFansLost = 15;
+          cashChange -= prFine;
+          nextFans = Math.max(5, nextFans - prFansLost);
+          
+          nextEmails = [{
+            id: 'pr_incident_' + Date.now().toString(),
+            sender: 'General Counsel',
+            subject: `URGENT: Safety Scandal on '${unsafeTier.name}' Tier`,
+            body: `Legal Department Alert:\n\nOur automated content audit has flagged severe compliance breaches on our '${unsafeTier.name}' tier, which operates under 'None' safety moderation.\n\nMalicious users exploited our routed models to produce fraudulent materials and bypass standard safety parameters, drawing intense public criticism.\n\nTo manage this crisis, we have paid a $50,000 regulatory settlement, and lost ${prFansLost} Fans. We strongly recommend setting moderation safety filters to at least 'Moderate' on this tier.`,
+            tick: currentTick,
+            read: false,
+            reward: null,
+            claimed: false
+          }, ...nextEmails];
+
+          nextNewsFeed = [{
+            tick: currentTick,
+            type: 'warning',
+            text: `PR CRISIS: Safety breach on unfiltered plan '${unsafeTier.name}'! Fined $50,000 and lost ${prFansLost} Fans.`,
+            iconColor: 'text-error'
+          }, ...nextNewsFeed];
+        }
+
         // 8. Milestone Detections & VC Grant Emails
         const nextMilestones = { ...state.milestones };
 
@@ -1789,6 +2016,7 @@ export const useGameStore = create(
           },
           llms: nextLlms,
           countries: updatedCountries,
+          subscriptionTiers: nextSubscriptionTiers,
           research: {
             ...state.research,
             activeResearch: nextActiveResearch,
@@ -1806,7 +2034,11 @@ export const useGameStore = create(
       name: 'ai-tycoon-save-state',
       partialize: (state) => {
         // Exclude UI flow state like gameStage, simulationSpeed, isPaused, lastActiveSpeed from persistence
-        const { gameStage, simulationSpeed, lastActiveSpeed, isPaused, ...rest } = state;
+        const rest = { ...state };
+        delete rest.gameStage;
+        delete rest.simulationSpeed;
+        delete rest.lastActiveSpeed;
+        delete rest.isPaused;
         return rest;
       }
     }

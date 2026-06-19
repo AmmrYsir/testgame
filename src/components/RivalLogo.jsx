@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function RivalLogo({ name, className = "w-4 h-4", fallbackLogo = "smart_toy" }) {
   const nameLower = name?.toLowerCase();
 

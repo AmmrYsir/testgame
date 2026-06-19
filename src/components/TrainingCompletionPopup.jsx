@@ -1,28 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useGameStore } from '../store';
 
 export default function TrainingCompletionPopup({ model }) {
   const { finalizeModelTraining } = useGameStore();
-  const [versionInput, setVersionInput] = useState('');
 
-  // Auto-populate suggested version label
-  useEffect(() => {
+  const [versionInput, setVersionInput] = useState(() => {
     if (model && model.trainingCompletion) {
       const verStr = model.version || '1.0';
       const num = parseFloat(verStr);
-      
-      // If it is the first training (e.g. version was 1.0 and old stats were base draft stats)
-      // we suggest keeping "1.0" as the initial release version. Otherwise increment.
       const isDraftFirstRun = verStr === '1.0' && model.trainingCompletion.oldStats.knowledge === 15;
-      
-      if (isDraftFirstRun) {
-        setVersionInput('1.0');
-      } else {
-        const nextNum = isNaN(num) ? 2.0 : num + 1.0;
-        setVersionInput(nextNum.toFixed(1));
-      }
+      if (isDraftFirstRun) return '1.0';
+      const nextNum = isNaN(num) ? 2.0 : num + 1.0;
+      return nextNum.toFixed(1);
     }
-  }, [model]);
+    return '';
+  });
 
   if (!model || model.status !== 'trained_pending' || !model.trainingCompletion) return null;
 

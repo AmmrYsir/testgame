@@ -9,7 +9,7 @@ export default function ModelModal({ isOpen, onClose }) {
     resources, 
     createModel, 
     startTraining, 
-    countries 
+    subscriptionTiers
   } = useGameStore();
   
   const [selectedModelId, setSelectedModelId] = useState(null);
@@ -589,32 +589,31 @@ export default function ModelModal({ isOpen, onClose }) {
                                   <span className="text-outline text-[9.5px] uppercase block">Active Customers</span>
                                   <span className="font-bold text-on-surface">{(selectedModel.marketMetrics?.users || 0).toLocaleString()}</span>
                                 </div>
-                                <span className="text-[10px] text-outline">
-                                  Max Routed Demand: {Object.values(countries || {}).filter(c => c.deployedModelId === selectedModel.id).reduce((sum, c) => sum + c.demand, 0).toLocaleString()}
-                                </span>
-                              </div>
-
-                              <div className="bg-[#0b0e15] p-2.5 rounded-lg border border-white/5 text-xs font-mono text-center">
-                                <span className="text-outline text-[9.5px] uppercase block">Automated Price</span>
-                                <span className="font-bold text-primary">$15.00/mo subscription</span>
+                                <div>
+                                  <span className="text-outline text-[9.5px] uppercase block">Compute Footprint</span>
+                                  <span className="font-bold text-primary">{(selectedModel.marketMetrics?.gpusRequired || 0).toLocaleString()} H100s</span>
+                                </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Regional Deployments Info */}
+                          {/* Subscription Routing Info */}
                           <div className="bg-[#0b0e15]/40 border border-white/5 p-md rounded-xl space-y-sm text-xs text-left">
-                            <h4 className="font-bold text-xs text-on-surface">Active Deployments</h4>
+                            <h4 className="font-bold text-xs text-on-surface">Routed Tiers</h4>
                             <p className="text-[10.5px] text-outline">
-                              This model is automatically deployed to all regions with open player operations.
+                              This model is routed to the following customer billing plans configured in the SaaS Admin panel:
                             </p>
                             <div className="flex flex-wrap gap-xs font-mono text-[10px] mt-2">
-                              {Object.entries(countries || {})
-                                .filter(([_, country]) => country.deployedModelId === selectedModel.id && country.openMarkets?.player)
-                                .map(([code, country]) => (
-                                  <span key={code} className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-primary">
-                                    {country.name} ({code})
+                              {(subscriptionTiers || [])
+                                .filter(t => t.modelId === selectedModel.id)
+                                .map(t => (
+                                  <span key={t.id} className="px-2 py-0.5 bg-primary/10 border border-primary/20 rounded text-primary font-bold">
+                                    {t.name} (${t.price}/mo)
                                   </span>
                                 ))}
+                              {(subscriptionTiers || []).filter(t => t.modelId === selectedModel.id).length === 0 && (
+                                <span className="text-outline italic text-[10.5px]">Not currently routed to any subscription tiers.</span>
+                              )}
                             </div>
                           </div>
                         </div>
